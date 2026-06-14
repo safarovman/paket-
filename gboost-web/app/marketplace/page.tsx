@@ -57,8 +57,6 @@ export default function MarketplacePage() {
       <div className="w-10 h-10 border-2 border-cyan/30 border-t-cyan rounded-full animate-spin" />
     </div>
   );
-
-  return (
     <div className="gsection py-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
