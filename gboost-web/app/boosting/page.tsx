@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import clsx from "clsx";
@@ -22,7 +22,7 @@ const SERVICES = [
 
 const fmt = (n: number) => n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 
-export default function BoostingPage() {
+function BoostingContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const preselected = searchParams.get("gamer");
@@ -299,5 +299,18 @@ export default function BoostingPage() {
         </div>
       )}
     </div>
+  );
+}
+
+
+export default function BoostingPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex justify-center items-center min-h-[60vh]">
+        <div className="w-10 h-10 border-2 border-orange-500/30 border-t-orange-500 rounded-full animate-spin" />
+      </div>
+    }>
+      <BoostingContent />
+    </Suspense>
   );
 }
