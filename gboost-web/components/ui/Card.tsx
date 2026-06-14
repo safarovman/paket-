@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import React, { ReactNode } from "react";
 import clsx from "clsx";
 
 interface CardProps {
@@ -8,13 +8,14 @@ interface CardProps {
   borderColor?: string;
   onClick?: () => void;
   padding?: string;
+  style?: React.CSSProperties;
 }
 
-export function Card({ children, className, hover, borderColor, onClick, padding = "p-5" }: CardProps) {
+export function Card({ children, className, hover, borderColor, onClick, padding = "p-5", style }: CardProps) {
   return (
     <div
       onClick={onClick}
-      style={borderColor ? { borderColor } : undefined}
+      style={style ?? (borderColor ? { borderColor } : undefined)}
       className={clsx(
         "bg-card rounded-2xl border border-border",
         padding,
@@ -28,11 +29,11 @@ export function Card({ children, className, hover, borderColor, onClick, padding
   );
 }
 
-export function GradientCard({ children, className, gradient = "from-card to-navy", padding = "p-5" }: {
-  children: ReactNode; className?: string; gradient?: string; padding?: string;
+export function GradientCard({ children, className, gradient = "from-card to-navy", padding = "p-5", style }: {
+  children: ReactNode; className?: string; gradient?: string; padding?: string; style?: React.CSSProperties;
 }) {
   return (
-    <div className={clsx(`bg-gradient-to-br ${gradient} rounded-2xl border border-border`, padding, className)}>
+    <div style={style} className={clsx(`bg-gradient-to-br ${gradient} rounded-2xl border border-border`, padding, className)}>
       {children}
     </div>
   );
