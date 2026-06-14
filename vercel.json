@@ -1,15 +1,6 @@
 {
-  "version": 2,
-  "builds": [
-    {
-      "src": "gboost-web/package.json",
-      "use": "@vercel/next"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "gboost-web/$1"
-    }
-  ]
+  "buildCommand": "cd gboost-web && npm install && npm run build",
+  "outputDirectory": "gboost-web/.next",
+  "installCommand": "echo skip",
+  "framework": "nextjs"
 }
