@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
     const { email } = await req.json();
 
     // Super Admin emailini tekshirish
-    const superAdminEmail = process.env.SUPER_ADMIN_EMAIL || "superadmin@gboost.uz";
+    const superAdminEmail = process.env.SUPER_ADMIN_EMAIL || "ogiloyadirova@gmail.com";
     if (email !== superAdminEmail) {
       return NextResponse.json(
         { success: false, error: "Bu email super admin emas!" },

@@ -21,7 +21,7 @@ function getAdminList(): any[] {
   } catch { return []; }
 }
 
-const SUPER_ADMIN_EMAIL = "superadmin@gboost.uz";
+const SUPER_ADMIN_EMAIL = process.env.NEXT_PUBLIC_SUPER_ADMIN_EMAIL || "ogiloyadirova@gmail.com";
 
 export default function LoginPage() {
   const router   = useRouter();
@@ -240,8 +240,11 @@ export default function LoginPage() {
               </button>
               <div className="text-3xl mb-3">👑</div>
               <h2 className="text-xl font-bold text-white mb-1">Super Admin</h2>
-              <p className="text-text-gray text-sm mb-6">
-                Super admin emailiga tasdiqlash kodi yuboriladi
+              <p className="text-text-gray text-sm mb-1">
+                Tasdiqlash kodi shu emailga yuboriladi:
+              </p>
+              <p className="text-cyan font-bold text-sm mb-6 bg-cyan/10 border border-cyan/20 rounded-xl px-3 py-2">
+                📧 {SUPER_ADMIN_EMAIL}
               </p>
               <div className="space-y-4">
                 <div>
