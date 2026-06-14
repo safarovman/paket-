@@ -1,324 +1,303 @@
 "use client";
 import { useState } from "react";
-import Link from "next/link";
-import { Card, GradientCard } from "@/components/ui/Card";
-import { GAMES, SERVICE_TYPES, PAYMENT_METHODS, COMMISSION, formatPrice } from "@/lib/constants";
+import { useRouter, useSearchParams } from "next/navigation";
+import { supabase } from "@/lib/supabase";
 import clsx from "clsx";
+import Link from "next/link";
 
-type Step = 1 | 2 | 3 | 4;
+const TOP_GAMERS = [
+  { id:"aslaboi",    name:"Aslaboi",    game:"MLBB",      rank:"Mythic Glory", wins:68, price:15000, avatar:"A", color:"#FF6B00", games:2341, rating:4.9, reviews:142, bio:"MLBB da 3 yillik tajriba. Mythic Glory darajasida. Solo va Duo boosting." },
+  { id:"yakuza",     name:"Yakuza",     game:"PUBG",      rank:"Conqueror",    wins:74, price:20000, avatar:"Y", color:"#FFD600", games:1890, rating:4.8, reviews:97,  bio:"PUBG Conqueror. Sniper va assault rifle mutaxassisi." },
+  { id:"abuser",     name:"Abuser",     game:"CS2",       rank:"Global Elite", wins:71, price:25000, avatar:"Ab",color:"#9B59B6", games:3200, rating:4.9, reviews:201, bio:"CS2 Global Elite. AWP va rifle bilan professional o'yinchi." },
+  { id:"kingslayer", name:"KingSlayer", game:"MLBB",      rank:"Mythic",       wins:65, price:12000, avatar:"K", color:"#FF6B00", games:1654, rating:4.7, reviews:88,  bio:"MLBB Mythic darajasi. Tank va jungler ixtisoslik." },
+  { id:"prosniper",  name:"ProSniper",  game:"PUBG",      rank:"Ace",          wins:70, price:18000, avatar:"P", color:"#FFD600", games:1234, rating:4.8, reviews:134, bio:"PUBG Ace. Sniper va close range mutaxassis." },
+  { id:"zeroskill",  name:"ZeroSkill",  game:"Free Fire", rank:"Heroic",       wins:62, price:10000, avatar:"Z", color:"#00C853", games:987,  rating:4.6, reviews:63,  bio:"Free Fire Heroic. Aggressive o'yin uslubi." },
+];
+
+const SERVICES = [
+  { id:"play",    icon:"🎮", name:"Birga O'ynash",    desc:"Top geymer siz bilan birga o'ynaydi (Duo)" },
+  { id:"boost",   icon:"🚀", name:"Akkaunt Boosting", desc:"Akkauntingizni kuchaytiradi, siz kuzatasiz" },
+  { id:"coaching",icon:"🎓", name:"Coaching",         desc:"Siz o'ynaysiz, u ko'rsatmalar beradi" },
+];
+
+const fmt = (n: number) => n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 
 export default function BoostingPage() {
-  const [step, setStep]           = useState<Step>(1);
-  const [gameIdx, setGameIdx]     = useState(0);
-  const [service, setService]     = useState("solo");
-  const [fromRank, setFromRank]   = useState(0);
-  const [toRank, setToRank]       = useState(2);
-  const [payment, setPayment]     = useState("humo");
-  const [ordered, setOrdered]     = useState(false);
-  const [loading, setLoading]     = useState(false);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const preselected = searchParams.get("gamer");
 
-  const game = GAMES[gameIdx];
-  const svcObj = SERVICE_TYPES.find(s => s.id === service)!;
-  const rankDiff = Math.max(toRank - fromRank, 1);
-  const base = game.basePrice * rankDiff * (1 - svcObj.discount);
-  const commission = base * COMMISSION;
-  const total = base + commission;
+  const [selectedGamer, setSelectedGamer] = useState<typeof TOP_GAMERS[0] | null>(
+    preselected ? TOP_GAMERS.find(g => g.id === preselected) || null : null
+  );
+  const [service, setService]   = useState("play");
+  const [hours, setHours]       = useState(1);
+  const [message, setMessage]   = useState("");
+  const [loading, setLoading]   = useState(false);
+  const [success, setSuccess]   = useState(false);
+  const [filterGame, setFilterGame] = useState("all");
+  const [detailGamer, setDetailGamer] = useState<typeof TOP_GAMERS[0] | null>(null);
+
+  const total = selectedGamer ? selectedGamer.price * hours : 0;
+
+  const filtered = filterGame === "all"
+    ? TOP_GAMERS
+    : TOP_GAMERS.filter(g => g.game === filterGame);
 
   const handleOrder = async () => {
+    if (!selectedGamer) return;
     setLoading(true);
-    await new Promise(r => setTimeout(r, 1800));
+    await supabase.from("orders").insert({
+      user_name:   "Foydalanuvchi",
+      game:        selectedGamer.game,
+      service:     `${SERVICES.find(s => s.id === service)?.name} — ${selectedGamer.name}`,
+      from_rank:   "Hozirgi",
+      to_rank:     "Keyingi",
+      price:       total,
+      status:      "pending",
+      booster:     selectedGamer.name,
+      note:        message || null,
+      payment_method: "click",
+    });
     setLoading(false);
-    setOrdered(true);
+    setSuccess(true);
   };
 
-  if (ordered) return <SuccessScreen gameIcon={game.icon} game={game.short} fromRank={game.ranks[fromRank]} toRank={game.ranks[toRank]} total={total} />;
-
-  const stepLabels = ["O'yin","Xizmat","Rank & Narx","To'lov"];
-
-  return (
-    <div className="gsection py-8">
-      <div className="max-w-3xl mx-auto">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-black text-text-white mb-2">⚔️ Boosting Xizmati</h1>
-          <p className="text-text-gray">Reytingingizni ko'taring — xavfsiz va tez</p>
-        </div>
-
-        {/* Stepper */}
-        <div className="flex items-center mb-8">
-          {stepLabels.map((lbl, i) => {
-            const s = (i + 1) as Step;
-            const done = step > s;
-            const active = step === s;
-            return (
-              <div key={s} className="flex items-center flex-1">
-                <div className="flex flex-col items-center">
-                  <div className={clsx("w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold transition-all",
-                    done   ? "bg-green text-white" :
-                    active ? "bg-gradient-primary text-white shadow-cyan" :
-                             "bg-card border border-border text-text-gray")}>
-                    {done ? "✓" : s}
-                  </div>
-                  <span className={clsx("text-xs mt-1 hidden sm:block", active ? "text-cyan font-semibold" : "text-text-gray")}>{lbl}</span>
-                </div>
-                {i < stepLabels.length - 1 && (
-                  <div className={clsx("flex-1 h-0.5 mx-2", done ? "bg-green" : "bg-border")} />
-                )}
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Step 1 — Game */}
-        {step === 1 && (
-          <div className="animate-slide-up space-y-4">
-            <h2 className="text-xl font-bold text-text-white mb-1">O'yin tanlang</h2>
-            <div className="grid sm:grid-cols-2 gap-4">
-              {GAMES.map((g, i) => (
-                <button key={g.id} onClick={() => setGameIdx(i)}
-                  className={clsx("p-5 rounded-2xl border text-left transition-all hover:scale-[1.02]",
-                    gameIdx===i ? "shadow-cyan scale-[1.02]" : "border-border hover:border-current/30")}
-                  style={{ background:`${g.color}${gameIdx===i?"20":"10"}`, borderColor: gameIdx===i ? `${g.color}80` : undefined }}>
-                  <div className="flex items-center gap-3 mb-3">
-                    <span className="text-4xl">{g.icon}</span>
-                    <div>
-                      <p className="font-black text-base" style={{ color: g.color }}>{g.short}</p>
-                      <p className="text-text-gray text-xs">{g.name}</p>
-                    </div>
-                    {gameIdx===i && <span className="ml-auto text-xl">✅</span>}
-                  </div>
-                  <p className="text-text-gray text-xs">{g.ranks.length} rank darajasi • Solo & Duo</p>
-                  <p className="text-sm font-semibold mt-1" style={{ color: g.color }}>
-                    {formatPrice(g.basePrice)} so'mdan
-                  </p>
-                </button>
-              ))}
-            </div>
-            <button onClick={() => setStep(2)} className="gbtn-primary w-full mt-2">Davom etish →</button>
-          </div>
-        )}
-
-        {/* Step 2 — Service */}
-        {step === 2 && (
-          <div className="animate-slide-up space-y-4">
-            <h2 className="text-xl font-bold text-text-white mb-1">Xizmat turini tanlang</h2>
-            <div className="space-y-3">
-              {SERVICE_TYPES.map(s => (
-                <button key={s.id} onClick={() => setService(s.id)}
-                  className={clsx("w-full p-5 rounded-2xl border text-left transition-all",
-                    service===s.id ? "border-cyan bg-cyan/10 shadow-cyan" : "border-border bg-card hover:border-cyan/30")}>
-                  <div className="flex items-start gap-4">
-                    <span className="text-3xl">{s.icon}</span>
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between flex-wrap gap-2">
-                        <p className={clsx("font-bold text-base", service===s.id?"text-cyan":"text-text-white")}>{s.name}</p>
-                        {s.discount > 0 && (
-                          <span className="text-xs bg-green/15 text-green border border-green/30 rounded-full px-2.5 py-0.5 font-bold">
-                            {(s.discount*100).toFixed(0)}% chegirma 🎉
-                          </span>
-                        )}
-                        {s.discount < 0 && (
-                          <span className="text-xs bg-purple/15 text-purple-light border border-purple/30 rounded-full px-2.5 py-0.5 font-bold">
-                            Premium xizmat
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-text-gray text-sm mt-1">{s.desc}</p>
-                    </div>
-                    {service===s.id && <span className="text-xl text-cyan shrink-0">✅</span>}
-                  </div>
-                </button>
-              ))}
-            </div>
-            <div className="flex gap-3 mt-2">
-              <button onClick={() => setStep(1)} className="flex-1 border border-border rounded-xl py-3 text-text-gray hover:bg-card text-sm transition-colors">← Orqaga</button>
-              <button onClick={() => setStep(3)} className="flex-1 gbtn-primary">Davom etish →</button>
-            </div>
-          </div>
-        )}
-
-        {/* Step 3 — Rank & Price */}
-        {step === 3 && (
-          <div className="animate-slide-up space-y-5">
-            <h2 className="text-xl font-bold text-text-white mb-1">Rank va narx</h2>
-
-            {/* Game info */}
-            <GradientCard gradient="from-card to-navy" className="border flex items-center gap-4"
-              style={{ borderColor:`${game.color}40` }}>
-              <span className="text-4xl">{game.icon}</span>
-              <div>
-                <p className="font-black" style={{ color: game.color }}>{game.name}</p>
-                <p className="text-text-gray text-sm">{svcObj.name}</p>
-              </div>
-            </GradientCard>
-
-            {/* Rank selectors */}
-            <div className="grid grid-cols-2 gap-4">
-              <RankSelector label="Hozirgi Rank 🔴" ranks={game.ranks} selected={fromRank} color={game.color}
-                onChange={v => { setFromRank(v); if(toRank<=v) setToRank(Math.min(v+1,game.ranks.length-1)); }} />
-              <RankSelector label="Maqsad Rank 🟢" ranks={game.ranks} selected={toRank} color="#00C853"
-                onChange={v => { if(v>fromRank) setToRank(v); }} />
-            </div>
-
-            {/* Rank diff badge */}
-            <div className="flex items-center justify-center gap-4">
-              <span className="px-4 py-2 rounded-xl border text-sm font-bold" style={{ background:`${game.color}20`, color:game.color, borderColor:`${game.color}40` }}>
-                {game.ranks[fromRank]}
-              </span>
-              <span className="text-text-gray text-xl">→</span>
-              <span className="px-4 py-2 rounded-xl border border-green/40 bg-green/15 text-green text-sm font-bold">
-                {game.ranks[toRank]}
-              </span>
-              <span className="text-cyan text-sm font-bold">+{rankDiff} rank</span>
-            </div>
-
-            {/* Price calculator */}
-            <Card className="border-gold/25">
-              <div className="flex items-center gap-2 mb-4">
-                <span className="text-xl">💰</span>
-                <h3 className="font-bold text-gold">Narx Kalkulyatori</h3>
-              </div>
-              <div className="space-y-2.5">
-                {[
-                  { label:"Boosting narxi", value:`${formatPrice(Math.round(base))} so'm`, color:"text-text-light" },
-                  { label:`GBoost komissiyasi (${(COMMISSION*100).toFixed(0)}%)`, value:`${formatPrice(Math.round(commission))} so'm`, color:"text-text-gray" },
-                ].map(r => (
-                  <div key={r.label} className="flex justify-between items-center">
-                    <span className="text-text-gray text-sm">{r.label}</span>
-                    <span className={`text-sm font-semibold ${r.color}`}>{r.value}</span>
-                  </div>
-                ))}
-                <div className="border-t border-border pt-2.5 flex justify-between items-center">
-                  <span className="font-bold text-text-white">Jami:</span>
-                  <span className="text-gold font-black text-xl">{formatPrice(Math.round(total))} so'm</span>
-                </div>
-              </div>
-            </Card>
-
-            <div className="flex gap-3">
-              <button onClick={() => setStep(2)} className="flex-1 border border-border rounded-xl py-3 text-text-gray hover:bg-card text-sm transition-colors">← Orqaga</button>
-              <button onClick={() => setStep(4)} className="flex-1 gbtn-primary">Davom etish →</button>
-            </div>
-          </div>
-        )}
-
-        {/* Step 4 — Payment & Confirm */}
-        {step === 4 && (
-          <div className="animate-slide-up space-y-5">
-            <h2 className="text-xl font-bold text-text-white mb-1">To'lov va tasdiqlash</h2>
-
-            {/* Order summary */}
-            <GradientCard gradient="from-card to-navy" className="border border-border">
-              <h3 className="font-bold text-text-white mb-3">📋 Buyurtma xulosasi</h3>
-              <div className="space-y-2">
-                {[
-                  { l:"O'yin",    v:`${game.icon} ${game.name}` },
-                  { l:"Xizmat",  v:svcObj.name },
-                  { l:"Rank",    v:`${game.ranks[fromRank]} → ${game.ranks[toRank]}` },
-                  { l:"Himoya",  v:"🛡️ 3 kunlik Escrow", vc:"text-green" },
-                  { l:"Vaqt",    v:"⏰ 12-24 soat", vc:"text-gold" },
-                ].map(r => (
-                  <div key={r.l} className="flex justify-between text-sm">
-                    <span className="text-text-gray">{r.l}:</span>
-                    <span className={r.vc || "text-text-light font-medium"}>{r.v}</span>
-                  </div>
-                ))}
-                <div className="border-t border-border pt-2 flex justify-between">
-                  <span className="font-bold text-text-white">Jami:</span>
-                  <span className="font-black text-xl text-gold">{formatPrice(Math.round(total))} so'm</span>
-                </div>
-              </div>
-            </GradientCard>
-
-            {/* Payment methods */}
-            <div>
-              <p className="text-text-gray text-sm font-medium mb-3">💳 To'lov usuli:</p>
-              <div className="grid grid-cols-4 gap-2.5">
-                {PAYMENT_METHODS.map(m => (
-                  <button key={m.id} onClick={() => setPayment(m.id)}
-                    className={clsx("flex flex-col items-center gap-1.5 py-3 px-2 rounded-xl border text-xs font-semibold transition-all",
-                      payment===m.id ? "border-cyan bg-cyan/10 text-cyan shadow-cyan" : "border-border bg-card text-text-gray hover:border-cyan/30")}>
-                    <span className="text-xl">{m.icon}</span>
-                    {m.name}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Escrow info */}
-            <GradientCard gradient="from-green/10 to-card" className="border border-green/20">
-              <div className="flex items-start gap-3">
-                <span className="text-2xl shrink-0">🛡️</span>
-                <div className="text-sm text-text-gray leading-relaxed">
-                  To'lovingiz <span className="text-green font-semibold">3 kun Escrow himoyasida</span> saqlanadi.
-                  Boosting tugagach avtomatik o'tkaziladi. Muammo chiqsa — pul qaytariladi.
-                </div>
-              </div>
-            </GradientCard>
-
-            <div className="flex gap-3">
-              <button onClick={() => setStep(3)} className="flex-1 border border-border rounded-xl py-3 text-text-gray hover:bg-card text-sm transition-colors">← Orqaga</button>
-              <button onClick={handleOrder} disabled={loading}
-                className="flex-1 gbtn-primary disabled:opacity-60">
-                {loading
-                  ? <span className="flex items-center justify-center gap-2"><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"/>Yuborilmoqda...</span>
-                  : `✅ Buyurtma berish — ${formatPrice(Math.round(total))} so'm`}
-              </button>
-            </div>
-          </div>
-        )}
+  if (success) return (
+    <div className="gsection py-20 text-center">
+      <div className="text-6xl mb-5 animate-float inline-block">🎉</div>
+      <h1 className="text-3xl font-black text-white mb-3">Buyurtma qabul qilindi!</h1>
+      <p className="text-gray-500 mb-2">{selectedGamer?.name} bilan {SERVICES.find(s=>s.id===service)?.name}</p>
+      <p className="text-orange-400 font-black text-xl mb-6">{fmt(total)} so'm</p>
+      <div className="flex gap-3 justify-center flex-wrap">
+        <Link href="/dashboard" className="gbtn px-6 py-3 rounded-xl">🏠 Dashboard</Link>
+        <Link href="/marketplace" className="gbtn-outline px-6 py-3 rounded-xl">🏪 Bozor</Link>
       </div>
     </div>
   );
-}
 
-function RankSelector({ label, ranks, selected, color, onChange }: {
-  label:string; ranks:string[]; selected:number; color:string; onChange:(v:number)=>void;
-}) {
-  const [open, setOpen] = useState(false);
   return (
-    <div className="relative">
-      <p className="text-xs font-semibold mb-2" style={{ color }}>{label}</p>
-      <button onClick={() => setOpen(!open)} type="button"
-        className="w-full flex items-center justify-between gap-2 px-4 py-3 rounded-xl border text-sm font-semibold transition-all"
-        style={{ background:`${color}15`, borderColor:`${color}50`, color }}>
-        <span>{ranks[selected]}</span>
-        <span className={clsx("transition-transform", open && "rotate-180")}>▾</span>
-      </button>
-      {open && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-xl z-20 max-h-52 overflow-y-auto">
-          {ranks.map((r, i) => (
-            <button key={r} onClick={() => { onChange(i); setOpen(false); }} type="button"
-              className={clsx("w-full text-left px-4 py-2.5 text-sm transition-colors first:rounded-t-xl last:rounded-b-xl",
-                selected===i ? "bg-cyan/10 text-cyan font-bold" : "text-text-light hover:bg-card/80")}>
-              {selected===i && "✓ "}{r}
+    <div className="gsection py-10">
+      <div className="mb-8">
+        <h1 className="text-3xl font-black text-white mb-2">🚀 Boosting & O'ynash</h1>
+        <p className="text-gray-500">Top geymerlar bilan birga o'ynang yoki akkauntingizni kuchayting</p>
+      </div>
+
+      <div className="grid lg:grid-cols-3 gap-8">
+        {/* Geymerlar ro'yxati */}
+        <div className="lg:col-span-2">
+          {/* Filter */}
+          <div className="flex gap-2 mb-5 flex-wrap">
+            {["all","MLBB","PUBG","CS2","Free Fire"].map(g => (
+              <button key={g} onClick={() => setFilterGame(g)}
+                className={clsx("text-xs px-3 py-1.5 rounded-xl border font-semibold transition-all",
+                  filterGame === g ? "bg-orange-500/20 border-orange-500/50 text-orange-400" : "border-[#2A2A2A] text-gray-500 hover:text-white")}>
+                {g === "all" ? "Barchasi" : g}
+              </button>
+            ))}
+          </div>
+
+          <div className="grid sm:grid-cols-2 gap-4">
+            {filtered.map(g => (
+              <div key={g.id}
+                className={clsx("bg-[#1A1A1A] border rounded-2xl p-5 transition-all cursor-pointer",
+                  selectedGamer?.id === g.id ? "border-orange-500 shadow-lg" : "border-[#2A2A2A] hover:border-[#3A3A3A]")}>
+                {/* Geymer header */}
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-white font-black text-xl shrink-0"
+                    style={{ background: `linear-gradient(135deg, ${g.color}, ${g.color}66)` }}>
+                    {g.avatar}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="font-black text-white">{g.name}</p>
+                      <span className="gbadge-orange text-xs">⭐ Top</span>
+                    </div>
+                    <p className="text-gray-500 text-xs">{g.game} • {g.rank}</p>
+                    <div className="flex items-center gap-1 mt-0.5">
+                      {"⭐".repeat(Math.round(g.rating))}
+                      <span className="text-gray-500 text-xs ml-1">{g.rating} ({g.reviews})</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Stats */}
+                <div className="grid grid-cols-3 gap-2 mb-4">
+                  <div className="bg-[#111] rounded-xl p-2 text-center">
+                    <p className="text-green-400 font-bold text-sm">{g.wins}%</p>
+                    <p className="text-gray-600 text-xs">Win</p>
+                  </div>
+                  <div className="bg-[#111] rounded-xl p-2 text-center">
+                    <p className="text-orange-400 font-bold text-sm">{(g.games/1000).toFixed(1)}K</p>
+                    <p className="text-gray-600 text-xs">O'yin</p>
+                  </div>
+                  <div className="bg-[#111] rounded-xl p-2 text-center">
+                    <p className="text-white font-bold text-sm">{fmt(g.price)}</p>
+                    <p className="text-gray-600 text-xs">so'm/soat</p>
+                  </div>
+                </div>
+
+                <p className="text-gray-500 text-xs mb-4 line-clamp-2">{g.bio}</p>
+
+                <div className="flex gap-2">
+                  <button onClick={() => setDetailGamer(g)}
+                    className="flex-1 bg-[#2A2A2A] hover:bg-[#333] text-white text-xs py-2 rounded-xl transition-all font-semibold">
+                    Batafsil
+                  </button>
+                  <button onClick={() => setSelectedGamer(g)}
+                    className={clsx("flex-1 text-xs py-2 rounded-xl font-bold transition-all",
+                      selectedGamer?.id === g.id ? "bg-green-500 text-white" : "gbtn")}>
+                    {selectedGamer?.id === g.id ? "✓ Tanlandi" : "Tanlash"}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Top geymer bo'lish */}
+          <div className="mt-6 bg-gradient-to-r from-orange-500/10 to-transparent border border-orange-500/20 rounded-2xl p-5 flex items-center justify-between gap-4">
+            <div>
+              <p className="text-white font-bold mb-1">🎯 Top Geymer bo'lishni xohlaysizmi?</p>
+              <p className="text-gray-500 text-sm">Arizangizni yuboring — admin ko'rib chiqadi</p>
+            </div>
+            <Link href="/become-pro" className="gbtn text-sm px-4 py-2 rounded-xl whitespace-nowrap">Ariza →</Link>
+          </div>
+        </div>
+
+        {/* Buyurtma paneli */}
+        <div className="lg:col-span-1">
+          <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded-2xl p-5 sticky top-20">
+            <h2 className="font-black text-white text-lg mb-4">📋 Buyurtma</h2>
+
+            {!selectedGamer ? (
+              <div className="text-center py-8 text-gray-600">
+                <div className="text-4xl mb-2">👈</div>
+                <p className="text-sm">Chap tarafdan geymer tanlang</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {/* Tanlangan geymer */}
+                <div className="flex items-center gap-3 bg-[#111] rounded-xl p-3">
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-black text-sm shrink-0"
+                    style={{ background: selectedGamer.color }}>
+                    {selectedGamer.avatar}
+                  </div>
+                  <div>
+                    <p className="text-white font-bold text-sm">{selectedGamer.name}</p>
+                    <p className="text-gray-500 text-xs">{selectedGamer.game}</p>
+                  </div>
+                  <button onClick={() => setSelectedGamer(null)} className="ml-auto text-gray-500 hover:text-white text-sm">✕</button>
+                </div>
+
+                {/* Xizmat turi */}
+                <div>
+                  <label className="text-gray-500 text-xs mb-2 block font-medium">Xizmat turi</label>
+                  <div className="space-y-2">
+                    {SERVICES.map(s => (
+                      <button key={s.id} onClick={() => setService(s.id)}
+                        className={clsx("w-full p-3 rounded-xl border text-left transition-all",
+                          service === s.id ? "border-orange-500/60 bg-orange-500/10" : "border-[#2A2A2A] hover:border-[#3A3A3A]")}>
+                        <div className="flex items-center gap-2">
+                          <span>{s.icon}</span>
+                          <div>
+                            <p className={`font-semibold text-sm ${service === s.id ? "text-orange-400" : "text-white"}`}>{s.name}</p>
+                            <p className="text-gray-600 text-xs">{s.desc}</p>
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Soatlar */}
+                <div>
+                  <label className="text-gray-500 text-xs mb-2 block font-medium">Vaqt (soat)</label>
+                  <div className="flex gap-2">
+                    {[1,2,3,5].map(h => (
+                      <button key={h} onClick={() => setHours(h)}
+                        className={clsx("flex-1 py-2 rounded-xl border text-sm font-bold transition-all",
+                          hours === h ? "border-orange-500 bg-orange-500/20 text-orange-400" : "border-[#2A2A2A] text-gray-500 hover:text-white")}>
+                        {h}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Izoh */}
+                <div>
+                  <label className="text-gray-500 text-xs mb-1.5 block font-medium">Izoh (ixtiyoriy)</label>
+                  <textarea value={message} onChange={e => setMessage(e.target.value)}
+                    placeholder="Qaysi rankdan qaysi rankg, qanday o'yin..."
+                    rows={2} className="ginput resize-none text-xs" />
+                </div>
+
+                {/* Narx */}
+                <div className="bg-[#111] rounded-xl p-3 space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-500">{hours} soat × {fmt(selectedGamer.price)} so'm</span>
+                    <span className="text-white font-bold">{fmt(total)} so'm</span>
+                  </div>
+                  <div className="h-px bg-[#2A2A2A]" />
+                  <div className="flex justify-between">
+                    <span className="text-gray-500 text-sm">Jami:</span>
+                    <span className="text-orange-400 font-black text-lg">{fmt(total)} so'm</span>
+                  </div>
+                </div>
+
+                <button onClick={handleOrder} disabled={loading} className="gbtn w-full py-3 rounded-xl disabled:opacity-60">
+                  {loading
+                    ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Yuklanmoqda...</>
+                    : "🎮 Buyurtma Berish"}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Geymer detail modal */}
+      {detailGamer && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          onClick={() => setDetailGamer(null)}>
+          <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded-2xl w-full max-w-md p-6"
+            onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="font-black text-white text-xl">{detailGamer.name}</h3>
+              <button onClick={() => setDetailGamer(null)} className="text-gray-500 hover:text-white text-xl">✕</button>
+            </div>
+            <div className="flex items-center gap-4 mb-5">
+              <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-white font-black text-2xl"
+                style={{ background: detailGamer.color }}>
+                {detailGamer.avatar}
+              </div>
+              <div>
+                <p className="text-gray-400 text-sm">{detailGamer.game} • {detailGamer.rank}</p>
+                <div className="flex items-center gap-1 mt-1">
+                  {"⭐".repeat(Math.round(detailGamer.rating))}
+                  <span className="text-gray-500 text-xs ml-1">{detailGamer.rating} ({detailGamer.reviews} sharh)</span>
+                </div>
+              </div>
+            </div>
+            <p className="text-gray-400 text-sm leading-relaxed mb-5">{detailGamer.bio}</p>
+            <div className="grid grid-cols-3 gap-3 mb-5">
+              {[
+                { l:"Win Rate", v:`${detailGamer.wins}%`, c:"text-green-400" },
+                { l:"O'yinlar", v:`${detailGamer.games.toLocaleString()}`, c:"text-orange-400" },
+                { l:"Narx/soat", v:`${fmt(detailGamer.price)} so'm`, c:"text-white" },
+              ].map(s => (
+                <div key={s.l} className="bg-[#111] rounded-xl p-3 text-center">
+                  <p className={`font-black text-sm ${s.c}`}>{s.v}</p>
+                  <p className="text-gray-600 text-xs mt-0.5">{s.l}</p>
+                </div>
+              ))}
+            </div>
+            <button onClick={() => { setSelectedGamer(detailGamer); setDetailGamer(null); }}
+              className="gbtn w-full py-3 rounded-xl">
+              ✓ Tanlash va Buyurtma →
             </button>
-          ))}
+          </div>
         </div>
       )}
-    </div>
-  );
-}
-
-function SuccessScreen({ gameIcon, game, fromRank, toRank, total }: {
-  gameIcon:string; game:string; fromRank:string; toRank:string; total:number;
-}) {
-  return (
-    <div className="gsection py-16 flex items-center justify-center min-h-[60vh]">
-      <div className="text-center max-w-md animate-fade-in">
-        <div className="w-24 h-24 rounded-full bg-green/15 border-2 border-green flex items-center justify-center mx-auto mb-6">
-          <span className="text-5xl">✅</span>
-        </div>
-        <h1 className="text-3xl font-black text-text-white mb-3">Buyurtma qabul qilindi! 🎉</h1>
-        <p className="text-text-gray mb-2">{gameIcon} {game}: <span className="text-red font-semibold">{fromRank}</span> → <span className="text-green font-semibold">{toRank}</span></p>
-        <p className="text-gold font-black text-xl mb-4">{formatPrice(Math.round(total))} so'm</p>
-        <GradientCard gradient="from-green/10 to-card" className="border border-green/20 mb-6 text-sm text-text-gray">
-          🛡️ To'lovingiz Escrow himoyasida. Booster tez orada buyurtmangizni qabul qiladi.
-        </GradientCard>
-        <div className="flex gap-3">
-          <Link href="/dashboard" className="flex-1 gbtn-outline text-sm py-3 rounded-xl">🏠 Dashboard</Link>
-          <Link href="/escrow" className="flex-1 gbtn-primary text-sm py-3 rounded-xl">🛡️ Escrowni Ko'rish</Link>
-        </div>
-      </div>
     </div>
   );
 }

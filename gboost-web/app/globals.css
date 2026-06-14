@@ -4,102 +4,76 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-html {
-  scroll-behavior: smooth;
-}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
 
 body {
-  background-color: #0D0D1A;
-  color: #E8EAF6;
+  background-color: #0E0E0E;
+  color: #F0F0F0;
   font-family: 'Inter', system-ui, sans-serif;
   min-height: 100vh;
-  overflow-x: hidden;
 }
 
-/* Scrollbar */
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: #0D0D1A; }
-::-webkit-scrollbar-thumb { background: #1A2245; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #6C3FB5; }
-
-/* Selection */
-::selection { background: rgba(0,229,255,0.2); color: #00E5FF; }
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: #0E0E0E; }
+::-webkit-scrollbar-thumb { background: #2A2A2A; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #FF6B00; }
+::selection { background: rgba(255,107,0,0.2); color: #FF6B00; }
 
 @layer components {
   /* Cards */
   .gcard {
-    @apply bg-card border border-border rounded-2xl;
+    @apply bg-[#1A1A1A] border border-[#2A2A2A] rounded-2xl;
   }
   .gcard-hover {
-    @apply gcard transition-all duration-200 hover:border-cyan/30 hover:shadow-cyan cursor-pointer;
+    @apply gcard transition-all duration-200 hover:border-orange-500/40 hover:shadow-lg cursor-pointer;
   }
+
   /* Buttons */
-  .gbtn-primary {
-    @apply bg-gradient-primary text-white font-bold py-3 px-6 rounded-xl
-           transition-all duration-200 hover:opacity-90 hover:scale-[1.02]
-           active:scale-[0.98] shadow-cyan flex items-center justify-center gap-2;
+  .gbtn {
+    @apply bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-6 rounded-xl
+           transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]
+           flex items-center justify-center gap-2 shadow-lg;
   }
   .gbtn-outline {
-    @apply border border-cyan/50 text-cyan font-semibold py-3 px-6 rounded-xl
-           bg-cyan/5 transition-all duration-200 hover:bg-cyan/10 hover:border-cyan
+    @apply border border-orange-500/60 text-orange-400 font-semibold py-3 px-6 rounded-xl
+           bg-orange-500/5 transition-all duration-200 hover:bg-orange-500/15 hover:border-orange-400
            flex items-center justify-center gap-2;
   }
-  .gbtn-ghost {
-    @apply text-text-gray font-medium py-2.5 px-5 rounded-xl
-           transition-all duration-200 hover:bg-card hover:text-text-light
-           flex items-center justify-center gap-2;
+  .gbtn-gray {
+    @apply bg-[#2A2A2A] hover:bg-[#333] text-white font-semibold py-3 px-6 rounded-xl
+           transition-all duration-200 flex items-center justify-center gap-2;
   }
-  /* Badge */
-  .gbadge {
-    @apply text-xs font-bold px-2.5 py-1 rounded-full;
-  }
+
   /* Input */
   .ginput {
-    @apply w-full bg-card border border-border rounded-xl px-4 py-3 text-text-light
-           placeholder-text-gray outline-none transition-all duration-200
-           focus:border-cyan focus:ring-1 focus:ring-cyan/30;
+    @apply w-full bg-[#1A1A1A] border border-[#2A2A2A] rounded-xl px-4 py-3 text-white
+           placeholder-gray-600 outline-none transition-all duration-200
+           focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 text-sm;
   }
+
+  /* Badge */
+  .gbadge-orange { @apply text-xs font-bold px-2.5 py-1 rounded-full bg-orange-500/15 text-orange-400 border border-orange-500/30; }
+  .gbadge-green  { @apply text-xs font-bold px-2.5 py-1 rounded-full bg-green-500/15 text-green-400 border border-green-500/30; }
+  .gbadge-red    { @apply text-xs font-bold px-2.5 py-1 rounded-full bg-red-500/15 text-red-400 border border-red-500/30; }
+  .gbadge-gray   { @apply text-xs font-bold px-2.5 py-1 rounded-full bg-white/5 text-gray-400 border border-white/10; }
+  .gbadge-yellow { @apply text-xs font-bold px-2.5 py-1 rounded-full bg-yellow-500/15 text-yellow-400 border border-yellow-500/30; }
+
   /* Section */
-  .gsection {
-    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
-  }
-  /* Gradient text */
-  .gtext-gradient {
-    @apply bg-gradient-primary bg-clip-text text-transparent;
-  }
-  .gtext-gold {
-    @apply bg-gradient-gold bg-clip-text text-transparent;
-  }
-  /* Status badges */
-  .status-active     { @apply gbadge bg-cyan/15 text-cyan border border-cyan/30; }
-  .status-completed  { @apply gbadge bg-green/15 text-green border border-green/30; }
-  .status-pending    { @apply gbadge bg-gold/15 text-gold border border-gold/30; }
-  .status-error      { @apply gbadge bg-red/15 text-red border border-red/30; }
-  /* Karma badges */
-  .karma-high   { @apply gbadge bg-green/15 text-green border border-green/30; }
-  .karma-medium { @apply gbadge bg-gold/15 text-gold border border-gold/30; }
-  .karma-low    { @apply gbadge bg-red/15 text-red border border-red/30; }
+  .gsection { @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8; }
+
+  /* Orange text */
+  .gorange { @apply text-orange-400; }
 }
 
 @layer utilities {
-  .bg-gradient-primary { background: linear-gradient(135deg, #6C3FB5, #00E5FF); }
-  .bg-gradient-gold    { background: linear-gradient(135deg, #FFD600, #FF8C00); }
-  .bg-gradient-dark    { background: linear-gradient(135deg, #161D38, #0D0D1A); }
-  .text-shimmer {
-    background: linear-gradient(90deg, #6C3FB5, #00E5FF, #6C3FB5);
-    background-size: 200%;
+  .text-gradient {
+    background: linear-gradient(135deg, #FF6B00, #FF9A3C);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    animation: shimmer 3s linear infinite;
   }
-  @keyframes shimmer {
-    0%   { background-position: 0% }
-    100% { background-position: 200% }
+  .bg-orange-gradient { background: linear-gradient(135deg, #FF6B00, #FF9A3C); }
+  .border-shine {
+    border-image: linear-gradient(135deg, #FF6B00, transparent) 1;
   }
 }
