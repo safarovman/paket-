@@ -1,20 +1,22 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import { supabase, errText } from "@/lib/supabase";
 import { useUser } from "@/components/UserProvider";
 import { chances, game, rarity, som, type Account, type Case } from "@/lib/uzdrop";
 import AccountCard from "@/components/AccountCard";
 import CaseArt from "@/components/CaseArt";
+import CodeCard from "@/components/CodeCard";
 
 type Item = Pick<Account, "id" | "title" | "game" | "rank" | "image_url" | "price">;
 const CELL = 148;          // bitta katak eni (px), oraliq bilan
 const WIN_INDEX = 42;      // lentadagi yutuq joyi
 const STRIP = 50;
 
-export default function CasePage() {
-  const { id } = useParams<{ id: string }>();
+function CasePage() {
+  const id = useSearchParams().get("id") || "";
   const { user, profile, refresh } = useUser();
   const [c, setC] = useState<Case | null>(null);
   const [items, setItems] = useState<Item[]>([]);
@@ -25,6 +27,7 @@ export default function CasePage() {
   const [won, setWon] = useState<Item | null>(null);
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState(false);
+  const [code, setCode] = useState<{ code: string; title: string } | null>(null);
   const boxRef = useRef<HTMLDivElement>(null);
 
   const load = useCallback(async () => {
@@ -75,10 +78,10 @@ export default function CasePage() {
   };
   const keep = async () => {
     if (!won) return; setBusy(true);
-    const { error } = await supabase.rpc("claim_won", { p_account: won.id });
+    const { data, error } = await supabase.rpc("claim_won", { p_account: won.id });
     setBusy(false);
     if (error) { setMsg(errText(error)); return; }
-    window.location.href = "/profile";
+    setCode({ code: data as string, title: won.title }); setWon(null);
   };
 
   if (!c) return <div className="wrap py-20 text-center text-muted">Yuklanmoqda…</div>;
@@ -152,6 +155,16 @@ export default function CasePage() {
         </div>
       )}
 
+      {code && (
+        <div className="fixed inset-0 z-[60] bg-black/70 backdrop-blur-sm grid place-items-center p-4 animate-fade-in" onClick={() => setCode(null)}>
+          <div className="panel w-full max-w-sm p-6 max-h-[92vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <p className="font-black text-center mb-3">🎉 {code.title}</p>
+            <CodeCard code={code.code} kind="spin" title={code.title} />
+            <button onClick={() => setCode(null)} className="btn-ghost w-full mt-3">Yopish</button>
+          </div>
+        </div>
+      )}
+
       {/* Keys ichidagilar */}
       <h2 className="h-title mt-12 mb-4">Keys ichida</h2>
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
@@ -163,3 +176,5 @@ export default function CasePage() {
     </div>
   );
 }
+
+export default function Page() { return <Suspense><CasePage /></Suspense>; }

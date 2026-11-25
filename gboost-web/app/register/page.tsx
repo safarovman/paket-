@@ -1,2 +1,6 @@
-import { redirect } from "next/navigation";
-export default function Register() { redirect("/login"); }
+"use client";
+import { useEffect } from "react";
+export default function Register() {
+  useEffect(() => { window.location.replace("/login"); }, []);
+  return null;
+}

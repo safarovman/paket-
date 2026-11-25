@@ -5,10 +5,11 @@ import { supabase, errText } from "@/lib/supabase";
 import { useUser } from "@/components/UserProvider";
 import { som, ago, PAY_METHODS, DEPOSIT_CARD, DEPOSIT_CARD_OWNER } from "@/lib/uzdrop";
 import LoginCta from "@/components/profile/LoginCta";
+import CodeCard from "@/components/CodeCard";
 
 const PRESETS = [10_000, 25_000, 50_000, 100_000, 250_000];
 
-interface Dep { id: string; amount: number; method: string; status: string; created_at: string; }
+interface Dep { id: string; code: string | null; amount: number; method: string; status: string; created_at: string; }
 interface Wd  { id: string; amount: number; card: string; status: string; created_at: string; }
 
 const ST: Record<string, { t: string; c: string }> = {
@@ -34,11 +35,12 @@ export default function WalletPage() {
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; t: string } | null>(null);
+  const [payCode, setPayCode] = useState<{ code: string; amount: number } | null>(null);
 
   const load = useCallback(async () => {
     if (!user) return;
     const [d, w] = await Promise.all([
-      supabase.from("deposits").select("id,amount,method,status,created_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(20),
+      supabase.from("deposits").select("id,code,amount,method,status,created_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(20),
       supabase.from("withdrawals").select("id,amount,card,status,created_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(20),
     ]);
     setDeps((d.data as Dep[]) || []);
@@ -50,11 +52,11 @@ export default function WalletPage() {
     setMsg(null);
     if (amount < 1000) return setMsg({ ok: false, t: "Minimal summa 1 000 so'm" });
     setBusy(true);
-    const { error } = await supabase.rpc("request_deposit", { p_amount: amount, p_method: method, p_note: note || null });
+    const { data, error } = await supabase.rpc("request_deposit", { p_amount: amount, p_method: method, p_note: note || null });
     setBusy(false);
     if (error) return setMsg({ ok: false, t: errText(error) });
     setNote("");
-    setMsg({ ok: true, t: "✅ So'rov yuborildi! Admin bir necha daqiqada tasdiqlaydi va balansingiz to'ldiriladi." });
+    setPayCode({ code: data as string, amount });
     load();
   };
 
@@ -153,7 +155,7 @@ export default function WalletPage() {
             <button disabled={busy} onClick={deposit} className="btn-accent w-full">✅ To&apos;ladim — {som(amount)}</button>
           </div>
 
-          <History title="To'ldirish so'rovlari" rows={deps.map(d => ({ id: d.id, a: d.amount, s: d.status, sub: `${PAY_METHODS.find(m => m.id === d.method)?.name ?? d.method} • ${ago(d.created_at)} oldin` }))} />
+          <History title="To'ldirish so'rovlari" rows={deps.map(d => ({ id: d.id, a: d.amount, s: d.status, sub: `${d.code ? d.code + " • " : ""}${PAY_METHODS.find(m => m.id === d.method)?.name ?? d.method} • ${ago(d.created_at)} oldin` }))} />
         </div>
       ) : (
         <div className="grid md:grid-cols-2 gap-4">
@@ -175,6 +177,15 @@ export default function WalletPage() {
             <button disabled={busy} onClick={withdraw} className="btn-violet w-full">🏦 Yechib olish</button>
           </div>
           <History title="Yechish so'rovlari" rows={wds.map(w => ({ id: w.id, a: w.amount, s: w.status, sub: `•••• ${w.card.replace(/\D/g, "").slice(-4)} • ${ago(w.created_at)} oldin` }))} />
+        </div>
+      )}
+      {payCode && (
+        <div className="fixed inset-0 z-[60] bg-black/70 grid place-items-center p-4" onClick={() => setPayCode(null)}>
+          <div className="panel p-6 max-w-sm w-full animate-fade-in max-h-[92vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <p className="font-black text-center mb-3">To&apos;ldirish so&apos;rovi: {som(payCode.amount)}</p>
+            <CodeCard code={payCode.code} kind="deposit" amount={payCode.amount} />
+            <button onClick={() => setPayCode(null)} className="btn-ghost w-full mt-3">Yopish</button>
+          </div>
         </div>
       )}
     </div>

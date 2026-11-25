@@ -86,7 +86,7 @@ export default function Home() {
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
             {shown.map(c => (
-              <Link key={c.id} href={`/case/${c.id}`}
+              <Link key={c.id} href={`/case?id=${c.id}`}
                 className="group relative rounded-2xl overflow-hidden border border-line bg-panel hover:-translate-y-1 transition-transform">
                 <div className="absolute inset-0 opacity-40 group-hover:opacity-70 transition-opacity"
                   style={{ background: `radial-gradient(circle at 50% 35%, ${c.color}, transparent 65%)` }} />
@@ -128,7 +128,7 @@ export default function Home() {
       <section className="grid sm:grid-cols-3 gap-3 text-center">
         {[
           ["🔒", "Xavfsiz", "Har bir akkaunt admin tomonidan tekshiriladi"],
-          ["⚡", "Tez", "Xariddan keyin login/parol darhol ochiladi"],
+          ["🔑", "Kod orqali", "Xariddan keyin kod beriladi — admin Telegramda topshiradi"],
           ["🎁", "Halol spin", "Natija serverda hisoblanadi, ehtimollar ochiq"],
         ].map(([i, t, d]) => (
           <div key={t} className="panel p-5"><div className="text-3xl">{i}</div><p className="font-black uppercase mt-2">{t}</p><p className="text-xs text-muted mt-1">{d}</p></div>

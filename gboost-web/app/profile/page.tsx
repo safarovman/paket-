@@ -4,8 +4,8 @@ import Link from "next/link";
 import clsx from "clsx";
 import { supabase, errText } from "@/lib/supabase";
 import { useUser } from "@/components/UserProvider";
-import { som, game, rarity, ago, type Account } from "@/lib/uzdrop";
-import Secrets from "@/components/profile/Secrets";
+import { som, game, rarity, ago, type Account, type Delivery } from "@/lib/uzdrop";
+import CodeCard from "@/components/CodeCard";
 import LoginCta from "@/components/profile/LoginCta";
 
 type Tab = "inv" | "buy" | "mine" | "tx";
@@ -60,10 +60,40 @@ function AccCard({ a, children }: { a: Account; children?: React.ReactNode }) {
   );
 }
 
-function Reveal({ id }: { id: string }) {
-  const [open, setOpen] = useState(false);
-  return open ? <Secrets accountId={id} />
-    : <button onClick={() => setOpen(true)} className="btn-ghost w-full !py-2.5">🔑 Ma&apos;lumotlarni ko&apos;rish</button>;
+const D_STATUS: Record<Delivery["status"], { t: string; c: string }> = {
+  waiting:   { t: "⏳ Adminga yozing",  c: "text-accent" },
+  delivered: { t: "✅ Topshirildi",     c: "text-win" },
+  cancelled: { t: "↩️ Bekor, pul qaytdi", c: "text-lose" },
+};
+
+function DeliveryBox({ d, onOpen }: { d?: Delivery; onOpen: () => void }) {
+  if (!d) return <p className="text-xs text-muted">Kod topilmadi</p>;
+  const st = D_STATUS[d.status];
+  return (
+    <button onClick={onOpen} className="w-full rounded-xl border border-dashed border-line bg-bg px-3 py-2 text-left hover:border-accent transition-colors">
+      <p className="text-[10px] uppercase font-bold text-muted">Kod</p>
+      <p className="font-black tracking-wider text-accent">{d.code}</p>
+      <p className={clsx("text-[11px] font-bold", st.c)}>{st.t}</p>
+    </button>
+  );
+}
+
+function TelegramField({ value, onSaved }: { value?: string | null; onSaved: () => void }) {
+  const [v, setV] = useState(value ? "@" + value : "");
+  const [state, setState] = useState<string>("");
+  const save = async () => {
+    setState("…");
+    const { error } = await supabase.rpc("set_telegram", { p_username: v });
+    setState(error ? errText(error) : "✅ Saqlandi");
+    if (!error) onSaved();
+  };
+  return (
+    <div className="flex gap-2 items-center">
+      <input className="input !py-2 max-w-[200px]" placeholder="@telegram_username" value={v} onChange={e => setV(e.target.value)} />
+      <button onClick={save} className="btn-ghost !py-2 !px-3">Saqlash</button>
+      {state && <span className="text-xs text-muted">{state}</span>}
+    </div>
+  );
 }
 
 export default function ProfilePage() {
@@ -75,17 +105,22 @@ export default function ProfilePage() {
   const [txs, setTxs] = useState<Tx[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
   const [confirm, setConfirm] = useState<Account | null>(null);
-  const [revealed, setRevealed] = useState<Record<string, boolean>>({});
+  const [deliv, setDeliv] = useState<Record<string, Delivery>>({});
+  const [showCode, setShowCode] = useState<{ d: Delivery; title: string } | null>(null);
   const [msg, setMsg] = useState<{ ok: boolean; t: string } | null>(null);
 
   const load = useCallback(async () => {
     if (!user) return;
-    const [a, b, c, d] = await Promise.all([
+    const [a, b, c, d, e] = await Promise.all([
       supabase.from("accounts").select("*").eq("owner_id", user.id).in("status", ["won", "claimed"]).order("updated_at", { ascending: false }),
       supabase.from("accounts").select("*").eq("owner_id", user.id).eq("status", "sold").order("updated_at", { ascending: false }),
       supabase.from("accounts").select("*").eq("seller_id", user.id).order("created_at", { ascending: false }),
       supabase.from("transactions").select("id,type,amount,note,created_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(100),
+      supabase.from("deliveries").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
     ]);
+    const dm: Record<string, Delivery> = {};
+    ((e.data as Delivery[]) || []).forEach(x => { if (!dm[x.account_id]) dm[x.account_id] = x; });
+    setDeliv(dm);
     setInv((a.data as Account[]) || []);
     setBought((b.data as Account[]) || []);
     setMine((c.data as Account[]) || []);
@@ -107,12 +142,11 @@ export default function ProfilePage() {
 
   const claim = async (a: Account) => {
     setBusy(a.id);
-    const { error } = await supabase.rpc("claim_won", { p_account: a.id });
+    const { data, error } = await supabase.rpc("claim_won", { p_account: a.id });
     setBusy(null);
     setConfirm(null);
     if (error) return flash(false, errText(error));
-    setRevealed(r => ({ ...r, [a.id]: true }));
-    flash(true, "Akkaunt sizniki! Login va parol quyida.");
+    setShowCode({ d: { id: "", code: data as string, account_id: a.id, source: "spin", price: a.price, status: "waiting", admin_note: null, created_at: "" }, title: a.title });
     await load();
   };
 
@@ -137,6 +171,10 @@ export default function ProfilePage() {
         <div className="flex-1 min-w-0">
           <p className="text-xl font-black truncate">{profile?.username || "Foydalanuvchi"}</p>
           <p className="text-muted text-sm truncate">{user.email}</p>
+          <div className="flex flex-wrap items-center gap-2 mt-2">
+            <span className="chip bg-violet/20 text-violet-light !text-xs">ID: {profile?.public_id ?? "—"}</span>
+            <TelegramField value={profile?.telegram} onSaved={refresh} />
+          </div>
         </div>
         <div className="relative flex items-center gap-3">
           <div>
@@ -178,7 +216,7 @@ export default function ProfilePage() {
                     Olish
                   </button>
                 </>
-              ) : revealed[a.id] ? <Secrets accountId={a.id} /> : <Reveal id={a.id} />}
+              ) : <DeliveryBox d={deliv[a.id]} onOpen={() => deliv[a.id] && setShowCode({ d: deliv[a.id], title: a.title })} />}
             </AccCard>
           ))}
         </div>
@@ -186,7 +224,7 @@ export default function ProfilePage() {
 
       {tab === "buy" && (bought.length === 0 ? empty("Hali xarid qilmagansiz.", "/market", "🛒 Akkauntlar") : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {bought.map(a => <AccCard key={a.id} a={a}><Reveal id={a.id} /></AccCard>)}
+          {bought.map(a => <AccCard key={a.id} a={a}><DeliveryBox d={deliv[a.id]} onOpen={() => deliv[a.id] && setShowCode({ d: deliv[a.id], title: a.title })} /></AccCard>)}
         </div>
       ))}
 
@@ -229,13 +267,25 @@ export default function ProfilePage() {
         </div>
       ))}
 
+      {showCode && (
+        <div className="fixed inset-0 z-[60] bg-black/70 grid place-items-center p-4" onClick={() => setShowCode(null)}>
+          <div className="panel p-6 max-w-sm w-full animate-fade-in max-h-[92vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <p className="font-black text-center mb-3">{showCode.title}</p>
+            {showCode.d.status === "waiting"
+              ? <CodeCard code={showCode.d.code} kind={showCode.d.source} title={showCode.title} />
+              : <p className="text-center text-sm text-muted">Kod: <b className="text-white">{showCode.d.code}</b><br />{D_STATUS[showCode.d.status].t}{showCode.d.admin_note ? ` — ${showCode.d.admin_note}` : ""}</p>}
+            <button onClick={() => setShowCode(null)} className="btn-ghost w-full mt-3">Yopish</button>
+          </div>
+        </div>
+      )}
+
       {/* Olishni tasdiqlash */}
       {confirm && (
         <div className="fixed inset-0 z-[60] bg-black/70 grid place-items-center p-4" onClick={() => setConfirm(null)}>
           <div className="panel p-6 max-w-sm w-full animate-fade-in" onClick={e => e.stopPropagation()}>
             <p className="text-lg font-black mb-2">Akkauntni olasizmi?</p>
             <p className="text-sm text-muted mb-5">
-              Olgandan so&apos;ng login va parol ochiladi, lekin <b className="text-white">{confirm.title}</b> ni
+              Sizga kod beriladi — uni ID raqamingiz bilan Telegramda adminga yuborasiz va admin akkauntni topshiradi. Lekin <b className="text-white">{confirm.title}</b> ni
               endi {som(confirm.price)} ga qayta sotib bo&apos;lmaydi.
             </p>
             <div className="flex gap-2">

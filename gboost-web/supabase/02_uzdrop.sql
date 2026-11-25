@@ -1,6 +1,6 @@
 -- ============================================================
 --  UzDrop — Supabase sxemasi (akkaunt bozori + akkaunt spin)
---  Supabase → SQL Editor → shu faylni to'liq ishga tushiring.
+--  Tartib: 01_close_old_gboost.sql → 02_uzdrop.sql → 03_codes.sql
 --  Qayta ishga tushirish xavfsiz (idempotent).
 -- ============================================================
 
@@ -156,15 +156,9 @@ create policy "accounts visible" on public.accounts for select using (
   status in ('active','pool') or seller_id = auth.uid() or owner_id = auth.uid() or public.is_admin()
 );
 
-drop policy if exists "secrets owner"    on public.account_secrets;
-create policy "secrets owner" on public.account_secrets for select using (
-  public.is_admin() or exists (
-    select 1 from public.accounts a where a.id = account_id and (
-      (a.owner_id = auth.uid() and a.status in ('sold','claimed')) or
-      (a.seller_id = auth.uid() and a.status in ('pending','active','rejected'))
-    )
-  )
-);
+drop policy if exists "secrets owner" on public.account_secrets;
+drop policy if exists "secrets admin" on public.account_secrets;
+create policy "secrets admin" on public.account_secrets for select using (public.is_admin());
 
 drop policy if exists "spins public"     on public.spins;
 create policy "spins public" on public.spins for select using (true);
@@ -224,24 +218,6 @@ begin
   return v_id;
 end $$;
 
--- Bozordan akkaunt sotib olish
-create or replace function public.buy_account(p_account uuid) returns void
-language plpgsql security definer set search_path = public as $$
-declare a public.accounts; v_bal bigint;
-begin
-  if auth.uid() is null then raise exception 'Avval tizimga kiring'; end if;
-  select * into a from public.accounts where id = p_account for update;
-  if a.id is null or a.status <> 'active' then raise exception 'Akkaunt sotuvda emas'; end if;
-  if a.seller_id = auth.uid() then raise exception 'O''z akkauntingizni sotib ololmaysiz'; end if;
-  select balance into v_bal from public.profiles where id = auth.uid() for update;
-  if v_bal < a.price then raise exception 'Balans yetarli emas'; end if;
-
-  perform public._add_balance(auth.uid(), -a.price, 'buy', a.title);
-  if a.kind = 'market' and a.seller_id is not null then
-    perform public._add_balance(a.seller_id, public.seller_share(a.price), 'sale', a.title);
-  end if;
-  update public.accounts set status = 'sold', owner_id = auth.uid(), updated_at = now() where id = a.id;
-end $$;
 
 -- Keys ochish (spin) — tasodif serverda hisoblanadi
 create or replace function public.open_case(p_case uuid)
@@ -293,26 +269,7 @@ begin
   return a.price;
 end $$;
 
--- Yutilgan akkauntni olish (login/parol ochiladi, keyin sotib bo'lmaydi)
-create or replace function public.claim_won(p_account uuid) returns void
-language plpgsql security definer set search_path = public as $$
-begin
-  update public.accounts set status = 'claimed', updated_at = now()
-  where id = p_account and owner_id = auth.uid() and status = 'won';
-  if not found then raise exception 'Akkaunt topilmadi'; end if;
-end $$;
 
--- Balans to'ldirish so'rovi
-create or replace function public.request_deposit(p_amount bigint, p_method text, p_note text) returns uuid
-language plpgsql security definer set search_path = public as $$
-declare v_id uuid;
-begin
-  if auth.uid() is null then raise exception 'Avval tizimga kiring'; end if;
-  if p_amount < 1000 then raise exception 'Minimal summa 1 000 so''m'; end if;
-  insert into public.deposits(user_id, amount, method, note) values (auth.uid(), p_amount, p_method, p_note)
-  returning id into v_id;
-  return v_id;
-end $$;
 
 -- Pul yechish so'rovi (summa darhol bloklanadi)
 create or replace function public.request_withdraw(p_amount bigint, p_card text) returns uuid
@@ -433,12 +390,8 @@ begin
 end $$;
 
 -- ---------- Ruxsatlar ----------
-grant execute on function public.submit_account(text,text,text,text,text,int,text,bigint,text,text,text) to authenticated;
-grant execute on function public.buy_account(uuid)              to authenticated;
 grant execute on function public.open_case(uuid)                to authenticated;
 grant execute on function public.sell_won(uuid)                 to authenticated;
-grant execute on function public.claim_won(uuid)                to authenticated;
-grant execute on function public.request_deposit(bigint,text,text) to authenticated;
 grant execute on function public.request_withdraw(bigint,text)  to authenticated;
 
 -- ---------- Realtime (jonli spin lentasi) ----------
@@ -529,7 +482,7 @@ begin
   perform public._require_admin();
   update public.accounts set title = coalesce(nullif(trim(p_title),''), title), description = nullif(trim(p_description),''),
     rank = nullif(trim(p_rank),''), level = p_level, price = coalesce(p_price, price),
-    images = coalesce(p_images, images), image_url = coalesce(p_images, images)[1], updated_at = now()
+    images = coalesce(p_images, images), image_url = (coalesce(p_images, images))[1], updated_at = now()
   where id = p_id and status in ('pending','active','pool');
   if not found then raise exception 'Akkaunt topilmadi yoki allaqachon sotilgan'; end if;
 end $$;

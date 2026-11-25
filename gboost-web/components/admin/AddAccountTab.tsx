@@ -1,0 +1,127 @@
+"use client";
+import { useState } from "react";
+import clsx from "clsx";
+import { supabase, errText } from "@/lib/supabase";
+import { GAMES, rarity, som, type Case } from "@/lib/uzdrop";
+import ImageUploader from "@/components/ImageUploader";
+import { Tg, num, type Rpc, type UserInfo } from "./shared";
+
+type Mode = "market" | "quick" | "site";
+const MODES: { id: Mode; t: string; d: string }[] = [
+  { id: "market", t: "🛒 Sotuvchi nomidan (bozorga)", d: "Akkaunt bozorda sotiladi. Xaridorga topshirilgach sotuvchiga narxning 90% tushadi." },
+  { id: "quick",  t: "⚡ Tez sotish (sayt sotib oladi)", d: "Sotuvchiga kelishilgan summa HOZIROQ balansiga tushadi. Akkaunt saytniki bo'ladi." },
+  { id: "site",   t: "🏠 Saytning o'z akkaunti", d: "Sotuvchi yo'q. Bozorga yoki keysga qo'yiladi." },
+];
+const empty = { game: GAMES[0].id, title: "", description: "", rank: "", level: "", price: "", payout: "", case_id: "", login: "", password: "", extra: "", sellerId: "" };
+type Seller = UserInfo & { id: string };
+
+export default function AddAccountTab({ cases, busy, rpc }: { cases: Case[]; busy: boolean; rpc: Rpc }) {
+  const [mode, setMode] = useState<Mode>("market");
+  const [f, setF] = useState(empty);
+  const [images, setImages] = useState<string[]>([]);
+  const [seller, setSeller] = useState<Seller | null | "none">(null);
+  const [looking, setLooking] = useState(false);
+  const [lookErr, setLookErr] = useState("");
+  const set = (k: keyof typeof empty) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => setF({ ...f, [k]: e.target.value });
+
+  const price = num(f.price), payout = num(f.payout);
+  const needSeller = mode !== "site";
+  const sellerOk = !needSeller || (seller && seller !== "none");
+  const ok = f.title.trim() && price && price >= 1000 && f.login.trim() && f.password && sellerOk && (mode !== "quick" || payout);
+
+  const lookup = async () => {
+    const id = num(f.sellerId);
+    setLookErr(""); setSeller(null);
+    if (!id) return;
+    setLooking(true);
+    const { data, error } = await supabase.rpc("admin_find_user", { p_public_id: id });
+    setLooking(false);
+    if (error) { setLookErr(errText(error)); return; }
+    setSeller(data ? (data as Seller) : "none");
+  };
+
+  const save = async () => {
+    const s = seller && seller !== "none" ? seller.id : null;
+    const done = await rpc("admin_create_account", {
+      p_mode: mode, p_seller: needSeller ? s : null, p_payout: mode === "quick" ? payout : null,
+      p_game: f.game, p_title: f.title.trim(), p_description: f.description.trim() || null, p_rank: f.rank.trim() || null,
+      p_level: num(f.level), p_images: images, p_price: price,
+      p_case: mode === "market" ? null : (f.case_id || null),
+      p_login: f.login.trim(), p_password: f.password, p_extra: f.extra.trim() || null,
+    }, mode === "quick" ? "Akkaunt joylandi, sotuvchiga pul tushdi" : "Akkaunt saytga joylandi");
+    if (done) { setF({ ...empty, game: f.game }); setImages([]); setSeller(null); }
+  };
+
+  return (
+    <div className="panel p-4 sm:p-5 max-w-3xl space-y-5">
+      <div className="grid gap-2">
+        {MODES.map(m => (
+          <label key={m.id} className={clsx("flex gap-3 items-start rounded-xl border p-3 cursor-pointer transition-colors",
+            mode === m.id ? "border-accent bg-accent/5" : "border-line hover:border-violet")}>
+            <input type="radio" name="mode" className="mt-1 accent-[#FFC83D]" checked={mode === m.id}
+              onChange={() => { setMode(m.id); if (m.id === "market") setF(x => ({ ...x, case_id: "" })); }} />
+            <span><b className="text-sm">{m.t}</b><span className="block text-xs text-muted">{m.d}</span></span>
+          </label>
+        ))}
+      </div>
+
+      {needSeller && (
+        <div className="rounded-xl bg-bg border border-line p-3 space-y-2">
+          <label className="label !mb-0">Sotuvchining ID raqami</label>
+          <div className="flex gap-2">
+            <input className="input font-mono" inputMode="numeric" placeholder="100002" value={f.sellerId}
+              onChange={e => { set("sellerId")(e); setSeller(null); }} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); lookup(); } }} />
+            <button type="button" disabled={looking || !num(f.sellerId)} className="btn-ghost" onClick={lookup}>{looking ? "…" : "Topish"}</button>
+          </div>
+          {seller === "none" && <p className="text-lose text-sm font-bold">Bu ID bilan foydalanuvchi topilmadi</p>}
+          {lookErr && <p className="text-lose text-sm font-bold">{lookErr}</p>}
+          {seller && seller !== "none" && (
+            <p className="text-sm">✅ <b className="font-mono text-accent">ID {seller.public_id}</b> • {seller.username || "—"} • {seller.email || "—"} • <Tg u={seller.telegram} /></p>
+          )}
+        </div>
+      )}
+
+      <div className="grid sm:grid-cols-2 gap-3">
+        <div><label className="label">O&apos;yin</label>
+          <select className="input" value={f.game} onChange={set("game")}>{GAMES.map(g => <option key={g.id} value={g.id}>{g.icon} {g.name}</option>)}</select></div>
+        <div><label className="label">Joylashuv</label>
+          <select className="input" value={f.case_id} onChange={set("case_id")} disabled={mode === "market"}>
+            <option value="">🛒 Bozorga (sotuvga)</option>
+            {mode !== "market" && cases.map(c => <option key={c.id} value={c.id}>🎰 {c.name} ({som(c.price)})</option>)}
+          </select></div>
+      </div>
+      <div><label className="label">Sarlavha *</label><input className="input" value={f.title} onChange={set("title")} placeholder="Masalan: 45 lvl, 12 ta skin" /></div>
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <div><label className="label">Rank</label><input className="input" value={f.rank} onChange={set("rank")} /></div>
+        <div><label className="label">Level</label><input className="input" inputMode="numeric" value={f.level} onChange={set("level")} /></div>
+        <div className="col-span-2 sm:col-span-1">
+          <label className="label">{f.case_id ? "Qiymati" : "Sotuv narxi"} (so&apos;m) *</label>
+          <input className="input" inputMode="numeric" value={f.price} onChange={set("price")} />
+          {price ? <p className="text-[11px] mt-1 font-bold" style={{ color: rarity(price).color }}>{rarity(price).name} • {som(price)}</p> : null}
+        </div>
+      </div>
+      {mode === "quick" && (
+        <div>
+          <label className="label">Sotuvchiga to&apos;lov (so&apos;m) *</label>
+          <input className="input" inputMode="numeric" value={f.payout} onChange={set("payout")} />
+          <p className="text-[11px] text-muted mt-1">Saqlash bosilishi bilan bu summa sotuvchi balansiga darhol tushadi.{payout ? ` (${som(payout)})` : ""}</p>
+        </div>
+      )}
+      <div><label className="label">Tavsif</label><textarea className="input min-h-[80px]" value={f.description} onChange={set("description")} /></div>
+      <div><label className="label">Rasmlar (8 tagacha)</label><ImageUploader value={images} onChange={setImages} /></div>
+
+      <div className="rounded-xl border border-violet/40 bg-violet/5 p-3 space-y-3">
+        <p className="label !mb-0">🔒 Kirish ma&apos;lumotlari — saytda hech kimga ko&apos;rinmaydi</p>
+        <div className="grid sm:grid-cols-2 gap-3">
+          <div><label className="label">Login *</label><input className="input" value={f.login} onChange={set("login")} autoComplete="off" /></div>
+          <div><label className="label">Parol *</label><input className="input" value={f.password} onChange={set("password")} autoComplete="off" /></div>
+        </div>
+        <div><label className="label">Qo&apos;shimcha (pochta, kod…)</label><input className="input" value={f.extra} onChange={set("extra")} autoComplete="off" /></div>
+      </div>
+
+      <button disabled={busy || !ok} className="btn-accent w-full" onClick={save}>
+        {mode === "quick" && payout ? `Joylash va sotuvchiga ${som(payout)} to'lash` : "Saytga joylash"}
+      </button>
+    </div>
+  );
+}

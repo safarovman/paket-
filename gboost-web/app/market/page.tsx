@@ -6,6 +6,7 @@ import { supabase, errText } from "@/lib/supabase";
 import { useUser } from "@/components/UserProvider";
 import { GAMES, game, som, type Account } from "@/lib/uzdrop";
 import AccountCard from "@/components/AccountCard";
+import CodeCard from "@/components/CodeCard";
 
 function Market() {
   const params = useSearchParams();
@@ -17,7 +18,8 @@ function Market() {
   const [sel, setSel] = useState<Account | null>(null);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState("");
-  const [bought, setBought] = useState<{ login: string; password: string; extra: string | null } | null>(null);
+  const [bought, setBought] = useState<string | null>(null);
+  const [img, setImg] = useState(0);
 
   const load = () => supabase.from("accounts").select("*").eq("status", "active").order("created_at", { ascending: false })
     .then(({ data }) => {
@@ -39,19 +41,18 @@ function Market() {
     if (!sel) return;
     if (!user) { window.location.href = "/login"; return; }
     setBusy(true); setMsg("");
-    const { error } = await supabase.rpc("buy_account", { p_account: sel.id });
+    const { data, error } = await supabase.rpc("buy_account", { p_account: sel.id });
     if (error) { setMsg(errText(error)); setBusy(false); return; }
-    const { data } = await supabase.from("account_secrets").select("login,password,extra").eq("account_id", sel.id).maybeSingle();
-    setBought(data as any); setBusy(false); refresh(); load();
+    setBought(data as string); setBusy(false); refresh(); load();
   };
-  const close = () => { setSel(null); setBought(null); setMsg(""); };
+  const close = () => { setSel(null); setBought(null); setMsg(""); setImg(0); };
 
   return (
     <div className="wrap py-6">
       <div className="flex flex-wrap items-end justify-between gap-3 mb-5">
         <div>
           <h1 className="h-title">Akkauntlar bozori</h1>
-          <p className="text-muted text-sm">Tekshirilgan akkauntlar — xariddan keyin login/parol darhol ochiladi</p>
+          <p className="text-muted text-sm">Admin tekshirgan akkauntlar — xariddan keyin kod beriladi, admin Telegramda topshiradi</p>
         </div>
         <Link href="/sell" className="btn-violet">+ Akkaunt sotish</Link>
       </div>
@@ -89,17 +90,31 @@ function Market() {
               <>
                 <p className="text-win font-black uppercase text-center">✅ Xarid muvaffaqiyatli!</p>
                 <p className="text-muted text-sm text-center mb-4">{sel.title}</p>
-                <Secret label="Login" v={bought.login} />
-                <Secret label="Parol" v={bought.password} />
-                {bought.extra && <Secret label="Qo'shimcha" v={bought.extra} />}
-                <p className="text-xs text-muted mt-3">Ma&apos;lumotlar profil → Xaridlar bo&apos;limida ham saqlanadi. Parolni darhol almashtiring.</p>
+                <CodeCard code={bought} kind="buy" title={sel.title} />
+                <p className="text-xs text-muted mt-3 text-center">Kod profil → Xaridlar bo&apos;limida ham saqlanadi.</p>
                 <button onClick={close} className="btn-ghost w-full mt-4">Yopish</button>
               </>
             ) : (
               <>
-                <AccountCard a={sel} />
+                {sel.images?.length > 0 ? (
+                  <div>
+                    <img src={sel.images[img] ?? sel.images[0]} alt="" className="w-full aspect-video object-cover rounded-xl border border-line" />
+                    {sel.images.length > 1 && (
+                      <div className="flex gap-1.5 mt-2 overflow-x-auto">
+                        {sel.images.map((u, i) => (
+                          <button key={u} onClick={() => setImg(i)} className={`shrink-0 w-16 h-10 rounded-md overflow-hidden border-2 ${i === img ? "border-accent" : "border-transparent opacity-60"}`}>
+                            <img src={u} alt="" className="w-full h-full object-cover" />
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    <p className="font-black mt-3">{sel.title}</p>
+                    <p className="text-xs text-muted">{sel.rank || ""}</p>
+                  </div>
+                ) : <AccountCard a={sel} />}
                 {sel.description && <p className="text-sm text-muted mt-4 whitespace-pre-line">{sel.description}</p>}
-                <div className="flex justify-between text-sm mt-4"><span className="text-muted">O&apos;yin</span><b>{game(sel.game).name}</b></div>
+                <div className="flex justify-between text-sm mt-4"><span className="text-muted">Narx</span><b className="text-accent">{som(sel.price)}</b></div>
+                <div className="flex justify-between text-sm"><span className="text-muted">O&apos;yin</span><b>{game(sel.game).name}</b></div>
                 {sel.level != null && <div className="flex justify-between text-sm"><span className="text-muted">Daraja</span><b>{sel.level}</b></div>}
                 <div className="flex justify-between text-sm"><span className="text-muted">Balansingiz</span><b>{som(profile?.balance)}</b></div>
                 {msg && <p className="text-lose text-sm font-bold mt-3">{msg}</p>}
@@ -107,6 +122,7 @@ function Market() {
                   {user && (profile?.balance ?? 0) < sel.price
                     ? <Link href="/wallet" className="btn-accent">Balansni to&apos;ldirish</Link>
                     : <button onClick={buy} disabled={busy} className="btn-accent">{busy ? "…" : `Sotib olish • ${som(sel.price)}`}</button>}
+                  <p className="text-[11px] text-muted text-center">Xariddan so&apos;ng kod beriladi — uni Telegramda adminga yuborasiz, admin akkauntni topshiradi.</p>
                   <button onClick={close} className="btn-ghost">Bekor qilish</button>
                 </div>
               </>
@@ -114,16 +130,6 @@ function Market() {
           </div>
         </div>
       )}
-    </div>
-  );
-}
-
-function Secret({ label, v }: { label: string; v: string }) {
-  return (
-    <div className="flex items-center gap-2 bg-bg border border-line rounded-xl px-3 py-2 mt-2">
-      <span className="text-xs text-muted w-20">{label}</span>
-      <code className="flex-1 font-bold text-sm break-all">{v}</code>
-      <button onClick={() => navigator.clipboard.writeText(v)} className="text-xs text-accent font-bold">Nusxa</button>
     </div>
   );
 }

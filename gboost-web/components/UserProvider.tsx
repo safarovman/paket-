@@ -15,7 +15,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const load = useCallback(async (u: User | null) => {
     setUser(u);
     if (!u) { setProfile(null); setLoading(false); return; }
-    const { data } = await supabase.from("profiles").select("id,username,balance,is_admin").eq("id", u.id).maybeSingle();
+    const { data } = await supabase.from("profiles").select("id,public_id,username,email,telegram,balance,is_admin").eq("id", u.id).maybeSingle();
     setProfile(data as Profile | null);
     setLoading(false);
   }, []);
