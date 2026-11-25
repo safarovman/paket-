@@ -4,7 +4,7 @@ import clsx from "clsx";
 import { supabase, errText } from "@/lib/supabase";
 import { useUser } from "@/components/UserProvider";
 import { som, type Account, type Case } from "@/lib/uzdrop";
-import { Empty, UserLine, dt, type PoolRow, type ProfileRow, type UserInfo } from "@/components/admin/shared";
+import { Empty, UserLine, dt, type AdminOpt, type PoolRow, type ProfileRow, type UserInfo } from "@/components/admin/shared";
 import CodeTab, { type WaitingRow } from "@/components/admin/CodeTab";
 import AddAccountTab from "@/components/admin/AddAccountTab";
 import ListedTab from "@/components/admin/ListedTab";
@@ -38,17 +38,19 @@ export default function AdminPage() {
   const [pool, setPool]               = useState<PoolRow[]>([]);
   const [listed, setListed]           = useState<Account[]>([]);
   const [users, setUsers]             = useState<ProfileRow[]>([]);
+  const [admins, setAdmins]           = useState<AdminOpt[]>([]);
 
   const flash = (ok: boolean, text: string) => { setMsg({ ok, text }); setTimeout(() => setMsg(null), 4000); };
 
   const load = useCallback(async () => {
-    const [dl, dep, wd, cs, ls, us] = await Promise.all([
-      supabase.from("deliveries").select("code,user_id,source,price,created_at,accounts(title,game)").eq("status", "waiting").order("created_at"),
+    const [dl, dep, wd, cs, ls, us, ad] = await Promise.all([
+      supabase.from("deliveries").select("code,user_id,source,price,created_at,accounts(title,game,public_no,admin_id)").eq("status", "waiting").order("created_at"),
       supabase.from("deposits").select("*").eq("status", "pending").order("created_at"),
       supabase.from("withdrawals").select("*").eq("status", "pending").order("created_at"),
       supabase.from("cases").select("*").order("sort"),
       supabase.from("accounts").select("*").in("status", ["active", "pool"]).order("created_at", { ascending: false }),
       supabase.from("profiles").select("id,public_id,username,email,telegram,balance,is_admin").order("created_at", { ascending: false }).limit(1000),
+      supabase.rpc("admin_contacts"),
     ]);
     setWaiting((dl.data ?? []) as unknown as WaitingRow[]);
     setDeposits((dep.data ?? []) as Deposit[]);
@@ -58,9 +60,26 @@ export default function AdminPage() {
     setListed(acc);
     setPool(acc.filter(a => a.status === "pool" && a.case_id).map(a => ({ case_id: a.case_id as string, price: a.price })));
     setUsers((us.data ?? []) as ProfileRow[]);
+    setAdmins((ad.data ?? []) as AdminOpt[]);
   }, []);
 
   useEffect(() => { if (profile?.is_admin) load(); }, [profile?.is_admin, load]);
+
+  // Adminlar ro'yxati (telegram'i borlar) + o'zim har doim
+  const adminOpts = useMemo<AdminOpt[]>(() => {
+    if (!profile) return admins;
+    return admins.some(a => a.id === profile.id) ? admins
+      : [{ id: profile.id, username: profile.username, telegram: profile.telegram ?? null }, ...admins];
+  }, [admins, profile]);
+  // Akkauntdagi admin_id → ism/@telegram (admins ro'yxati, bo'lmasa foydalanuvchilar)
+  const adminById = useMemo(() => {
+    const m: Record<string, AdminOpt> = {};
+    users.filter(u => u.is_admin).forEach(u => { m[u.id] = { id: u.id, username: u.username, telegram: u.telegram }; });
+    adminOpts.forEach(a => { m[a.id] = a; });
+    return m;
+  }, [users, adminOpts]);
+
+  const after = async (ok: boolean, text: string) => { flash(ok, text); await load(); };
 
   const byId = useMemo(() => Object.fromEntries(users.map(u => [u.id, u as UserInfo])) as Record<string, UserInfo>, [users]);
 
@@ -105,7 +124,7 @@ export default function AdminPage() {
           msg.ok ? "border-win text-win" : "border-lose text-lose")}>{msg.text}</div>
       )}
 
-      {tab === "code" && <CodeTab waiting={waiting} users={byId} busy={busy} rpc={rpc} />}
+      {tab === "code" && <CodeTab waiting={waiting} users={byId} admins={adminById} me={profile.id} busy={busy} rpc={rpc} />}
 
       {tab === "deposits" && (
         <div className="space-y-3">
@@ -151,10 +170,10 @@ export default function AdminPage() {
         </div>
       )}
 
-      {tab === "add" && <AddAccountTab cases={cases} busy={busy} rpc={rpc} />}
-      {tab === "listed" && <ListedTab accounts={listed} cases={cases} users={byId} busy={busy} rpc={rpc} />}
+      {tab === "add" && <AddAccountTab cases={cases} admins={adminOpts} me={profile.id} myTelegram={profile.telegram ?? null} busy={busy} rpc={rpc} after={after} />}
+      {tab === "listed" && <ListedTab accounts={listed} cases={cases} users={byId} admins={adminOpts} adminById={adminById} me={profile.id} busy={busy} rpc={rpc} />}
       {tab === "cases" && <CasesTab cases={cases} pool={pool} busy={busy} onSave={args => rpc("admin_save_case", args, "Keys saqlandi")} />}
-      {tab === "users" && <UsersTab users={users} busy={busy} rpc={rpc} />}
+      {tab === "users" && <UsersTab users={users} me={profile.id} busy={busy} rpc={rpc} />}
     </div>
   );
 }

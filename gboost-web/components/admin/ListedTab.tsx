@@ -2,19 +2,24 @@
 import { useState } from "react";
 import { game, som, type Account, type Case } from "@/lib/uzdrop";
 import ImageUploader from "@/components/ImageUploader";
-import { Empty, UserLine, num, type Rpc, type UserInfo } from "./shared";
+import { AccNo, AdminLine, Empty, UserLine, num, type AccExtra, type AdminOpt, type Rpc, type UserInfo } from "./shared";
 
-export default function ListedTab({ accounts, cases, users, busy, rpc }: {
-  accounts: Account[]; cases: Case[]; users: Record<string, UserInfo>; busy: boolean; rpc: Rpc;
+type Acc = Account & AccExtra;
+
+export default function ListedTab({ accounts, cases, users, admins, adminById, me, busy, rpc }: {
+  accounts: Account[]; cases: Case[]; users: Record<string, UserInfo>; admins: AdminOpt[]; adminById: Record<string, AdminOpt>;
+  me: string; busy: boolean; rpc: Rpc;
 }) {
   const [q, setQ] = useState("");
   const [edit, setEdit] = useState<string | null>(null);
-  const list = accounts.filter(a => !q || a.title.toLowerCase().includes(q.toLowerCase()));
+  const s = q.trim().toLowerCase();
+  const list = (accounts as Acc[]).filter(a => !s || a.title.toLowerCase().includes(s) ||
+    (/^#?\d+$/.test(s) && String(a.public_no ?? "").includes(s.replace("#", ""))));
   const caseName = (id: string | null) => cases.find(c => c.id === id)?.name ?? "keys";
 
   return (
     <div className="space-y-3">
-      <input className="input max-w-sm" placeholder="🔍 Sarlavha bo'yicha qidirish" value={q} onChange={e => setQ(e.target.value)} />
+      <input className="input max-w-sm" placeholder="🔍 Sarlavha yoki #raqam" value={q} onChange={e => setQ(e.target.value)} />
       {list.length === 0 && <Empty text="Saytda akkaunt yo'q" />}
       {list.map(a => (
         <div key={a.id} className="panel p-3 sm:p-4">
@@ -23,13 +28,23 @@ export default function ListedTab({ accounts, cases, users, busy, rpc }: {
               {a.image_url ? <img src={a.image_url} alt="" className="w-full h-full object-cover" /> : <span className="text-2xl">{game(a.game).icon}</span>}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-extrabold truncate">{a.title}</p>
+              <p className="font-extrabold truncate"><AccNo n={a.public_no} /> {a.title}</p>
               <p className="text-xs text-muted">{game(a.game).icon} {game(a.game).name}{a.rank ? ` • ${a.rank}` : ""} • <b className="text-accent">{som(a.price)}</b></p>
               <div className="flex flex-wrap gap-2 items-center mt-1">
                 <span className={a.status === "pool" ? "chip bg-violet/20 text-violet-light" : "chip bg-win/15 text-win"}>
                   {a.status === "pool" ? `🎰 ${caseName(a.case_id)}` : "🛒 Bozorda"}
                 </span>
                 {a.seller_id && <span className="text-xs">Sotuvchi: <UserLine u={users[a.seller_id]} /></span>}
+              </div>
+              <div className="flex flex-wrap gap-2 items-center mt-1">
+                <AdminLine a={a.admin_id ? adminById[a.admin_id] ?? { id: a.admin_id, username: null, telegram: null } : null} me={me} />
+                <select className="input !py-1 !px-2 !text-xs !w-auto" value="" disabled={busy}
+                  onChange={e => { const v = e.target.value; if (v) rpc("admin_assign_account", { p_account: a.id, p_admin: v }, "Mas'ul admin o'zgartirildi"); }}>
+                  <option value="">Adminni o&apos;zgartirish…</option>
+                  {admins.filter(x => x.id !== a.admin_id).map(x => (
+                    <option key={x.id} value={x.id}>{x.username || "—"}{x.telegram ? ` (@${x.telegram})` : ""}</option>
+                  ))}
+                </select>
               </div>
             </div>
             <div className="flex flex-col sm:flex-row gap-2">

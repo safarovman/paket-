@@ -4,7 +4,7 @@ import clsx from "clsx";
 import { supabase, errText } from "@/lib/supabase";
 import { GAMES, rarity, som, type Case } from "@/lib/uzdrop";
 import ImageUploader from "@/components/ImageUploader";
-import { Tg, num, type Rpc, type UserInfo } from "./shared";
+import { AccNo, Tg, num, type AdminOpt, type Rpc, type UserInfo } from "./shared";
 
 type Mode = "market" | "quick" | "site";
 const MODES: { id: Mode; t: string; d: string }[] = [
@@ -15,8 +15,14 @@ const MODES: { id: Mode; t: string; d: string }[] = [
 const empty = { game: GAMES[0].id, title: "", description: "", rank: "", level: "", price: "", payout: "", case_id: "", login: "", password: "", extra: "", sellerId: "" };
 type Seller = UserInfo & { id: string };
 
-export default function AddAccountTab({ cases, busy, rpc }: { cases: Case[]; busy: boolean; rpc: Rpc }) {
+export default function AddAccountTab({ cases, admins, me, myTelegram, busy, after }: {
+  cases: Case[]; admins: AdminOpt[]; me: string; myTelegram: string | null; busy: boolean; rpc: Rpc;
+  after: (ok: boolean, text: string) => Promise<void>;
+}) {
   const [mode, setMode] = useState<Mode>("market");
+  const [adminId, setAdminId] = useState(me);
+  const [saving, setSaving] = useState(false);
+  const [created, setCreated] = useState<{ no: number | null; title: string; admin: AdminOpt | undefined } | null>(null);
   const [f, setF] = useState(empty);
   const [images, setImages] = useState<string[]>([]);
   const [seller, setSeller] = useState<Seller | null | "none">(null);
@@ -42,18 +48,42 @@ export default function AddAccountTab({ cases, busy, rpc }: { cases: Case[]; bus
 
   const save = async () => {
     const s = seller && seller !== "none" ? seller.id : null;
-    const done = await rpc("admin_create_account", {
+    setSaving(true); setCreated(null);
+    const { data: newId, error } = await supabase.rpc("admin_create_account", {
       p_mode: mode, p_seller: needSeller ? s : null, p_payout: mode === "quick" ? payout : null,
       p_game: f.game, p_title: f.title.trim(), p_description: f.description.trim() || null, p_rank: f.rank.trim() || null,
       p_level: num(f.level), p_images: images, p_price: price,
       p_case: mode === "market" ? null : (f.case_id || null),
       p_login: f.login.trim(), p_password: f.password, p_extra: f.extra.trim() || null,
-    }, mode === "quick" ? "Akkaunt joylandi, sotuvchiga pul tushdi" : "Akkaunt saytga joylandi");
-    if (done) { setF({ ...empty, game: f.game }); setImages([]); setSeller(null); }
+    });
+    if (error) { setSaving(false); await after(false, errText(error)); return; }
+    const id = newId as string;
+    let assignErr = "";
+    if (adminId && adminId !== me) {
+      const r = await supabase.rpc("admin_assign_account", { p_account: id, p_admin: adminId });
+      if (r.error) assignErr = " (admin biriktirilmadi: " + errText(r.error) + ")";
+    }
+    const { data: row } = await supabase.from("accounts").select("public_no").eq("id", id).maybeSingle();
+    setCreated({ no: (row as { public_no: number | null } | null)?.public_no ?? null, title: f.title.trim(), admin: admins.find(a => a.id === adminId) });
+    setSaving(false);
+    setF({ ...empty, game: f.game }); setImages([]); setSeller(null);
+    await after(!assignErr, (mode === "quick" ? "Akkaunt joylandi, sotuvchiga pul tushdi" : "Akkaunt saytga joylandi") + assignErr);
   };
 
   return (
     <div className="panel p-4 sm:p-5 max-w-3xl space-y-5">
+      {!myTelegram && (
+        <div className="rounded-xl border border-accent/60 bg-accent/10 p-3 text-sm font-bold text-accent">
+          ⚠️ Profilingizda Telegram username yo&apos;q — xaridorlar sizga yozolmaydi. Profil sahifasida qo&apos;shing.
+        </div>
+      )}
+      {created && (
+        <div className="rounded-xl border border-win/60 bg-win/10 p-4 animate-fade-in">
+          <p className="text-sm font-bold text-win">✅ Saytga joylandi</p>
+          <p className="mt-1"><AccNo n={created.no} big /> <b className="ml-2">{created.title}</b></p>
+          <p className="text-xs mt-1">Mas&apos;ul admin: <b>{created.admin?.username || "—"}</b> • <Tg u={created.admin?.telegram} /></p>
+        </div>
+      )}
       <div className="grid gap-2">
         {MODES.map(m => (
           <label key={m.id} className={clsx("flex gap-3 items-start rounded-xl border p-3 cursor-pointer transition-colors",
@@ -80,6 +110,18 @@ export default function AddAccountTab({ cases, busy, rpc }: { cases: Case[]; bus
           )}
         </div>
       )}
+
+      <div>
+        <label className="label">Mas&apos;ul admin</label>
+        <select className="input" value={adminId} onChange={e => setAdminId(e.target.value)}>
+          {admins.map(a => (
+            <option key={a.id} value={a.id}>
+              {a.id === me ? "👤 Men — " : ""}{a.username || "—"}{a.telegram ? ` (@${a.telegram})` : " (telegram yo'q)"}
+            </option>
+          ))}
+        </select>
+        <p className="text-[11px] text-muted mt-1">Xaridor sotib olgach aynan shu adminning Telegramiga yo&apos;naltiriladi.</p>
+      </div>
 
       <div className="grid sm:grid-cols-2 gap-3">
         <div><label className="label">O&apos;yin</label>
@@ -119,7 +161,7 @@ export default function AddAccountTab({ cases, busy, rpc }: { cases: Case[]; bus
         <div><label className="label">Qo&apos;shimcha (pochta, kod…)</label><input className="input" value={f.extra} onChange={set("extra")} autoComplete="off" /></div>
       </div>
 
-      <button disabled={busy || !ok} className="btn-accent w-full" onClick={save}>
+      <button disabled={busy || saving || !ok} className="btn-accent w-full" onClick={save}>
         {mode === "quick" && payout ? `Joylash va sotuvchiga ${som(payout)} to'lash` : "Saytga joylash"}
       </button>
     </div>

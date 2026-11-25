@@ -51,7 +51,7 @@ function AccCard({ a, children }: { a: Account; children?: React.ReactNode }) {
           <span className="chip bg-panel2 text-muted">{g.icon} {g.name}</span>
           <span className="chip" style={{ background: r.color + "22", color: r.color }}>{r.name}</span>
         </div>
-        <p className="font-extrabold leading-tight">{a.title}</p>
+        <p className="font-extrabold leading-tight">{a.public_no ? <span className="text-muted mr-1">#{a.public_no}</span> : null}{a.title}</p>
         {a.rank && <p className="text-xs text-muted">🏆 {a.rank}</p>}
         <p className="font-black" style={{ color: r.color }}>{som(a.price)}</p>
         <div className="mt-auto pt-1 space-y-2">{children}</div>
@@ -272,7 +272,7 @@ export default function ProfilePage() {
           <div className="panel p-6 max-w-sm w-full animate-fade-in max-h-[92vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <p className="font-black text-center mb-3">{showCode.title}</p>
             {showCode.d.status === "waiting"
-              ? <CodeCard code={showCode.d.code} kind={showCode.d.source} title={showCode.title} />
+              ? <CodeCard code={showCode.d.code} kind={showCode.d.source} title={showCode.title} accountId={showCode.d.account_id} />
               : <p className="text-center text-sm text-muted">Kod: <b className="text-white">{showCode.d.code}</b><br />{D_STATUS[showCode.d.status].t}{showCode.d.admin_note ? ` — ${showCode.d.admin_note}` : ""}</p>}
             <button onClick={() => setShowCode(null)} className="btn-ghost w-full mt-3">Yopish</button>
           </div>

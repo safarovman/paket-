@@ -4,6 +4,9 @@ import { useState } from "react";
 export interface UserInfo { public_id: number | null; username: string | null; email: string | null; telegram: string | null; }
 export interface ProfileRow extends UserInfo { id: string; balance: number; is_admin: boolean; }
 export interface PoolRow { case_id: string; price: number; }
+export interface AdminOpt { id: string; username: string | null; telegram: string | null; }
+/** Hisoblash ustunlari (04_account_admins.sql) */
+export interface AccExtra { public_no?: number | null; admin_id?: string | null; }
 export type Rpc = (fn: string, args: Record<string, unknown>, ok: string) => Promise<boolean>;
 
 export const num = (v: string) => { const n = parseInt(v.replace(/\D/g, ""), 10); return isNaN(n) ? null : n; };
@@ -54,5 +57,21 @@ export function UserBlock({ u, title }: { u: UserInfo; title: string }) {
         Mos kelmasa — login/parolni BERMANG.
       </div>
     </div>
+  );
+}
+
+/** Akkaunt raqami: #1024 */
+export function AccNo({ n, big }: { n?: number | null; big?: boolean }) {
+  return <span className={`font-mono font-black text-accent ${big ? "text-2xl" : "text-sm"}`}>#{n ?? "—"}</span>;
+}
+
+/** Mas'ul admin: ism • @telegram */
+export function AdminLine({ a, me }: { a?: { id?: string; username: string | null; telegram: string | null } | null; me?: string }) {
+  if (!a) return <span className="text-xs text-muted">Mas&apos;ul admin: — biriktirilmagan</span>;
+  return (
+    <span className="text-xs">
+      Mas&apos;ul admin: <b>{a.username || "—"}</b> • <Tg u={a.telegram} />
+      {me && a.id === me && <span className="chip bg-win/15 text-win ml-1">siz</span>}
+    </span>
   );
 }

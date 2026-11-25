@@ -27,7 +27,7 @@ function CasePage() {
   const [won, setWon] = useState<Item | null>(null);
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState(false);
-  const [code, setCode] = useState<{ code: string; title: string } | null>(null);
+  const [code, setCode] = useState<{ code: string; title: string; id: string } | null>(null);
   const boxRef = useRef<HTMLDivElement>(null);
 
   const load = useCallback(async () => {
@@ -81,7 +81,7 @@ function CasePage() {
     const { data, error } = await supabase.rpc("claim_won", { p_account: won.id });
     setBusy(false);
     if (error) { setMsg(errText(error)); return; }
-    setCode({ code: data as string, title: won.title }); setWon(null);
+    setCode({ code: data as string, title: won.title, id: won.id }); setWon(null);
   };
 
   if (!c) return <div className="wrap py-20 text-center text-muted">Yuklanmoqda…</div>;
@@ -159,7 +159,7 @@ function CasePage() {
         <div className="fixed inset-0 z-[60] bg-black/70 backdrop-blur-sm grid place-items-center p-4 animate-fade-in" onClick={() => setCode(null)}>
           <div className="panel w-full max-w-sm p-6 max-h-[92vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <p className="font-black text-center mb-3">🎉 {code.title}</p>
-            <CodeCard code={code.code} kind="spin" title={code.title} />
+            <CodeCard code={code.code} kind="spin" title={code.title} accountId={code.id} />
             <button onClick={() => setCode(null)} className="btn-ghost w-full mt-3">Yopish</button>
           </div>
         </div>

@@ -90,7 +90,7 @@ function Market() {
               <>
                 <p className="text-win font-black uppercase text-center">✅ Xarid muvaffaqiyatli!</p>
                 <p className="text-muted text-sm text-center mb-4">{sel.title}</p>
-                <CodeCard code={bought} kind="buy" title={sel.title} />
+                <CodeCard code={bought} kind="buy" title={sel.title} accountId={sel.id} />
                 <p className="text-xs text-muted mt-3 text-center">Kod profil → Xaridlar bo&apos;limida ham saqlanadi.</p>
                 <button onClick={close} className="btn-ghost w-full mt-4">Yopish</button>
               </>
@@ -115,6 +115,7 @@ function Market() {
                 {sel.description && <p className="text-sm text-muted mt-4 whitespace-pre-line">{sel.description}</p>}
                 <div className="flex justify-between text-sm mt-4"><span className="text-muted">Narx</span><b className="text-accent">{som(sel.price)}</b></div>
                 <div className="flex justify-between text-sm"><span className="text-muted">O&apos;yin</span><b>{game(sel.game).name}</b></div>
+                {sel.public_no != null && <div className="flex justify-between text-sm"><span className="text-muted">Akkaunt ID</span><b>#{sel.public_no}</b></div>}
                 {sel.level != null && <div className="flex justify-between text-sm"><span className="text-muted">Daraja</span><b>{sel.level}</b></div>}
                 <div className="flex justify-between text-sm"><span className="text-muted">Balansingiz</span><b>{som(profile?.balance)}</b></div>
                 {msg && <p className="text-lose text-sm font-bold mt-3">{msg}</p>}

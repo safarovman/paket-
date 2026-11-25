@@ -8,11 +8,14 @@ Hammasi bepul: **Cloudflare Pages** (sayt, trafik cheksiz), **Cloudflare R2** (r
    1. `supabase/01_close_old_gboost.sql` — eski ochiq jadvallarni yopadi
    2. `supabase/02_uzdrop.sql` — asosiy sxema
    3. `supabase/03_codes.sql` — kod orqali topshirish
-2. O'zingizni admin qiling (o'z emailingiz bilan):
+   4. `supabase/04_account_admins.sql` — akkaunt ID (#1001…) va mas'ul admin
+2. Saytda ro'yxatdan o'ting, keyin o'zingizni **ega** qiling (o'z emailingiz bilan):
    ```sql
-   update public.profiles set is_admin = true
+   update public.profiles set is_owner = true, is_admin = true
     where id = (select id from auth.users where email = 'SIZNING@EMAIL');
    ```
+   Boshqa adminlarni keyin admin panel → Foydalanuvchilar → "Admin qilish" orqali tayinlaysiz (faqat ega qila oladi).
+   **Har bir admin profil sahifasida Telegram username'ini yozishi shart** — xaridorlar aynan shu adminga yo'naltiriladi.
 3. **Admin akkauntga kuchli, boshqa joyda ishlatilmagan parol qo'ying.**
 
 ## 2. Cloudflare R2 (rasmlar)
@@ -60,9 +63,12 @@ Hammasi bepul: **Cloudflare Pages** (sayt, trafik cheksiz), **Cloudflare R2** (r
 
 ## Xavfsizlik — qanday ishlaydi
 - Login/parollar **faqat admin** ko'radi (bazada RLS). Sayt foydalanuvchiga hech qachon ko'rsatmaydi.
-- Xarid / spin / to'ldirish → foydalanuvchiga **kod** (`UZ-XXXX-XXXX`, `PAY-XXXX-XXXX`) va **ID raqami** beriladi.
-- Foydalanuvchi Telegramda adminga kod + ID yozadi → admin panel → **🔑 Kod** → kod kiritiladi →
-  xaridorning ID va @username'i ko'rinadi. **Telegramdagi yozuvchi bilan mos kelsa** login/parol beriladi va "Topshirildi" bosiladi.
+- Har bir akkauntning **ID raqami** bor (`#1024`) va u **mas'ul adminga** biriktirilgan (uni joylagan admin).
+- Xarid / spin → xaridorga **akkaunt ID + maxfiy kod** (`UZ-XXXX-XXXX`) va **mas'ul adminning @telegram'i** beriladi.
+  To'ldirish → `PAY-XXXX-XXXX` kodi, asosiy admin (`NEXT_PUBLIC_TELEGRAM_ADMIN`).
+- Xaridor aynan o'sha adminga yozadi → admin panel → **🔑 Kod** → kod yoki `#1024` kiritiladi →
+  xaridorning UzDrop ID va @username'i ko'rinadi. **Kod mos kelsa va Telegramdagi yozuvchi o'sha odam bo'lsa**
+  login/parol beriladi va "Topshirildi" bosiladi. Akkaunt ID hammaga ko'rinadi — shuning uchun maxfiy kodsiz bermang.
 - Sotuvchiga pul faqat "Topshirildi"dan keyin tushadi. Muammo bo'lsa "Bekor qilish" — xaridorga pul qaytadi.
 - Foydalanuvchilar akkaunt va rasm qo'sha olmaydi — faqat admin (Telegramda kelishilgandan so'ng).
 - R2 kalitlari Supabase Secrets'da; rasm yuklash havolasini faqat admin oladi, 5 daqiqa amal qiladi.

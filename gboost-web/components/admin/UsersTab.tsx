@@ -1,10 +1,16 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
 import { som } from "@/lib/uzdrop";
 import { Empty, Tg, type ProfileRow, type Rpc } from "./shared";
 
-export default function UsersTab({ users, busy, rpc }: { users: ProfileRow[]; busy: boolean; rpc: Rpc }) {
+export default function UsersTab({ users, me, busy, rpc }: { users: ProfileRow[]; me: string; busy: boolean; rpc: Rpc }) {
   const [q, setQ] = useState("");
+  const [owner, setOwner] = useState(false);
+  useEffect(() => {
+    supabase.from("profiles").select("is_owner").eq("id", me).single()
+      .then(({ data }) => setOwner(!!(data as { is_owner?: boolean } | null)?.is_owner));
+  }, [me]);
   const [edit, setEdit] = useState<{ id: string; delta: string; note: string } | null>(null);
   const s = q.trim().toLowerCase().replace(/^@/, "");
   const list = users.filter(u => !s ||
@@ -25,6 +31,16 @@ export default function UsersTab({ users, busy, rpc }: { users: ProfileRow[]; bu
             </div>
             <p className="font-extrabold text-accent">{som(u.balance)}</p>
             <button className="btn-ghost !py-2" onClick={() => setEdit(edit?.id === u.id ? null : { id: u.id, delta: "", note: "" })}>Balans ±</button>
+            {owner && u.id !== me && (
+              <button disabled={busy} className={u.is_admin ? "btn-ghost !py-2 !text-lose" : "btn-violet !py-2"}
+                onClick={() => {
+                  const make = !u.is_admin;
+                  if (confirm(make ? `${u.username || "Foydalanuvchi"} admin qilinsinmi? U login/parollarni ko'ra oladi.` : "Adminlikdan olinsinmi?"))
+                    rpc("owner_set_admin", { p_user: u.id, p_admin: make }, make ? "Admin qilindi" : "Adminlikdan olindi");
+                }}>
+                {u.is_admin ? "Adminlikdan olish" : "Admin qilish"}
+              </button>
+            )}
           </div>
           {edit?.id === u.id && (
             <div className="flex flex-col sm:flex-row gap-2 mt-3">
