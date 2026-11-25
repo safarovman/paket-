@@ -1,41 +1,25 @@
-# GBoost Web — Next.js Sayt
+# UzDrop — akkaunt sotish va akkaunt spin
 
-> O'zbekistonning birinchi xavfsiz geyming ekotizimi
+Next.js 14 + Tailwind + Supabase. Sahifalar:
 
-**Sayt:** [Vercel'ga deploy qilingan](https://gboost-web.vercel.app)
-
-## Sahifalar
-
-| Sahifa | URL | Tavsif |
-|--------|-----|--------|
-| Landing | `/` | Hero, muammo/yechim, o'yinlar, Escrow, CTA |
-| Login | `/login` | Telefon + Telegram login |
-| Register | `/register` | 2 bosqich — Mijoz/Booster rol |
-| Dashboard | `/dashboard` | Statistika, buyurtmalar, tezkor harakatlar |
-| Boosting | `/boosting` | 4 bosqich wizard — o'yin, xizmat, rank, to'lov |
-| Marketplace | `/marketplace` | Akkaunt bozori + modal detail |
-| Escrow | `/escrow` | Approve/Dispute + "Qanday ishlaydi" |
-| Karma | `/karma` | AI moduli, progress circle, jazo tizimi |
-| Profile | `/profile` | Foydalanuvchi profili, tahrirlash |
+| Sahifa | Vazifasi |
+|---|---|
+| `/` | Keyslar (spin), sotuvdagi akkauntlar |
+| `/case/[id]` | Ruletka, keys ichidagi akkauntlar va ehtimollar |
+| `/market` | Akkauntlar bozori, balansdan sotib olish |
+| `/sell` | Bozorga qo'yish yoki ⚡ Tez sotish |
+| `/wallet` | Balans to'ldirish va pul yechish |
+| `/profile` | Inventar (yutuqlar: sotish/olish), xaridlar, e'lonlar, tarix |
+| `/admin` | So'rovlarni tasdiqlash, keyslar, akkaunt qo'shish, foydalanuvchilar |
 
 ## Ishga tushirish
+1. Supabase → SQL Editor → `supabase/uzdrop.sql` ni to'liq ishga tushiring.
+2. O'zingizni admin qiling (SQL oxiridagi `update public.profiles set is_admin = true ...`).
+3. Env o'zgaruvchilar (Netlify/Vercel/Cloudflare):
+   - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - `NEXT_PUBLIC_DEPOSIT_CARD`, `NEXT_PUBLIC_DEPOSIT_CARD_OWNER` — to'ldirish uchun karta
+4. Supabase → Authentication → URL Configuration → Redirect URLs ga `https://SAYT/login/done` qo'shing.
+5. `npm install && npm run build`
 
-```bash
-cd gboost-web
-npm install
-npm run dev
-```
-
-## Vercel Deploy
-
-```bash
-npm install -g vercel
-vercel --prod
-```
-
-## Texnologiyalar
-
-- **Next.js 14** (App Router)
-- **TypeScript**
-- **Tailwind CSS**
-- **Vercel** (hosting)
+Barcha pul amallari Postgres funksiyalari (RPC) ichida bajariladi; spin natijasi serverda hisoblanadi,
+jadvallarga to'g'ridan-to'g'ri yozish RLS bilan yopilgan.

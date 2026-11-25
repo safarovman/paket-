@@ -1,226 +1,93 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
 import clsx from "clsx";
+import { supabase } from "@/lib/supabase";
+import { useUser } from "@/components/UserProvider";
+import { som } from "@/lib/uzdrop";
 
 const NAV = [
-  { href: "/marketplace", label: "Bozor",    icon: "🏪" },
-  { href: "/sell",        label: "Sotish",   icon: "💰" },
-  { href: "/rent",        label: "Ijara",    icon: "🔄" },
-  { href: "/boosting",    label: "Boosting", icon: "🚀" },
+  { href: "/",       label: "Spin",          icon: "🎰" },
+  { href: "/market", label: "Akkauntlar",    icon: "🛒" },
+  { href: "/sell",   label: "Sotish",        icon: "💰" },
+  { href: "/sell?quick=1", label: "Tez sotish", icon: "⚡" },
 ];
 
 export default function Navbar() {
-  const pathname = usePathname();
-  const router   = useRouter();
-  const [open, setOpen]         = useState(false);
-  const [scrolled, setScrolled] = useState(false);
-  const [user, setUser]         = useState<any>(null);
-  const [balance]               = useState(0);
-  const [showDropdown, setShowDropdown] = useState(false);
+  const path = usePathname();
+  const router = useRouter();
+  const { user, profile } = useUser();
+  const [menu, setMenu] = useState(false);
 
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 10);
-    window.addEventListener("scroll", onScroll);
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  useEffect(() => {
-    // Foydalanuvchini tekshirish
-    supabase.auth.getUser().then(({ data }) => {
-      setUser(data.user);
-    });
-
-    // Auth holati o'zgarganda yangilash
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
-      setUser(session?.user ?? null);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
-    setShowDropdown(false);
-    router.push("/");
-  };
-
-  const isAuth = pathname === "/login" || pathname === "/register";
-  const userName = user?.user_metadata?.full_name ||
-                   user?.user_metadata?.name ||
-                   user?.email?.split("@")[0] || "";
-  const userAvatar = userName?.[0]?.toUpperCase() || "?";
+  const logout = async () => { await supabase.auth.signOut(); setMenu(false); router.push("/"); };
+  const active = (href: string) => href === "/" ? path === "/" || path.startsWith("/case") : path.startsWith(href.split("?")[0]) && !href.includes("?");
 
   return (
-    <header className={clsx(
-      "sticky top-0 z-50 transition-all duration-300",
-      scrolled
-        ? "bg-[#0E0E0E]/95 backdrop-blur-md border-b border-[#2A2A2A]"
-        : "bg-[#0E0E0E] border-b border-[#1A1A1A]"
-    )}>
-      <div className="gsection">
-        <div className="flex items-center justify-between h-16 gap-4">
+    <header className="sticky top-0 z-50 bg-bg/90 backdrop-blur border-b border-line">
+      <div className="wrap flex items-center h-16 gap-4">
+        <Link href="/" className="flex items-center gap-2 shrink-0">
+          <span className="w-9 h-9 rounded-xl bg-gradient-to-br from-accent to-[#FF7A3D] grid place-items-center font-black text-[#1B1400] text-lg rotate-[-6deg]">U</span>
+          <span className="font-black text-xl tracking-tight">Uz<span className="text-accent">Drop</span></span>
+        </Link>
 
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-2.5 shrink-0 group">
-            <div className="w-9 h-9 rounded-xl bg-orange-gradient flex items-center justify-center group-hover:scale-105 transition-transform shadow-lg">
-              <span className="text-white font-black text-lg">G</span>
-            </div>
-            <span className="font-black text-xl text-gradient">GBoost</span>
-          </Link>
+        <nav className="hidden md:flex items-center gap-1 ml-4">
+          {NAV.map(n => (
+            <Link key={n.href} href={n.href}
+              className={clsx("px-3.5 py-2 rounded-lg text-[13px] font-extrabold uppercase tracking-wide transition-colors",
+                active(n.href) ? "text-accent bg-accent/10" : "text-muted hover:text-white")}>
+              <span className="mr-1">{n.icon}</span>{n.label}
+            </Link>
+          ))}
+        </nav>
 
-          {/* Desktop nav */}
-          {!isAuth && (
-            <nav className="hidden md:flex items-center gap-1">
-              {NAV.map(n => (
-                <Link key={n.href} href={n.href}
-                  className={clsx(
-                    "flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition-all",
-                    pathname === n.href || pathname.startsWith(n.href + "/")
-                      ? "bg-orange-500/15 text-orange-400 border border-orange-500/30"
-                      : "text-gray-400 hover:text-white hover:bg-white/5"
-                  )}>
-                  {n.icon} {n.label}
-                </Link>
-              ))}
-            </nav>
-          )}
-
-          {/* Right side */}
-          <div className="flex items-center gap-2 shrink-0">
-            {isAuth ? (
-              <Link href="/" className="text-gray-400 hover:text-white text-sm transition-colors">
-                ← Bosh sahifa
+        <div className="ml-auto flex items-center gap-2">
+          {user ? (
+            <>
+              <Link href="/wallet" className="flex items-center rounded-xl bg-panel border border-line overflow-hidden">
+                <span className="px-3 py-2 text-sm font-extrabold text-accent whitespace-nowrap">{som(profile?.balance)}</span>
+                <span className="bg-accent text-[#1B1400] w-9 h-9 grid place-items-center font-black text-lg">+</span>
               </Link>
-            ) : user ? (
-              // ─── Kirgan foydalanuvchi ───
-              <>
-                {/* Balans */}
-                <Link href="/wallet"
-                  className="hidden sm:flex items-center gap-1.5 bg-[#1A1A1A] border border-[#2A2A2A] hover:border-orange-500/30 rounded-xl px-3 py-2 transition-all">
-                  <span className="text-orange-400 font-bold text-sm">{balance.toLocaleString()} so'm</span>
-                  <span className="text-orange-400 text-xs font-bold">+</span>
-                </Link>
-
-                {/* Avatar + Dropdown */}
-                <div className="relative">
-                  <button
-                    onClick={() => setShowDropdown(!showDropdown)}
-                    className="w-9 h-9 rounded-xl bg-orange-gradient flex items-center justify-center text-white font-bold text-sm hover:scale-105 transition-transform">
-                    {userAvatar}
-                  </button>
-
-                  {showDropdown && (
-                    <div className="absolute right-0 top-12 w-56 bg-[#1A1A1A] border border-[#2A2A2A] rounded-2xl shadow-2xl overflow-hidden animate-fade-in z-50">
-                      {/* User info */}
-                      <div className="px-4 py-3 border-b border-[#2A2A2A]">
-                        <p className="text-white font-bold text-sm truncate">{userName}</p>
-                        <p className="text-gray-500 text-xs truncate">{user.email}</p>
-                      </div>
-                      {/* Menu items */}
+              <div className="relative">
+                <button onClick={() => setMenu(!menu)}
+                  className="w-10 h-10 rounded-xl bg-violet grid place-items-center font-black uppercase">
+                  {(profile?.username || user.email || "?")[0]}
+                </button>
+                {menu && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setMenu(false)} />
+                    <div className="absolute right-0 top-12 z-50 w-56 panel p-1.5 shadow-2xl animate-fade-in">
+                      <p className="px-3 py-2 text-sm font-bold truncate">{profile?.username || user.email}</p>
                       {[
-                        { href:"/dashboard", icon:"📊", label:"Dashboard" },
-                        { href:"/wallet",    icon:"💰", label:"Hamyon" },
-                        { href:"/profile",   icon:"👤", label:"Profil" },
-                      ].map(item => (
-                        <Link key={item.href} href={item.href}
-                          onClick={() => setShowDropdown(false)}
-                          className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-400 hover:text-white hover:bg-white/5 transition-all">
-                          <span>{item.icon}</span>
-                          <span>{item.label}</span>
-                        </Link>
+                        { href: "/profile", l: "🎒 Inventar va profil" },
+                        { href: "/wallet",  l: "💳 Balans" },
+                        ...(profile?.is_admin ? [{ href: "/admin", l: "🛠 Admin panel" }] : []),
+                      ].map(i => (
+                        <Link key={i.href} href={i.href} onClick={() => setMenu(false)}
+                          className="block px-3 py-2 rounded-lg text-sm text-muted hover:text-white hover:bg-panel2">{i.l}</Link>
                       ))}
-                      <div className="border-t border-[#2A2A2A]">
-                        <button onClick={handleLogout}
-                          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10 transition-all">
-                          <span>🚪</span>
-                          <span>Chiqish</span>
-                        </button>
-                      </div>
+                      <button onClick={logout} className="w-full text-left px-3 py-2 rounded-lg text-sm text-lose hover:bg-lose/10">🚪 Chiqish</button>
                     </div>
-                  )}
-
-                  {/* Backdrop */}
-                  {showDropdown && (
-                    <div className="fixed inset-0 z-40" onClick={() => setShowDropdown(false)} />
-                  )}
-                </div>
-
-                {/* Mobile menu btn */}
-                <button onClick={() => setOpen(!open)}
-                  className="md:hidden w-9 h-9 flex items-center justify-center rounded-xl bg-[#1A1A1A] border border-[#2A2A2A] text-gray-400">
-                  {open ? "✕" : "☰"}
-                </button>
-              </>
-            ) : (
-              // ─── Kirmagan foydalanuvchi ───
-              <>
-                <Link href="/login"
-                  className="hidden sm:flex text-gray-400 hover:text-white text-sm font-medium px-4 py-2 rounded-xl hover:bg-white/5 transition-all">
-                  Kirish
-                </Link>
-                <Link href="/register"
-                  className="flex items-center gap-1.5 bg-orange-500 hover:bg-orange-600 text-white text-sm font-bold px-4 py-2 rounded-xl transition-all shadow-lg">
-                  Ro'yxat
-                </Link>
-                {/* Mobile */}
-                <button onClick={() => setOpen(!open)}
-                  className="md:hidden w-9 h-9 flex items-center justify-center rounded-xl bg-[#1A1A1A] border border-[#2A2A2A] text-gray-400">
-                  {open ? "✕" : "☰"}
-                </button>
-              </>
-            )}
-          </div>
+                  </>
+                )}
+              </div>
+            </>
+          ) : (
+            <Link href="/login" className="btn-accent !py-2.5">Kirish</Link>
+          )}
         </div>
-
-        {/* Mobile menu */}
-        {!isAuth && open && (
-          <div className="md:hidden border-t border-[#2A2A2A] py-3 space-y-1 animate-fade-in">
-            {NAV.map(n => (
-              <Link key={n.href} href={n.href} onClick={() => setOpen(false)}
-                className={clsx("flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all",
-                  pathname === n.href
-                    ? "bg-orange-500/15 text-orange-400"
-                    : "text-gray-400 hover:text-white hover:bg-white/5")}>
-                {n.icon} {n.label}
-              </Link>
-            ))}
-
-            <div className="pt-2 border-t border-[#2A2A2A] mt-1 space-y-1">
-              {user ? (
-                <>
-                  <Link href="/dashboard" onClick={() => setOpen(false)}
-                    className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-400 hover:text-white hover:bg-white/5 rounded-xl">
-                    📊 Dashboard
-                  </Link>
-                  <Link href="/wallet" onClick={() => setOpen(false)}
-                    className="flex items-center gap-2 px-4 py-2.5 text-sm text-orange-400 font-semibold">
-                    💰 Balans: {balance.toLocaleString()} so'm
-                  </Link>
-                  <button onClick={handleLogout}
-                    className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10 rounded-xl transition-all">
-                    🚪 Chiqish
-                  </button>
-                </>
-              ) : (
-                <>
-                  <Link href="/login" onClick={() => setOpen(false)}
-                    className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-400 hover:text-white hover:bg-white/5 rounded-xl">
-                    🔐 Kirish
-                  </Link>
-                  <Link href="/register" onClick={() => setOpen(false)}
-                    className="flex items-center gap-2 px-4 py-2.5 text-sm text-orange-400 font-bold">
-                    ✨ Ro'yxatdan o'tish
-                  </Link>
-                </>
-              )}
-            </div>
-          </div>
-        )}
       </div>
+
+      {/* Mobil pastki menyu */}
+      <nav className="md:hidden flex border-t border-line">
+        {NAV.map(n => (
+          <Link key={n.href} href={n.href}
+            className={clsx("flex-1 py-2 text-center text-[10px] font-extrabold uppercase",
+              active(n.href) ? "text-accent" : "text-muted")}>
+            <div className="text-base leading-none mb-0.5">{n.icon}</div>{n.label}
+          </Link>
+        ))}
+      </nav>
     </header>
   );
 }
