@@ -3,7 +3,8 @@ import { useCallback, useEffect, useState } from "react";
 import clsx from "clsx";
 import { supabase, errText } from "@/lib/supabase";
 import { useUser } from "@/components/UserProvider";
-import { som, ago, PAY_METHODS, DEPOSIT_CARD, DEPOSIT_CARD_OWNER } from "@/lib/uzdrop";
+import { som, ago, PAY_METHODS } from "@/lib/uzdrop";
+import { useDepositSettings } from "@/lib/useDeposit";
 import LoginCta from "@/components/profile/LoginCta";
 import CodeCard from "@/components/CodeCard";
 
@@ -35,6 +36,9 @@ export default function WalletPage() {
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; t: string } | null>(null);
+  const { settings: dep } = useDepositSettings();
+  const DEPOSIT_CARD = dep?.card ?? "…";
+  const DEPOSIT_CARD_OWNER = dep?.owner ?? "";
   const [payCode, setPayCode] = useState<{ code: string; amount: number } | null>(null);
 
   const load = useCallback(async () => {
@@ -101,7 +105,13 @@ export default function WalletPage() {
           msg.ok ? "bg-win/15 text-win" : "bg-lose/15 text-lose")}>{msg.t}</div>
       )}
 
-      {tab === "in" ? (
+      {tab === "in" && dep && !dep.enabled ? (
+        <div className="panel p-8 text-center border-lose/40">
+          <p className="text-4xl">⏸️</p>
+          <p className="font-black uppercase mt-2">Balans to&apos;ldirish vaqtincha to&apos;xtatilgan</p>
+          <p className="text-sm text-muted mt-2">{dep.message || "Hozir pul o'tkazmang. Tez orada qayta ishga tushadi."}</p>
+        </div>
+      ) : tab === "in" ? (
         <div className="grid md:grid-cols-2 gap-4">
           <div className="panel p-5 space-y-5">
             <div>

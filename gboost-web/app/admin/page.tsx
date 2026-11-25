@@ -10,8 +10,9 @@ import AddAccountTab from "@/components/admin/AddAccountTab";
 import ListedTab from "@/components/admin/ListedTab";
 import CasesTab from "@/components/admin/CasesTab";
 import UsersTab from "@/components/admin/UsersTab";
+import SettingsTab from "@/components/admin/SettingsTab";
 
-type Tab = "code" | "deposits" | "withdrawals" | "add" | "listed" | "cases" | "users";
+type Tab = "code" | "deposits" | "withdrawals" | "add" | "listed" | "cases" | "users" | "settings";
 const TABS: { id: Tab; label: string }[] = [
   { id: "code",        label: "🔑 Kod" },
   { id: "deposits",    label: "💳 To'ldirish" },
@@ -20,9 +21,10 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "listed",      label: "📦 Saytdagi" },
   { id: "cases",       label: "Keyslar" },
   { id: "users",       label: "Foydalanuvchilar" },
+  { id: "settings",    label: "⚙️ Sozlamalar" },
 ];
 
-interface Deposit { id: string; code: string | null; user_id: string; amount: number; method: string; note: string | null; created_at: string; }
+interface Deposit { id: string; code: string | null; card_last4?: string | null; user_id: string; amount: number; method: string; note: string | null; created_at: string; }
 interface Withdrawal { id: string; user_id: string; amount: number; card: string; created_at: string; }
 
 export default function AdminPage() {
@@ -136,6 +138,7 @@ export default function AdminPage() {
                   <p className="font-extrabold text-accent text-lg">{som(d.amount)}</p>
                   {d.code && <span className="font-mono font-black text-sm select-all">{d.code}</span>}
                   <span className="chip bg-panel2 text-muted uppercase">{d.method}</span>
+                  {d.card_last4 && <span className="chip bg-violet/20 text-violet-light">karta •••• {d.card_last4}</span>}
                 </div>
                 <UserLine u={byId[d.user_id]} />
                 {d.note && <p className="text-xs text-muted break-words">📝 {d.note}</p>}
@@ -174,6 +177,7 @@ export default function AdminPage() {
       {tab === "listed" && <ListedTab accounts={listed} cases={cases} users={byId} admins={adminOpts} adminById={adminById} me={profile.id} busy={busy} rpc={rpc} />}
       {tab === "cases" && <CasesTab cases={cases} pool={pool} busy={busy} onSave={args => rpc("admin_save_case", args, "Keys saqlandi")} />}
       {tab === "users" && <UsersTab users={users} me={profile.id} busy={busy} rpc={rpc} />}
+      {tab === "settings" && <SettingsTab me={profile.id} />}
     </div>
   );
 }

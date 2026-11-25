@@ -9,11 +9,13 @@ Hammasi bepul: **Cloudflare Pages** (sayt, trafik cheksiz), **Cloudflare R2** (r
    2. `supabase/02_uzdrop.sql` — asosiy sxema
    3. `supabase/03_codes.sql` — kod orqali topshirish
    4. `supabase/04_account_admins.sql` — akkaunt ID (#1001…) va mas'ul admin
+   5. `supabase/05_settings.sql` — to'lov kartasi sozlamasi (admin panel → ⚙️ Sozlamalar)
 2. Saytda ro'yxatdan o'ting, keyin o'zingizni **ega** qiling (o'z emailingiz bilan):
    ```sql
    update public.profiles set is_owner = true, is_admin = true
     where id = (select id from auth.users where email = 'SIZNING@EMAIL');
    ```
+   To'lov kartasini admin panel → **⚙️ Sozlamalar**da kiriting (faqat ega o'zgartira oladi; karta bloklansa shu yerda to'xtatib, yangisiga almashtirasiz).
    Boshqa adminlarni keyin admin panel → Foydalanuvchilar → "Admin qilish" orqali tayinlaysiz (faqat ega qila oladi).
    **Har bir admin profil sahifasida Telegram username'ini yozishi shart** — xaridorlar aynan shu adminga yo'naltiriladi.
 3. **Admin akkauntga kuchli, boshqa joyda ishlatilmagan parol qo'ying.**
@@ -48,8 +50,6 @@ Hammasi bepul: **Cloudflare Pages** (sayt, trafik cheksiz), **Cloudflare R2** (r
    | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | anon (ochiq) kalit |
    | `NEXT_PUBLIC_STORAGE` | `r2` |
    | `NEXT_PUBLIC_TELEGRAM_ADMIN` | admin Telegram username (@ siz) |
-   | `NEXT_PUBLIC_DEPOSIT_CARD` | to'lov kartasi raqami |
-   | `NEXT_PUBLIC_DEPOSIT_CARD_OWNER` | karta egasi |
    | `NODE_VERSION` | `20` |
 
 ## 4. Domen
