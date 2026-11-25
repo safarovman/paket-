@@ -42,7 +42,7 @@ export interface Spin {
   created_at: string;
 }
 
-export interface Profile { id: string; username: string | null; balance: number; is_admin: boolean; }
+export interface Profile { id: string; username: string | null; email?: string | null; balance: number; is_admin: boolean; }
 
 export const GAMES = [
   { id: "standoff2", name: "Standoff 2",      icon: "🔫", color: "#FFC83D" },
