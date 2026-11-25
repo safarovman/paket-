@@ -451,3 +451,95 @@ exception when others then null; end $$;
 --  update public.profiles set is_admin = true
 --   where id = (select id from auth.users where email = 'SIZNING@EMAIL.uz');
 -- ============================================================
+
+-- ============================================================
+--  v2: TELEGRAM ORQALI SOTISH + ADMIN RASM YUKLAYDI
+--  Sotuvchi Telegramda adminga yozadi → admin akkauntni tekshiradi →
+--  admin paneldan rasmlari bilan saytga joylaydi → xaridor sotib oladi.
+-- ============================================================
+alter table public.profiles add column if not exists email text;
+update public.profiles p set email = u.email from auth.users u where u.id = p.id and p.email is null;
+
+create or replace function public.handle_new_user() returns trigger
+language plpgsql security definer set search_path = public as $$
+begin
+  insert into public.profiles (id, username, email)
+  values (new.id, coalesce(new.raw_user_meta_data->>'full_name',
+                           new.raw_user_meta_data->>'name',
+                           split_part(new.email, '@', 1)), new.email)
+  on conflict (id) do nothing;
+  return new;
+end $$;
+
+alter table public.accounts add column if not exists images text[] not null default '{}';
+
+-- ---------- Rasmlar uchun Storage bucket (ochiq o'qish, faqat admin yuklaydi) ----------
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('account-images', 'account-images', true, 5242880, array['image/jpeg','image/png','image/webp'])
+on conflict (id) do update set public = true;
+
+drop policy if exists "uzdrop images read"   on storage.objects;
+create policy "uzdrop images read" on storage.objects for select using (bucket_id = 'account-images');
+drop policy if exists "uzdrop images admin"  on storage.objects;
+create policy "uzdrop images admin" on storage.objects for all
+  using (bucket_id = 'account-images' and public.is_admin())
+  with check (bucket_id = 'account-images' and public.is_admin());
+
+-- ---------- Admin akkauntni saytga joylaydi ----------
+--  p_mode = 'market' → sotuvchi nomidan sotuvga; sotilganda sotuvchiga 90%
+--  p_mode = 'quick'  → tez sotish: sotuvchiga p_payout hozir to'lanadi, akkaunt saytniki
+--  p_mode = 'site'   → saytning o'z akkaunti
+--  p_case berilsa akkaunt keysga (spin) tushadi, aks holda bozorga.
+create or replace function public.admin_create_account(
+  p_mode text, p_seller uuid, p_payout bigint,
+  p_game text, p_title text, p_description text, p_rank text, p_level int, p_images text[],
+  p_price bigint, p_case uuid, p_login text, p_password text, p_extra text
+) returns uuid language plpgsql security definer set search_path = public as $$
+declare v_id uuid; v_kind text;
+begin
+  perform public._require_admin();
+  if p_mode not in ('market','quick','site') then raise exception 'Noto''g''ri tur'; end if;
+  if coalesce(p_price,0) < 1000 then raise exception 'Narx kamida 1 000 so''m'; end if;
+  if coalesce(trim(p_title),'') = '' then raise exception 'Sarlavha majburiy'; end if;
+  if coalesce(trim(p_login),'') = '' or coalesce(trim(p_password),'') = '' then raise exception 'Login va parol majburiy'; end if;
+  if p_mode in ('market','quick') and p_seller is null then raise exception 'Sotuvchini tanlang'; end if;
+  if p_mode = 'market' and p_case is not null then raise exception 'Sotuvchi akkaunti keysga qo''yilmaydi — tez sotishni tanlang'; end if;
+  if p_mode = 'quick' and coalesce(p_payout,0) <= 0 then raise exception 'Sotuvchiga to''lov summasini kiriting'; end if;
+
+  v_kind := p_mode;
+  insert into public.accounts(game,title,description,rank,level,images,image_url,price,asked_price,kind,status,seller_id,case_id)
+  values (p_game, trim(p_title), nullif(trim(p_description),''), nullif(trim(p_rank),''), p_level,
+          coalesce(p_images,'{}'), (coalesce(p_images,'{}'))[1], p_price, p_payout, v_kind,
+          case when p_case is null then 'active' else 'pool' end,
+          case when p_mode = 'site' then null else p_seller end, p_case)
+  returning id into v_id;
+  insert into public.account_secrets(account_id,login,password,extra) values (v_id, trim(p_login), p_password, nullif(trim(p_extra),''));
+
+  if p_mode = 'quick' then
+    perform public._add_balance(p_seller, p_payout, 'quick_sell', trim(p_title));
+  end if;
+  return v_id;
+end $$;
+
+-- Sotuvdagi akkauntni tahrirlash
+create or replace function public.admin_update_account(
+  p_id uuid, p_title text, p_description text, p_rank text, p_level int, p_price bigint, p_images text[]
+) returns void language plpgsql security definer set search_path = public as $$
+begin
+  perform public._require_admin();
+  update public.accounts set title = coalesce(nullif(trim(p_title),''), title), description = nullif(trim(p_description),''),
+    rank = nullif(trim(p_rank),''), level = p_level, price = coalesce(p_price, price),
+    images = coalesce(p_images, images), image_url = coalesce(p_images, images)[1], updated_at = now()
+  where id = p_id and status in ('pending','active','pool');
+  if not found then raise exception 'Akkaunt topilmadi yoki allaqachon sotilgan'; end if;
+end $$;
+
+-- Sotuvdan olib tashlash
+create or replace function public.admin_remove_account(p_id uuid, p_note text) returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  perform public._require_admin();
+  update public.accounts set status = 'rejected', reject_note = p_note, updated_at = now()
+  where id = p_id and status in ('pending','active','pool');
+  if not found then raise exception 'Akkaunt topilmadi yoki allaqachon sotilgan'; end if;
+end $$;

@@ -9,6 +9,7 @@ export interface Account {
   rank: string | null;
   level: number | null;
   image_url: string | null;
+  images: string[];
   price: number;
   asked_price: number | null;
   kind: "market" | "quick" | "site";
@@ -64,6 +65,10 @@ export const PAY_METHODS = [
 /** To'ldirish uchun karta (env orqali o'zgartiring) */
 export const DEPOSIT_CARD = process.env.NEXT_PUBLIC_DEPOSIT_CARD || "8600 0000 0000 0000";
 export const DEPOSIT_CARD_OWNER = process.env.NEXT_PUBLIC_DEPOSIT_CARD_OWNER || "UZDROP";
+
+/** Sotuvchilar yozadigan admin Telegram username (@siz) */
+export const TELEGRAM_ADMIN = (process.env.NEXT_PUBLIC_TELEGRAM_ADMIN || "uzdrop_admin").replace(/^@/, "");
+export const telegramLink = (text: string) => `https://t.me/${TELEGRAM_ADMIN}?text=${encodeURIComponent(text)}`;
 
 export const COMMISSION = 0.10;
 

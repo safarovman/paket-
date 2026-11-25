@@ -2,70 +2,40 @@
 import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { supabase, errText } from "@/lib/supabase";
 import { useUser } from "@/components/UserProvider";
-import { COMMISSION, GAMES, som } from "@/lib/uzdrop";
+import { COMMISSION, TELEGRAM_ADMIN, telegramLink } from "@/lib/uzdrop";
 
 function Sell() {
   const params = useSearchParams();
-  const { user } = useUser();
+  const { user, profile } = useUser();
   const [quick, setQuick] = useState(params.get("quick") === "1");
   useEffect(() => { setQuick(params.get("quick") === "1"); }, [params]);
+  const [copied, setCopied] = useState(false);
 
-  const [f, setF] = useState({ game: "standoff2", title: "", rank: "", level: "", description: "", image_url: "", price: "", login: "", password: "", extra: "" });
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState("");
-  const [done, setDone] = useState(false);
-  const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => setF({ ...f, [k]: e.target.value });
-  const price = parseInt(f.price.replace(/\D/g, "")) || 0;
-
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault(); setErr("");
-    if (!f.title.trim()) return setErr("Sarlavhani kiriting");
-    if (price < 1000) return setErr("Narxni kiriting (kamida 1 000 so'm)");
-    setBusy(true);
-    const { error } = await supabase.rpc("submit_account", {
-      p_kind: quick ? "quick" : "market", p_game: f.game, p_title: f.title.trim(), p_description: f.description.trim() || null,
-      p_rank: f.rank.trim() || null, p_level: f.level ? parseInt(f.level) : null, p_image_url: f.image_url.trim() || null,
-      p_price: price, p_login: f.login.trim(), p_password: f.password, p_extra: f.extra.trim() || null,
-    });
-    setBusy(false);
-    if (error) return setErr(errText(error));
-    setDone(true);
-  };
-
-  if (!user) return (
-    <div className="wrap py-20 text-center">
-      <p className="text-5xl">💰</p><h1 className="h-title mt-3">Akkaunt sotish</h1>
-      <p className="text-muted mt-2 mb-6">Sotish uchun avval tizimga kiring</p>
-      <Link href="/login" className="btn-accent">Kirish</Link>
-    </div>
-  );
-
-  if (done) return (
-    <div className="wrap py-20 text-center max-w-lg">
-      <p className="text-6xl">{quick ? "⚡" : "✅"}</p>
-      <h1 className="h-title mt-3">So&apos;rov yuborildi!</h1>
-      <p className="text-muted mt-2">
-        {quick
-          ? "Admin akkauntni tekshiradi va pul balansingizga darhol tushadi. Shu pulga spin qilishingiz mumkin."
-          : "Admin tekshirgandan so'ng e'loningiz bozorda paydo bo'ladi. Sotilganda pul balansingizga tushadi."}
-      </p>
-      <div className="flex gap-3 justify-center mt-6">
-        <Link href="/profile" className="btn-violet">E&apos;lonlarim</Link>
-        <button onClick={() => { setDone(false); setF({ ...f, title: "", login: "", password: "", extra: "", description: "" }); }} className="btn-ghost">Yana sotish</button>
-      </div>
-    </div>
-  );
+  const who = profile?.email || user?.email || "";
+  const message = [
+    quick ? "⚡ Salom! Akkauntimni TEZ SOTMOQCHIMAN." : "🛒 Salom! Akkauntimni UzDrop bozorida sotmoqchiman.",
+    "",
+    `UzDrop akkauntim: ${who}`,
+    `ID: ${user?.id ?? ""}`,
+    "",
+    "O'yin: ",
+    "Rank / daraja: ",
+    "Skinlar / qahramonlar: ",
+    quick ? "Qancha so'rayman: " : "Sotuv narxi: ",
+    "",
+    "(Skrinshotlarni shu yerga yuboraman)",
+  ].join("\n");
 
   return (
     <div className="wrap py-6 max-w-3xl">
-      <h1 className="h-title mb-4">Akkauntni sotish</h1>
+      <h1 className="h-title mb-1">Akkauntni sotish</h1>
+      <p className="text-muted text-sm mb-5">Sotish Telegram orqali — admin akkauntni tekshiradi va o&apos;zi saytga joylaydi.</p>
 
       <div className="grid sm:grid-cols-2 gap-3 mb-6">
         {[
-          { q: false, i: "🛒", t: "Bozorga qo'yish", d: `O'zingiz narx qo'yasiz. Sotilganda ${100 - COMMISSION * 100}% sizga.` },
-          { q: true,  i: "⚡", t: "Tez sotish",      d: "UzDrop akkauntni o'zi sotib oladi — kutish yo'q, pul darhol balansga." },
+          { q: false, i: "🛒", t: "Bozorga qo'yish", d: `Narxni o'zingiz aytasiz. Sotilganda ${100 - COMMISSION * 100}% balansingizga tushadi.` },
+          { q: true,  i: "⚡", t: "Tez sotish",      d: "UzDrop akkauntni o'zi sotib oladi — admin tasdiqlashi bilan pul darhol balansda." },
         ].map(o => (
           <button key={o.t} type="button" onClick={() => setQuick(o.q)}
             className={`panel p-4 text-left transition-colors ${quick === o.q ? "!border-accent bg-accent/5" : "hover:border-violet"}`}>
@@ -76,46 +46,42 @@ function Sell() {
         ))}
       </div>
 
-      <form onSubmit={submit} className="panel p-5 grid sm:grid-cols-2 gap-4">
-        <div>
-          <label className="label">O&apos;yin</label>
-          <select className="input" value={f.game} onChange={set("game")}>
-            {GAMES.map(g => <option key={g.id} value={g.id}>{g.icon} {g.name}</option>)}
-          </select>
-        </div>
-        <div><label className="label">Sarlavha *</label><input className="input" placeholder="Masalan: 15 ta pichoq, Gold rank" value={f.title} onChange={set("title")} /></div>
-        <div><label className="label">Rank / unvon</label><input className="input" placeholder="Legendary, Conqueror…" value={f.rank} onChange={set("rank")} /></div>
-        <div><label className="label">Daraja (level)</label><input className="input" inputMode="numeric" value={f.level} onChange={set("level")} /></div>
-        <div className="sm:col-span-2">
-          <label className="label">Tavsif</label>
-          <textarea className="input min-h-[90px]" placeholder="Skinlar, qahramonlar, bog'langan pochta va h.k." value={f.description} onChange={set("description")} />
-        </div>
-        <div className="sm:col-span-2"><label className="label">Rasm havolasi (ixtiyoriy)</label><input className="input" placeholder="https://…" value={f.image_url} onChange={set("image_url")} /></div>
-        <div className="sm:col-span-2">
-          <label className="label">{quick ? "Qancha so'raysiz? *" : "Sotuv narxi *"}</label>
-          <input className="input text-lg font-black" inputMode="numeric" placeholder="100 000" value={f.price} onChange={set("price")} />
-          {price > 0 && (
-            <p className="text-xs text-muted mt-1.5">
-              {quick
-                ? <>Admin narxni tekshirib, adolatli taklif beradi (odatda so&apos;ralgan narx). Tasdiqlangach <b className="text-win">darhol</b> balansga tushadi.</>
-                : <>Sotilganda sizga: <b className="text-win">{som(Math.floor(price * (1 - COMMISSION)))}</b> (komissiya {COMMISSION * 100}%)</>}
-            </p>
-          )}
-        </div>
+      <div className="panel p-5">
+        <p className="font-black uppercase mb-4">Qanday ishlaydi</p>
+        <ol className="space-y-3">
+          {[
+            ["Tizimga kiring", "Pul aynan shu UzDrop akkauntingiz balansiga tushadi."],
+            ["Telegramda adminga yozing", `@${TELEGRAM_ADMIN} — tayyor xabar avtomatik ochiladi, bo'sh joylarni to'ldiring.`],
+            ["Skrinshotlar va ma'lumotlarni yuboring", "Rank, skinlar, inventar rasmlari. Login/parolni admin so'raganda berasiz."],
+            ["Admin tekshiradi va saytga joylaydi", quick ? "Narx kelishilgach pul darhol balansingizga tushadi." : "E'lon rasmlari bilan bozorda paydo bo'ladi."],
+            [quick ? "Spin qiling yoki yeching" : "Sotilganda pul keladi", quick ? "Pulga keys oching yoki kartaga yeching." : "Xaridor sotib olishi bilan pul balansingizda."],
+          ].map(([t, d], i) => (
+            <li key={t} className="flex gap-3">
+              <span className="w-7 h-7 shrink-0 rounded-lg bg-violet grid place-items-center font-black text-sm">{i + 1}</span>
+              <div><p className="font-bold text-sm">{t}</p><p className="text-xs text-muted">{d}</p></div>
+            </li>
+          ))}
+        </ol>
 
-        <div className="sm:col-span-2 border-t border-line pt-4">
-          <p className="font-extrabold text-sm">🔒 Akkauntga kirish ma&apos;lumotlari</p>
-          <p className="text-xs text-muted">Faqat admin va xaridorga ko&apos;rinadi. Xaridgacha hech kimga ochilmaydi.</p>
-        </div>
-        <div><label className="label">Login / Email / ID *</label><input className="input" value={f.login} onChange={set("login")} autoComplete="off" /></div>
-        <div><label className="label">Parol *</label><input className="input" value={f.password} onChange={set("password")} autoComplete="off" /></div>
-        <div className="sm:col-span-2"><label className="label">Qo&apos;shimcha (pochta paroli, kodlar)</label><input className="input" value={f.extra} onChange={set("extra")} autoComplete="off" /></div>
+        {user ? (
+          <>
+            <div className="mt-5 bg-bg border border-line rounded-xl p-3 text-xs text-muted whitespace-pre-line font-mono max-h-48 overflow-y-auto">{message}</div>
+            <div className="grid sm:grid-cols-2 gap-2 mt-3">
+              <a href={telegramLink(message)} target="_blank" rel="noopener noreferrer" className={quick ? "btn-accent" : "btn-violet"}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M9.8 15.6 9.4 20c.6 0 .9-.3 1.2-.6l2.9-2.8 6 4.4c1.1.6 1.9.3 2.2-1L24 3.6c.4-1.6-.6-2.3-1.6-1.9L1.1 10c-1.5.6-1.5 1.4-.3 1.8l5.5 1.7L19 5.5c.6-.4 1.1-.2.7.2" /></svg>
+                Telegramda yozish
+              </a>
+              <button onClick={() => { navigator.clipboard.writeText(message); setCopied(true); setTimeout(() => setCopied(false), 2000); }} className="btn-ghost">
+                {copied ? "✅ Nusxalandi" : "Xabarni nusxalash"}
+              </button>
+            </div>
+          </>
+        ) : (
+          <Link href="/login" className="btn-accent w-full mt-5">Avval tizimga kiring</Link>
+        )}
+      </div>
 
-        {err && <p className="sm:col-span-2 text-lose text-sm font-bold">{err}</p>}
-        <button disabled={busy} className={`${quick ? "btn-accent" : "btn-violet"} sm:col-span-2`}>
-          {busy ? "Yuborilmoqda…" : quick ? "⚡ Tez sotish" : "Bozorga qo'yish"}
-        </button>
-      </form>
+      <p className="text-xs text-muted mt-4">🔒 Login va parolingiz faqat admin va xaridorga ko&apos;rinadi. Admin hech qachon kartangiz PIN-kodi yoki SMS kodini so&apos;ramaydi.</p>
     </div>
   );
 }

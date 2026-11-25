@@ -18,9 +18,9 @@ export default function AccountCard({ a, footer, onClick, compact }: {
           <span className="chip bg-bg/60 text-muted">{g.icon} {g.name}</span>
           <span className="chip" style={{ color: r.color, background: r.color + "22" }}>{r.name}</span>
         </div>
-        <div className={`${compact ? "h-20" : "h-28"} grid place-items-center`}>
+        <div className={`${compact ? "h-20" : "h-28"} grid place-items-center rounded-lg overflow-hidden`}>
           {a.image_url
-            ? <img src={a.image_url} alt="" className="max-h-full max-w-full object-contain drop-shadow-xl" />
+            ? <img src={a.image_url} alt="" loading="lazy" className="h-full w-full object-cover rounded-lg" />
             : <span className={`${compact ? "text-4xl" : "text-6xl"} drop-shadow-xl`}>{g.icon}</span>}
         </div>
         <p className="font-extrabold text-sm truncate mt-2">{a.title}</p>
