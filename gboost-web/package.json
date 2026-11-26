@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "build:admin": "NEXT_PUBLIC_SITE=admin next build && rm -rf out-admin && mv out out-admin",
+    "dev:admin": "NEXT_PUBLIC_SITE=admin next dev -p 3001"
   },
   "dependencies": {
     "next": "14.2.5",

@@ -1,0 +1,10 @@
+// Admin sayti (alohida Worker).
+// Build: npm run build:admin  →  Deploy: npx wrangler deploy --config wrangler.admin.jsonc
+{
+  "name": "uzdrop-panel",
+  "compatibility_date": "2026-11-01",
+  "assets": {
+    "directory": "./out-admin",
+    "not_found_handling": "404-page"
+  }
+}

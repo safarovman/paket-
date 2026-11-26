@@ -1,41 +1,16 @@
-# GBoost Web — Next.js Sayt
+# UzDrop — akkaunt sotish va akkaunt spin
 
-> O'zbekistonning birinchi xavfsiz geyming ekotizimi
+Next.js 14 + Tailwind + Supabase. Sahifalar:
 
-**Sayt:** [Vercel'ga deploy qilingan](https://gboost-web.vercel.app)
-
-## Sahifalar
-
-| Sahifa | URL | Tavsif |
-|--------|-----|--------|
-| Landing | `/` | Hero, muammo/yechim, o'yinlar, Escrow, CTA |
-| Login | `/login` | Telefon + Telegram login |
-| Register | `/register` | 2 bosqich — Mijoz/Booster rol |
-| Dashboard | `/dashboard` | Statistika, buyurtmalar, tezkor harakatlar |
-| Boosting | `/boosting` | 4 bosqich wizard — o'yin, xizmat, rank, to'lov |
-| Marketplace | `/marketplace` | Akkaunt bozori + modal detail |
-| Escrow | `/escrow` | Approve/Dispute + "Qanday ishlaydi" |
-| Karma | `/karma` | AI moduli, progress circle, jazo tizimi |
-| Profile | `/profile` | Foydalanuvchi profili, tahrirlash |
+| Sahifa | Vazifasi |
+|---|---|
+| `/` | Keyslar (spin), sotuvdagi akkauntlar |
+| `/case?id=` | Ruletka, keys ichidagi akkauntlar va ehtimollar |
+| `/market` | Akkauntlar bozori, balansdan sotib olish → kod |
+| `/sell` | Telegram orqali adminga yozib sotish (bozorga yoki ⚡ tez) |
+| `/wallet` | Balans to'ldirish va pul yechish |
+| `/profile` | ID raqam, Telegram, inventar, xaridlar (kodlar), e'lonlar, tarix |
+| `/admin` | Kod bo'yicha topshirish, to'ldirish, akkaunt joylash (rasmlar), keyslar, foydalanuvchilar |
 
 ## Ishga tushirish
-
-```bash
-cd gboost-web
-npm install
-npm run dev
-```
-
-## Vercel Deploy
-
-```bash
-npm install -g vercel
-vercel --prod
-```
-
-## Texnologiyalar
-
-- **Next.js 14** (App Router)
-- **TypeScript**
-- **Tailwind CSS**
-- **Vercel** (hosting)
+To'liq yo'riqnoma: **[DEPLOY.md](DEPLOY.md)** (Supabase, Cloudflare Pages, R2, domen).

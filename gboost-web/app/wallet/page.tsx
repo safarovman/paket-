@@ -1,177 +1,210 @@
 "use client";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import clsx from "clsx";
+import { supabase, errText } from "@/lib/supabase";
+import { useUser } from "@/components/UserProvider";
+import { som, ago, PAY_METHODS, TELEGRAM_ADMIN, telegramLink } from "@/lib/uzdrop";
+import { useDepositSettings } from "@/lib/useDeposit";
+import LoginCta from "@/components/profile/LoginCta";
+import CodeCard from "@/components/CodeCard";
 
-const METHODS = [
-  { id:"click",  name:"Click",  icon:"📱", color:"#1976D2", min:10000  },
-  { id:"payme",  name:"Payme",  icon:"📲", color:"#00A4CF", min:10000  },
-  { id:"uzcard", name:"Uzcard", icon:"💳", color:"#0066CC", min:10000  },
-  { id:"humo",   name:"Humo",   icon:"💳", color:"#00A651", min:10000  },
-];
+const PRESETS = [10_000, 25_000, 50_000, 100_000, 250_000];
 
-const fmt = (n: number) => n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+interface Dep { id: string; code: string | null; amount: number; method: string; status: string; created_at: string; }
+interface Wd  { id: string; amount: number; card: string; status: string; created_at: string; }
 
-const HISTORY = [
-  { type:"in",  amount:100000, method:"Click",  date:"2024-01-15", status:"completed", desc:"Hisob to'ldirildi" },
-  { type:"out", amount:50000,  method:"Uzcard", date:"2024-01-14", status:"completed", desc:"Akkaunt sotib olindi" },
-  { type:"in",  amount:200000, method:"Payme",  date:"2024-01-12", status:"completed", desc:"Hisob to'ldirildi" },
-  { type:"in",  amount:75000,  method:"Humo",   date:"2024-01-10", status:"pending",   desc:"Kutilmoqda..." },
-];
+const ST: Record<string, { t: string; c: string }> = {
+  pending:  { t: "Kutilmoqda",   c: "bg-accent/15 text-accent" },
+  approved: { t: "Tasdiqlandi",  c: "bg-win/15 text-win" },
+  paid:     { t: "To'landi",     c: "bg-win/15 text-win" },
+  rejected: { t: "Rad etildi",   c: "bg-lose/15 text-lose" },
+};
+
+const digits = (s: string) => Number(s.replace(/\D/g, "")) || 0;
+const fmtInput = (n: number) => (n ? n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ") : "");
 
 export default function WalletPage() {
-  const [balance]    = useState(325000);
-  const [method, setMethod] = useState("click");
-  const [amount, setAmount] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const [tab, setTab] = useState<"topup"|"history">("topup");
+  const { user, profile, loading, refresh } = useUser();
+  const [tab, setTab] = useState<"in" | "out">("in");
+  const [method, setMethod] = useState(PAY_METHODS[0].id);
+  const [amount, setAmount] = useState(50_000);
+  const [note, setNote] = useState("");
+  const [wAmount, setWAmount] = useState(0);
+  const [card, setCard] = useState("");
+  const [deps, setDeps] = useState<Dep[]>([]);
+  const [wds, setWds] = useState<Wd[]>([]);
+  const [busy, setBusy] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [msg, setMsg] = useState<{ ok: boolean; t: string } | null>(null);
+  const { settings: dep } = useDepositSettings();
+  const DEPOSIT_CARD = dep?.card ?? "…";
+  const DEPOSIT_CARD_OWNER = dep?.owner ?? "";
+  const [payCode, setPayCode] = useState<{ code: string; amount: number } | null>(null);
 
-  const selectedMethod = METHODS.find(m => m.id === method)!;
-  const numAmount = Number(amount);
-  const isValid = numAmount >= selectedMethod.min;
+  const load = useCallback(async () => {
+    if (!user) return;
+    const [d, w] = await Promise.all([
+      supabase.from("deposits").select("id,code,amount,method,status,created_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(20),
+      supabase.from("withdrawals").select("id,amount,card,status,created_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(20),
+    ]);
+    setDeps((d.data as Dep[]) || []);
+    setWds((w.data as Wd[]) || []);
+  }, [user]);
+  useEffect(() => { load(); }, [load]);
 
-  const handleTopup = async () => {
-    if (!isValid) return;
-    setLoading(true);
-    await new Promise(r => setTimeout(r, 1500));
-    setLoading(false);
-    setSuccess(true);
-    setTimeout(() => setSuccess(false), 3000);
-    setAmount("");
+  const deposit = async () => {
+    setMsg(null);
+    if (amount < 1000) return setMsg({ ok: false, t: "Minimal summa 1 000 so'm" });
+    setBusy(true);
+    const { data, error } = await supabase.rpc("request_deposit", { p_amount: amount, p_method: method, p_note: note || null });
+    setBusy(false);
+    if (error) return setMsg({ ok: false, t: errText(error) });
+    setNote("");
+    setPayCode({ code: data as string, amount });
+    load();
   };
 
-  const QUICK_AMOUNTS = [50000, 100000, 200000, 500000];
+  const withdraw = async () => {
+    setMsg(null);
+    if (wAmount < 10_000) return setMsg({ ok: false, t: "Minimal yechish 10 000 so'm" });
+    if (card.replace(/\D/g, "").length < 16) return setMsg({ ok: false, t: "Karta raqamini to'liq kiriting (16 raqam)" });
+    setBusy(true);
+    const { error } = await supabase.rpc("request_withdraw", { p_amount: wAmount, p_card: card.trim() });
+    setBusy(false);
+    if (error) return setMsg({ ok: false, t: errText(error) });
+    setWAmount(0); setCard("");
+    setMsg({ ok: true, t: "✅ Yechish so'rovi qabul qilindi. Pul kartangizga tez orada o'tkaziladi." });
+    await Promise.all([refresh(), load()]);
+  };
+
+  if (loading) return <div className="wrap py-20 text-center text-muted">Yuklanmoqda...</div>;
+  if (!user) return <LoginCta text="Balansni to'ldirish va pul yechish uchun hisobingizga kiring." />;
+
+  const cardFmt = (v: string) => v.replace(/\D/g, "").slice(0, 16).replace(/(.{4})/g, "$1 ").trim();
 
   return (
-    <div className="gsection py-10">
-      <div className="max-w-xl mx-auto">
-        <h1 className="text-3xl font-black text-white mb-2">💰 Hamyon</h1>
-        <p className="text-gray-500 mb-8">Hisobingizni to'ldiring va bozordan foydalaning</p>
+    <div className="wrap py-8 max-w-4xl animate-fade-in">
+      {/* Balans */}
+      <div className="panel p-6 sm:p-8 relative overflow-hidden text-center">
+        <div className="absolute inset-0 opacity-40 pointer-events-none"
+          style={{ background: "radial-gradient(circle at 50% 120%, rgba(255,200,61,.35), transparent 60%)" }} />
+        <p className="label relative">Sizning balansingiz</p>
+        <p className="relative text-4xl sm:text-5xl font-black text-accent">{som(profile?.balance)}</p>
+      </div>
 
-        {/* Balance card */}
-        <div className="bg-gradient-to-br from-orange-500/20 to-[#1A1A1A] border border-orange-500/30 rounded-2xl p-6 mb-6">
-          <p className="text-gray-400 text-sm mb-1">Joriy balans</p>
-          <p className="text-4xl font-black text-white mb-1">{fmt(balance)}</p>
-          <p className="text-orange-400 font-semibold">so'm</p>
-          <div className="mt-4 grid grid-cols-2 gap-3 text-xs">
-            <div className="bg-black/30 rounded-xl p-3">
-              <p className="text-gray-400">Jami kirim</p>
-              <p className="text-green-400 font-bold text-base mt-1">{fmt(375000)} so'm</p>
-            </div>
-            <div className="bg-black/30 rounded-xl p-3">
-              <p className="text-gray-400">Jami chiqim</p>
-              <p className="text-red-400 font-bold text-base mt-1">{fmt(50000)} so'm</p>
-            </div>
-          </div>
-        </div>
+      <div className="grid grid-cols-2 gap-1.5 mt-6 mb-5 panel p-1.5">
+        {([["in", "💳 To'ldirish"], ["out", "🏦 Yechish"]] as const).map(([id, l]) => (
+          <button key={id} onClick={() => { setTab(id); setMsg(null); }}
+            className={clsx("py-3 rounded-xl text-sm font-extrabold uppercase transition-colors",
+              tab === id ? "bg-accent text-[#1B1400]" : "text-muted hover:text-white")}>{l}</button>
+        ))}
+      </div>
 
-        {/* Tabs */}
-        <div className="flex gap-1 bg-[#1A1A1A] border border-[#2A2A2A] rounded-xl p-1 mb-5">
-          <button onClick={() => setTab("topup")}
-            className={clsx("flex-1 py-2 rounded-lg text-sm font-semibold transition-all",
-              tab==="topup" ? "bg-orange-500/20 text-orange-400" : "text-gray-500 hover:text-white")}>
-            ➕ To'ldirish
-          </button>
-          <button onClick={() => setTab("history")}
-            className={clsx("flex-1 py-2 rounded-lg text-sm font-semibold transition-all",
-              tab==="history" ? "bg-orange-500/20 text-orange-400" : "text-gray-500 hover:text-white")}>
-            📋 Tarix
-          </button>
-        </div>
+      {msg && (
+        <div className={clsx("mb-4 rounded-xl px-4 py-3 text-sm font-bold animate-fade-in",
+          msg.ok ? "bg-win/15 text-win" : "bg-lose/15 text-lose")}>{msg.t}</div>
+      )}
 
-        {tab === "topup" && (
-          <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded-2xl p-6 space-y-5 animate-fade-in">
-
-            {success && (
-              <div className="bg-green-500/15 border border-green-500/30 rounded-xl p-4 text-center animate-fade-in">
-                <div className="text-3xl mb-2">✅</div>
-                <p className="text-green-400 font-bold">To'lov muvaffaqiyatli!</p>
-                <p className="text-gray-500 text-sm mt-1">Balans yangilanadi</p>
-              </div>
-            )}
-
-            {/* To'lov usuli */}
+      {tab === "in" ? (
+        <div className="grid md:grid-cols-2 gap-4">
+          <div className="panel p-5 space-y-4">
+            <p className="label">Admin orqali to&apos;ldirish (hozir ishlaydi)</p>
             <div>
-              <label className="text-gray-500 text-xs font-medium mb-2 block">💳 To'lov usuli</label>
-              <div className="grid grid-cols-4 gap-2">
-                {METHODS.map(m => (
-                  <button key={m.id} onClick={() => setMethod(m.id)}
-                    className={clsx("flex flex-col items-center gap-1.5 py-3 px-2 rounded-xl border transition-all",
-                      method===m.id ? "border-orange-500/60 bg-orange-500/10" : "border-[#2A2A2A] bg-[#111] hover:border-[#3A3A3A]")}>
-                    <span className="text-xl">{m.icon}</span>
-                    <span className={`text-xs font-bold ${method===m.id?"text-orange-400":"text-gray-500"}`}>{m.name}</span>
+              <label className="label">Summa</label>
+              <input className="input text-lg font-black" inputMode="numeric" value={fmtInput(amount)}
+                onChange={e => setAmount(digits(e.target.value))} placeholder="50 000" />
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {PRESETS.map(p => (
+                  <button key={p} onClick={() => setAmount(p)}
+                    className={clsx("chip !text-xs !py-1.5 !px-2.5 border",
+                      amount === p ? "border-accent text-accent" : "border-line text-muted hover:text-white")}>
+                    {fmtInput(p)}
                   </button>
                 ))}
               </div>
             </div>
-
-            {/* Miqdor */}
-            <div>
-              <label className="text-gray-500 text-xs font-medium mb-2 block">
-                💵 Miqdor <span className="text-gray-600">(min {fmt(selectedMethod.min)} so'm)</span>
-              </label>
-              <div className="relative">
-                <input type="number" value={amount} onChange={e => setAmount(e.target.value)}
-                  placeholder="100 000" className="ginput pr-16 text-xl font-bold" min={selectedMethod.min} />
-                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 text-sm">so'm</span>
-              </div>
-              {amount && numAmount > 0 && (
-                <p className="text-orange-400 text-sm mt-1.5 font-semibold">{fmt(numAmount)} so'm</p>
-              )}
+            <div className="rounded-xl bg-bg border border-line p-4 text-center">
+              <p className="text-xs text-muted">Sizning ID raqamingiz</p>
+              <p className="text-3xl font-black text-accent">{profile?.public_id ?? "—"}</p>
             </div>
-
-            {/* Tez miqdorlar */}
-            <div>
-              <label className="text-gray-500 text-xs font-medium mb-2 block">Tez tanlash</label>
-              <div className="grid grid-cols-4 gap-2">
-                {QUICK_AMOUNTS.map(a => (
-                  <button key={a} onClick={() => setAmount(a.toString())}
-                    className={clsx("py-2 rounded-xl border text-xs font-bold transition-all",
-                      amount===a.toString() ? "border-orange-500 bg-orange-500/20 text-orange-400" : "border-[#2A2A2A] text-gray-500 hover:text-white")}>
-                    {fmt(a)}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <button onClick={handleTopup} disabled={!isValid || loading}
-              className="gbtn w-full py-3.5 rounded-xl text-base disabled:opacity-40">
-              {loading
-                ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />To'lanmoqda...</>
-                : `${selectedMethod.icon} ${selectedMethod.name} orqali To'lash`}
-            </button>
-
-            {!isValid && amount && (
-              <p className="text-red-400 text-xs text-center">Min miqdor: {fmt(selectedMethod.min)} so'm</p>
-            )}
+            <ol className="text-xs text-muted space-y-1.5 list-decimal pl-5">
+              <li>Tugmani bosing — Telegramda <b className="text-white">@{TELEGRAM_ADMIN}</b> ga ID va summa bilan xabar ochiladi.</li>
+              <li>Admin to&apos;lov uchun karta raqamini beradi. To&apos;lab, chekni yuboring.</li>
+              <li>Admin tasdiqlashi bilan pul balansingizda ko&apos;rinadi.</li>
+            </ol>
+            <a href={telegramLink(`💳 Balans to'ldirmoqchiman\nMening UzDrop ID: ${profile?.public_id ?? ""}\nSumma: ${som(amount)}`)}
+              target="_blank" rel="noopener noreferrer" className="btn-accent w-full">Telegramda adminga yozish</a>
+            <p className="text-[11px] text-muted">⚠️ Faqat <b className="text-white">@{TELEGRAM_ADMIN}</b> ga to&apos;lang. Boshqa &quot;admin&quot;larga ishonmang — admin sizga birinchi yozmaydi.</p>
           </div>
-        )}
 
-        {tab === "history" && (
-          <div className="space-y-3 animate-fade-in">
-            {HISTORY.map((h, i) => (
-              <div key={i} className="bg-[#1A1A1A] border border-[#2A2A2A] rounded-xl p-4 flex items-center gap-4">
-                <div className={clsx("w-10 h-10 rounded-xl flex items-center justify-center text-xl shrink-0",
-                  h.type==="in" ? "bg-green-500/15" : "bg-red-500/10")}>
-                  {h.type==="in" ? "📥" : "📤"}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-white text-sm font-semibold truncate">{h.desc}</p>
-                  <p className="text-gray-600 text-xs mt-0.5">{h.method} • {h.date}</p>
-                </div>
-                <div className="text-right shrink-0">
-                  <p className={clsx("font-black text-sm", h.type==="in"?"text-green-400":"text-red-400")}>
-                    {h.type==="in"?"+":"-"}{fmt(h.amount)} so'm
-                  </p>
-                  <span className={clsx("text-xs", h.status==="completed"?"text-green-400":"text-yellow-400")}>
-                    {h.status==="completed"?"✅":"⏳"}
-                  </span>
-                </div>
+          <div className="panel p-5 space-y-3">
+            <p className="label">Avtomatik to&apos;lov</p>
+            {PAY_METHODS.map(m => (
+              <div key={m.id} className="flex items-center justify-between rounded-xl border border-line bg-bg px-4 py-3 opacity-70">
+                <span className="font-extrabold">{m.name}</span>
+                <span className="chip bg-accent/15 text-accent">Tez kunda</span>
               </div>
             ))}
+            <p className="text-xs text-muted">Kartadan avtomatik to&apos;ldirish tez orada qo&apos;shiladi — to&apos;lov qilishingiz bilan pul darhol balansga tushadi.</p>
           </div>
-        )}
-      </div>
+
+          <History title="To'ldirishlar tarixi" rows={deps.map(d => ({ id: d.id, a: d.amount, s: d.status, sub: `${d.method === "telegram" ? "Telegram (admin)" : PAY_METHODS.find(m => m.id === d.method)?.name ?? d.method} • ${ago(d.created_at)} oldin` }))} />
+        </div>
+      ) : (
+        <div className="grid md:grid-cols-2 gap-4">
+          <div className="panel p-5 space-y-4">
+            <div>
+              <label className="label">Summa (min 10 000)</label>
+              <input className="input text-lg font-black" inputMode="numeric" value={fmtInput(wAmount)}
+                onChange={e => setWAmount(digits(e.target.value))} placeholder="100 000" />
+              <button onClick={() => setWAmount(profile?.balance ?? 0)} className="text-xs font-bold text-accent mt-1.5">
+                Hammasi: {som(profile?.balance)}
+              </button>
+            </div>
+            <div>
+              <label className="label">Karta raqami (Uzcard / Humo)</label>
+              <input className="input font-mono" inputMode="numeric" value={card}
+                onChange={e => setCard(cardFmt(e.target.value))} placeholder="8600 1234 5678 9012" />
+            </div>
+            <p className="text-xs text-muted">Summa balansdan darhol bloklanadi. Agar so&apos;rov rad etilsa, pul balansga qaytariladi.</p>
+            <button disabled={busy} onClick={withdraw} className="btn-violet w-full">🏦 Yechib olish</button>
+          </div>
+          <History title="Yechish so'rovlari" rows={wds.map(w => ({ id: w.id, a: w.amount, s: w.status, sub: `•••• ${w.card.replace(/\D/g, "").slice(-4)} • ${ago(w.created_at)} oldin` }))} />
+        </div>
+      )}
+      {payCode && (
+        <div className="fixed inset-0 z-[60] bg-black/70 grid place-items-center p-4" onClick={() => setPayCode(null)}>
+          <div className="panel p-6 max-w-sm w-full animate-fade-in max-h-[92vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <p className="font-black text-center mb-3">To&apos;ldirish so&apos;rovi: {som(payCode.amount)}</p>
+            <CodeCard code={payCode.code} kind="deposit" amount={payCode.amount} />
+            <button onClick={() => setPayCode(null)} className="btn-ghost w-full mt-3">Yopish</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function History({ title, rows }: { title: string; rows: { id: string; a: number; s: string; sub: string }[] }) {
+  return (
+    <div className="panel p-5 md:col-span-2">
+      <p className="label mb-3">{title}</p>
+      {rows.length === 0 ? <p className="text-sm text-muted">Hali so&apos;rovlar yo&apos;q.</p> : (
+        <div className="divide-y divide-line">
+          {rows.map(r => {
+            const st = ST[r.s] ?? ST.pending;
+            return (
+              <div key={r.id} className="flex items-center gap-3 py-2.5">
+                <div className="flex-1 min-w-0">
+                  <p className="font-black text-sm">{som(r.a)}</p>
+                  <p className="text-xs text-muted truncate">{r.sub}</p>
+                </div>
+                <span className={clsx("chip", st.c)}>{st.t}</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

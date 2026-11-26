@@ -1,151 +1,300 @@
 "use client";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { Card, GradientCard } from "@/components/ui/Card";
-import { KarmaBadge } from "@/components/ui/Badge";
 import clsx from "clsx";
+import { supabase, errText } from "@/lib/supabase";
+import { useUser } from "@/components/UserProvider";
+import { SPIN_ENABLED, som, game, rarity, ago, type Account, type Delivery } from "@/lib/uzdrop";
+import CodeCard from "@/components/CodeCard";
+import LoginCta from "@/components/profile/LoginCta";
 
-const MENU_ITEMS = [
-  { icon:"📦", label:"Buyurtmalar tarixi",        href:"/dashboard"    },
-  { icon:"💰", label:"Hamyon va to'lovlar",        href:"/dashboard"    },
-  { icon:"🛡️", label:"Escrow tarixi",              href:"/escrow"       },
-  { icon:"⭐", label:"Karma tarixi",               href:"/karma"        },
-  { icon:"🔔", label:"Bildirishnomalar",           href:"#"             },
-  { icon:"🎮", label:"Mening akkauntlarim",        href:"/marketplace"  },
-  { icon:"❓", label:"Yordam va qo'llab-quvvatlash",href:"#"            },
+type Tab = "inv" | "buy" | "mine" | "tx";
+const TABS: { id: Tab; label: string }[] = [
+  { id: "buy",  label: "🛒 Xaridlar" },
+  ...(SPIN_ENABLED ? [{ id: "inv" as Tab, label: "🎒 Spin yutuqlari" }] : []),
+  { id: "mine", label: "📦 E'lonlarim" },
+  { id: "tx",   label: "📜 Tarix" },
 ];
 
-const CONTACT = [
-  { icon:"📧", label:"gboost.uz@gmail.com",   href:"mailto:gboost.uz@gmail.com" },
-  { icon:"✈️", label:"Telegram: @gboost_uz",  href:"#" },
-  { icon:"🌐", label:"gboost.uz",              href:"#" },
-];
+const TX_LABEL: Record<string, string> = {
+  deposit: "To'ldirish", withdraw: "Yechish", buy: "Xarid", sale: "Sotuv", spin: "Spin",
+  win_sell: "Yutuqni sotish", quick_sell: "Tez sotish", refund: "Qaytarish", admin: "Admin",
+};
+
+const STATUS: Record<string, { t: string; c: string }> = {
+  pending:  { t: "Tekshiruvda",     c: "bg-accent/15 text-accent" },
+  active:   { t: "Sotuvda",         c: "bg-win/15 text-win" },
+  sold:     { t: "Sotildi",         c: "bg-violet/20 text-violet-light" },
+  pool:     { t: "Sayt sotib oldi", c: "bg-violet/20 text-violet-light" },
+  won:      { t: "Sayt sotib oldi", c: "bg-violet/20 text-violet-light" },
+  claimed:  { t: "Sayt sotib oldi", c: "bg-violet/20 text-violet-light" },
+  rejected: { t: "Rad etildi",      c: "bg-lose/15 text-lose" },
+};
+
+interface Tx { id: string; type: string; amount: number; note: string | null; created_at: string; }
+
+function AccCard({ a, children }: { a: Account; children?: React.ReactNode }) {
+  const r = rarity(a.price);
+  const g = game(a.game);
+  return (
+    <div className="relative panel overflow-hidden flex flex-col" style={{ borderColor: r.color + "55" }}>
+      <div className="absolute inset-x-0 top-0 h-28 opacity-30 pointer-events-none"
+        style={{ background: `radial-gradient(circle at 50% 0%, ${r.color}, transparent 70%)` }} />
+      <div className="relative h-28 grid place-items-center">
+        {a.image_url
+          ? <img src={a.image_url} alt={a.title} className="h-full w-full object-cover" />
+          : <span className="text-5xl">{g.icon}</span>}
+      </div>
+      <div className="absolute inset-x-0 top-[108px] h-[3px]" style={{ background: r.color }} />
+      <div className="relative p-3.5 flex flex-col gap-2 flex-1">
+        <div className="flex items-center justify-between gap-2">
+          <span className="chip bg-panel2 text-muted">{g.icon} {g.name}</span>
+          <span className="chip" style={{ background: r.color + "22", color: r.color }}>{r.name}</span>
+        </div>
+        <p className="font-extrabold leading-tight">{a.public_no ? <span className="text-muted mr-1">#{a.public_no}</span> : null}{a.title}</p>
+        {a.rank && <p className="text-xs text-muted">🏆 {a.rank}</p>}
+        <p className="font-black" style={{ color: r.color }}>{som(a.price)}</p>
+        <div className="mt-auto pt-1 space-y-2">{children}</div>
+      </div>
+    </div>
+  );
+}
+
+const D_STATUS: Record<Delivery["status"], { t: string; c: string }> = {
+  waiting:   { t: "⏳ Adminga yozing",  c: "text-accent" },
+  delivered: { t: "✅ Topshirildi",     c: "text-win" },
+  cancelled: { t: "↩️ Bekor, pul qaytdi", c: "text-lose" },
+};
+
+function DeliveryBox({ d, onOpen }: { d?: Delivery; onOpen: () => void }) {
+  if (!d) return <p className="text-xs text-muted">Kod topilmadi</p>;
+  const st = D_STATUS[d.status];
+  return (
+    <button onClick={onOpen} className="w-full rounded-xl border border-dashed border-line bg-bg px-3 py-2 text-left hover:border-accent transition-colors">
+      <p className="text-[10px] uppercase font-bold text-muted">Kod</p>
+      <p className="font-black tracking-wider text-accent">{d.code}</p>
+      <p className={clsx("text-[11px] font-bold", st.c)}>{st.t}</p>
+    </button>
+  );
+}
+
+function TelegramField({ value, onSaved }: { value?: string | null; onSaved: () => void }) {
+  const [v, setV] = useState(value ? "@" + value : "");
+  const [state, setState] = useState<string>("");
+  const save = async () => {
+    setState("…");
+    const { error } = await supabase.rpc("set_telegram", { p_username: v });
+    setState(error ? errText(error) : "✅ Saqlandi");
+    if (!error) onSaved();
+  };
+  return (
+    <div className="flex gap-2 items-center">
+      <input className="input !py-2 max-w-[200px]" placeholder="@telegram_username" value={v} onChange={e => setV(e.target.value)} />
+      <button onClick={save} className="btn-ghost !py-2 !px-3">Saqlash</button>
+      {state && <span className="text-xs text-muted">{state}</span>}
+    </div>
+  );
+}
 
 export default function ProfilePage() {
-  const router = useRouter();
-  const [isEditing, setIsEditing] = useState(false);
-  const [name, setName] = useState("Abdulloh Karimov");
-  const [phone, setPhone] = useState("+998 90 123 45 67");
+  const { user, profile, loading, refresh } = useUser();
+  const [tab, setTab] = useState<Tab>("buy");
+  const [inv, setInv] = useState<Account[]>([]);
+  const [bought, setBought] = useState<Account[]>([]);
+  const [mine, setMine] = useState<Account[]>([]);
+  const [txs, setTxs] = useState<Tx[]>([]);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [confirm, setConfirm] = useState<Account | null>(null);
+  const [deliv, setDeliv] = useState<Record<string, Delivery>>({});
+  const [showCode, setShowCode] = useState<{ d: Delivery; title: string } | null>(null);
+  const [msg, setMsg] = useState<{ ok: boolean; t: string } | null>(null);
 
-  const handleLogout = () => router.push("/login");
+  const load = useCallback(async () => {
+    if (!user) return;
+    const [a, b, c, d, e] = await Promise.all([
+      supabase.from("accounts").select("*").eq("owner_id", user.id).in("status", ["won", "claimed"]).order("updated_at", { ascending: false }),
+      supabase.from("accounts").select("*").eq("owner_id", user.id).eq("status", "sold").order("updated_at", { ascending: false }),
+      supabase.from("accounts").select("*").eq("seller_id", user.id).order("created_at", { ascending: false }),
+      supabase.from("transactions").select("id,type,amount,note,created_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(100),
+      supabase.from("deliveries").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
+    ]);
+    const dm: Record<string, Delivery> = {};
+    ((e.data as Delivery[]) || []).forEach(x => { if (!dm[x.account_id]) dm[x.account_id] = x; });
+    setDeliv(dm);
+    setInv((a.data as Account[]) || []);
+    setBought((b.data as Account[]) || []);
+    setMine((c.data as Account[]) || []);
+    setTxs((d.data as Tx[]) || []);
+  }, [user]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const flash = (ok: boolean, t: string) => { setMsg({ ok, t }); setTimeout(() => setMsg(null), 3500); };
+
+  const sell = async (a: Account) => {
+    setBusy(a.id);
+    const { error } = await supabase.rpc("sell_won", { p_account: a.id });
+    setBusy(null);
+    if (error) return flash(false, errText(error));
+    flash(true, `⚡ Sotildi! +${som(a.price)} balansga qo'shildi`);
+    await Promise.all([refresh(), load()]);
+  };
+
+  const claim = async (a: Account) => {
+    setBusy(a.id);
+    const { data, error } = await supabase.rpc("claim_won", { p_account: a.id });
+    setBusy(null);
+    setConfirm(null);
+    if (error) return flash(false, errText(error));
+    setShowCode({ d: { id: "", code: data as string, account_id: a.id, source: "spin", price: a.price, status: "waiting", admin_note: null, created_at: "" }, title: a.title });
+    await load();
+  };
+
+  if (loading) return <div className="wrap py-20 text-center text-muted">Yuklanmoqda...</div>;
+  if (!user) return <LoginCta text="Inventar, xaridlar va tarixni ko'rish uchun hisobingizga kiring." />;
+
+  const empty = (t: string, href: string, cta: string) => (
+    <div className="panel p-10 text-center">
+      <p className="text-muted mb-4">{t}</p>
+      <Link href={href} className="btn-violet">{cta}</Link>
+    </div>
+  );
 
   return (
-    <div className="gsection py-8 max-w-2xl mx-auto space-y-5">
-      {/* Profile header */}
-      <GradientCard gradient="from-purple/20 via-card to-cyan/10" className="border border-cyan/15">
-        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5">
-          {/* Avatar */}
-          <div className="relative shrink-0">
-            <div className="w-20 h-20 rounded-2xl bg-gradient-primary flex items-center justify-center text-white font-black text-3xl shadow-cyan">
-              {name[0]}
-            </div>
-            <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-green border-2 border-card" />
+    <div className="wrap py-8 animate-fade-in">
+      {/* Sarlavha */}
+      <div className="panel p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center gap-5 relative overflow-hidden">
+        <div className="absolute -right-20 -top-20 w-64 h-64 rounded-full bg-violet/20 blur-3xl pointer-events-none" />
+        <div className="w-16 h-16 rounded-2xl bg-violet grid place-items-center text-2xl font-black uppercase shrink-0">
+          {(profile?.username || user.email || "?")[0]}
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-xl font-black truncate">{profile?.username || "Foydalanuvchi"}</p>
+          <p className="text-muted text-sm truncate">{user.email}</p>
+          <div className="flex flex-wrap items-center gap-2 mt-2">
+            <span className="chip bg-violet/20 text-violet-light !text-xs">ID: {profile?.public_id ?? "—"}</span>
+            <TelegramField value={profile?.telegram} onSaved={refresh} />
           </div>
+        </div>
+        <div className="relative flex items-center gap-3">
+          <div>
+            <p className="label !mb-0.5">Balans</p>
+            <p className="text-2xl font-black text-accent whitespace-nowrap">{som(profile?.balance)}</p>
+          </div>
+          <Link href="/wallet" className="btn-accent">+ To&apos;ldirish</Link>
+        </div>
+      </div>
 
-          {/* Info */}
-          <div className="flex-1 text-center sm:text-left">
-            {isEditing ? (
-              <div className="space-y-2 mb-3">
-                <input value={name} onChange={e => setName(e.target.value)}
-                  className="ginput text-sm w-full" placeholder="Ism familiya" />
-                <input value={phone} onChange={e => setPhone(e.target.value)}
-                  className="ginput text-sm w-full" placeholder="Telefon" />
+      {/* Tablar */}
+      <div className="flex gap-1.5 mt-6 mb-5 overflow-x-auto pb-1">
+        {TABS.map(t => (
+          <button key={t.id} onClick={() => setTab(t.id)}
+            className={clsx("px-4 py-2.5 rounded-xl text-[13px] font-extrabold uppercase whitespace-nowrap transition-colors",
+              tab === t.id ? "bg-accent text-[#1B1400]" : "bg-panel text-muted hover:text-white")}>
+            {t.label}
+            {t.id === "inv" && inv.filter(a => a.status === "won").length > 0 &&
+              <span className="ml-1.5 chip bg-lose text-white !px-1.5">{inv.filter(a => a.status === "won").length}</span>}
+          </button>
+        ))}
+      </div>
+
+      {msg && (
+        <div className={clsx("mb-4 rounded-xl px-4 py-3 text-sm font-bold animate-fade-in",
+          msg.ok ? "bg-win/15 text-win" : "bg-lose/15 text-lose")}>{msg.t}</div>
+      )}
+
+      {tab === "inv" && (inv.length === 0 ? empty("Inventar bo'sh. Keys ochib akkaunt yuting!", "/", "🎰 Spin qilish") : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {inv.map(a => (
+            <AccCard key={a.id} a={a}>
+              {a.status === "won" ? (
+                <>
+                  <button disabled={busy === a.id} onClick={() => sell(a)} className="btn-win w-full !py-2.5">
+                    ⚡ Sotish +{som(a.price)}
+                  </button>
+                  <button disabled={busy === a.id} onClick={() => setConfirm(a)} className="btn-ghost w-full !py-2.5">
+                    Olish
+                  </button>
+                </>
+              ) : <DeliveryBox d={deliv[a.id]} onOpen={() => deliv[a.id] && setShowCode({ d: deliv[a.id], title: a.title })} />}
+            </AccCard>
+          ))}
+        </div>
+      ))}
+
+      {tab === "buy" && (bought.length === 0 ? empty("Hali xarid qilmagansiz.", "/market", "🛒 Akkauntlar") : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {bought.map(a => <AccCard key={a.id} a={a}><DeliveryBox d={deliv[a.id]} onOpen={() => deliv[a.id] && setShowCode({ d: deliv[a.id], title: a.title })} /></AccCard>)}
+        </div>
+      ))}
+
+      {tab === "mine" && (mine.length === 0 ? empty("Sizda e'lonlar yo'q.", "/sell", "💰 Akkaunt sotish") : (
+        <div className="space-y-2">
+          {mine.map(a => {
+            const st = STATUS[a.status] ?? STATUS.pending;
+            return (
+              <div key={a.id} className="panel p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+                <span className="text-3xl">{game(a.game).icon}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="font-extrabold truncate">{a.title}</p>
+                  <p className="text-xs text-muted">{game(a.game).name}{a.rank ? ` • ${a.rank}` : ""} • {ago(a.created_at)} oldin</p>
+                  {a.status === "rejected" && a.reject_note && <p className="text-xs text-lose mt-1">Sabab: {a.reject_note}</p>}
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  {a.kind === "quick" && <span className="chip bg-accent/15 text-accent">⚡ Tez sotish</span>}
+                  <span className={clsx("chip", st.c)}>{st.t}</span>
+                  <span className="font-black whitespace-nowrap">{som(a.kind === "quick" ? a.asked_price ?? a.price : a.price)}</span>
+                </div>
               </div>
-            ) : (
-              <>
-                <h1 className="text-xl font-black text-text-white mb-0.5">{name}</h1>
-                <p className="text-text-gray text-sm mb-2">{phone}</p>
-              </>
-            )}
-            <KarmaBadge karma={78} />
-          </div>
-
-          {/* Edit button */}
-          <button onClick={() => setIsEditing(!isEditing)}
-            className={clsx("shrink-0 text-sm px-4 py-2 rounded-xl border font-semibold transition-all",
-              isEditing
-                ? "border-green/50 bg-green/10 text-green hover:bg-green/20"
-                : "border-border text-text-gray hover:bg-card hover:text-text-light")}>
-            {isEditing ? "✅ Saqlash" : "✏️ Tahrirlash"}
-          </button>
+            );
+          })}
         </div>
-      </GradientCard>
+      ))}
 
-      {/* Stats */}
-      <div className="grid grid-cols-3 gap-4">
-        {[
-          { label:"Buyurtmalar", value:"12",    color:"text-cyan",         icon:"📦" },
-          { label:"Muvaffaqiyat",value:"10",    color:"text-green",        icon:"✅" },
-          { label:"Karma",       value:"78/100",color:"text-gold",         icon:"⭐" },
-        ].map(s => (
-          <Card key={s.label} className="text-center py-4">
-            <div className="text-xl mb-1">{s.icon}</div>
-            <p className={`font-black text-lg ${s.color}`}>{s.value}</p>
-            <p className="text-text-gray text-xs mt-0.5">{s.label}</p>
-          </Card>
-        ))}
-      </div>
+      {tab === "tx" && (txs.length === 0 ? <div className="panel p-10 text-center text-muted">Tarix bo&apos;sh.</div> : (
+        <div className="panel divide-y divide-line">
+          {txs.map(t => (
+            <div key={t.id} className="flex items-center gap-3 px-4 py-3">
+              <div className="flex-1 min-w-0">
+                <p className="font-bold text-sm">{TX_LABEL[t.type] ?? t.type}</p>
+                <p className="text-xs text-muted truncate">{t.note || "—"} • {new Date(t.created_at).toLocaleString("uz-UZ")}</p>
+              </div>
+              <span className={clsx("font-black whitespace-nowrap", t.amount >= 0 ? "text-win" : "text-lose")}>
+                {t.amount >= 0 ? "+" : "−"}{som(Math.abs(t.amount))}
+              </span>
+            </div>
+          ))}
+        </div>
+      ))}
 
-      {/* VIP subscription */}
-      <GradientCard gradient="from-gold/15 to-card" className="border border-gold/25">
-        <div className="flex items-center justify-between flex-wrap gap-3">
-          <div className="flex items-center gap-3">
-            <span className="text-2xl">👑</span>
-            <div>
-              <p className="font-bold text-gold">VIP Obuna</p>
-              <p className="text-text-gray text-xs">Prioritet buyurtmalar, past komissiya</p>
+      {showCode && (
+        <div className="fixed inset-0 z-[60] bg-black/70 grid place-items-center p-4" onClick={() => setShowCode(null)}>
+          <div className="panel p-6 max-w-sm w-full animate-fade-in max-h-[92vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <p className="font-black text-center mb-3">{showCode.title}</p>
+            {showCode.d.status === "waiting"
+              ? <CodeCard code={showCode.d.code} kind={showCode.d.source} title={showCode.title} accountId={showCode.d.account_id} />
+              : <p className="text-center text-sm text-muted">Kod: <b className="text-white">{showCode.d.code}</b><br />{D_STATUS[showCode.d.status].t}{showCode.d.admin_note ? ` — ${showCode.d.admin_note}` : ""}</p>}
+            <button onClick={() => setShowCode(null)} className="btn-ghost w-full mt-3">Yopish</button>
+          </div>
+        </div>
+      )}
+
+      {/* Olishni tasdiqlash */}
+      {confirm && (
+        <div className="fixed inset-0 z-[60] bg-black/70 grid place-items-center p-4" onClick={() => setConfirm(null)}>
+          <div className="panel p-6 max-w-sm w-full animate-fade-in" onClick={e => e.stopPropagation()}>
+            <p className="text-lg font-black mb-2">Akkauntni olasizmi?</p>
+            <p className="text-sm text-muted mb-5">
+              Sizga kod beriladi — uni ID raqamingiz bilan Telegramda adminga yuborasiz va admin akkauntni topshiradi. Lekin <b className="text-white">{confirm.title}</b> ni
+              endi {som(confirm.price)} ga qayta sotib bo&apos;lmaydi.
+            </p>
+            <div className="flex gap-2">
+              <button onClick={() => setConfirm(null)} className="btn-ghost flex-1">Bekor</button>
+              <button disabled={busy === confirm.id} onClick={() => claim(confirm)} className="btn-accent flex-1">Ha, olaman</button>
             </div>
           </div>
-          <button className="bg-gradient-gold text-bg font-bold text-sm px-4 py-2 rounded-xl hover:opacity-90 transition-opacity">
-            $5/oy — Faollashtirish
-          </button>
         </div>
-      </GradientCard>
-
-      {/* Menu */}
-      <Card padding="p-0 overflow-hidden">
-        {MENU_ITEMS.map((item, i) => (
-          <div key={item.label}>
-            <Link href={item.href}
-              className="flex items-center gap-3 px-5 py-3.5 hover:bg-border/20 transition-colors">
-              <span className="text-xl">{item.icon}</span>
-              <span className="flex-1 text-text-light text-sm font-medium">{item.label}</span>
-              <span className="text-text-gray text-xs">→</span>
-            </Link>
-            {i < MENU_ITEMS.length - 1 && <div className="h-px bg-border mx-5" />}
-          </div>
-        ))}
-      </Card>
-
-      {/* Contact */}
-      <Card padding="p-0 overflow-hidden">
-        <div className="px-5 py-3 border-b border-border">
-          <p className="text-text-gray text-xs font-semibold uppercase tracking-wider">Aloqa</p>
-        </div>
-        {CONTACT.map((c, i) => (
-          <div key={c.label}>
-            <a href={c.href} className="flex items-center gap-3 px-5 py-3.5 hover:bg-border/20 transition-colors">
-              <span className="text-xl">{c.icon}</span>
-              <span className="flex-1 text-text-light text-sm">{c.label}</span>
-              <span className="text-text-gray text-xs">↗</span>
-            </a>
-            {i < CONTACT.length - 1 && <div className="h-px bg-border mx-5" />}
-          </div>
-        ))}
-      </Card>
-
-      {/* App info */}
-      <div className="text-center text-text-gray text-xs space-y-1">
-        <p>GBoost v1.0.0</p>
-        <p>© 2024 GBoost. Barcha huquqlar himoyalangan.</p>
-      </div>
-
-      {/* Logout */}
-      <button onClick={handleLogout}
-        className="w-full flex items-center justify-center gap-2 border border-red/40 bg-red/8 text-red font-semibold rounded-xl py-3 hover:bg-red/15 transition-colors">
-        🚪 Chiqish
-      </button>
+      )}
     </div>
   );
 }
