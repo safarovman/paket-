@@ -1,5 +1,5 @@
 -- ============================================================
---  UzDrop — BITTA FAYLDA HAMMASI (01…10 birlashtirilgan)
+--  UzDrop — BITTA FAYLDA HAMMASI (01…11 birlashtirilgan)
 --  Supabase → SQL Editor → hammasini nusxalab qo'ying → Run
 --  Qayta ishga tushirish xavfsiz.
 -- ============================================================
@@ -1148,3 +1148,12 @@ begin
   update public.profiles set telegram = v where id = auth.uid();
 end $$;
 grant execute on function public.set_telegram(text) to authenticated;
+
+-- >>>>>>>>>>>>>>>> 11_disable_withdraw.sql <<<<<<<<<<<<<<<<
+-- ============================================================
+--  UzDrop v11 — PUL YECHISH O'CHIRILDI (10 dan keyin)
+--  Saytda pul yechish yo'q: foydalanuvchilar request_withdraw ni chaqira olmaydi.
+--  Qayta yoqish kerak bo'lsa:
+--    grant execute on function public.request_withdraw(bigint,text) to authenticated;
+-- ============================================================
+revoke execute on function public.request_withdraw(bigint, text) from authenticated, anon, public;

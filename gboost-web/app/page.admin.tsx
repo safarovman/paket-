@@ -23,7 +23,6 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "activity",    label: "🔔 Faollik" },
   { id: "stats",       label: "📊 Statistika" },
   { id: "deposits",    label: "💳 To'ldirish" },
-  { id: "withdrawals", label: "Yechish" },
   { id: "add",         label: "➕ Akkaunt joylash" },
   { id: "listed",      label: "📦 Saytdagi" },
   { id: "cases",       label: "Keyslar" },
