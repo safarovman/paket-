@@ -55,9 +55,9 @@ Supabase / Cloudflare sozlamalariga kiritiladi.
 4. Edge funksiyalarni joylash — kompyuteringizda bir marta:
    ```bash
    npx supabase login
-   npx supabase functions deploy notify-admin --no-verify-jwt --project-ref heohxnkmwodsnhzgixst
-   npx supabase functions deploy telegram-auth --no-verify-jwt --project-ref heohxnkmwodsnhzgixst
-   npx supabase functions deploy r2-upload --project-ref heohxnkmwodsnhzgixst
+   npx supabase functions deploy notify-admin --no-verify-jwt --project-ref acwlvsazpqjnunqbaxyx
+   npx supabase functions deploy telegram-auth --no-verify-jwt --project-ref acwlvsazpqjnunqbaxyx
+   npx supabase functions deploy r2-upload --project-ref acwlvsazpqjnunqbaxyx
    ```
 5. Supabase → **Database → Webhooks** → Create:
    - Table: `transactions`, Events: **Insert**

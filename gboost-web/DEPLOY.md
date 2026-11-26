@@ -39,7 +39,7 @@ Hammasi bepul: **Cloudflare Pages** (sayt, trafik cheksiz), **Cloudflare R2** (r
    `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET=uzdrop-images`, `R2_PUBLIC_URL=https://img.SIZNINGDOMEN.uz`
 7. Funksiyani joylang (kompyuterda Supabase CLI bilan):
    ```bash
-   supabase functions deploy r2-upload --project-ref heohxnkmwodsnhzgixst
+   supabase functions deploy r2-upload --project-ref acwlvsazpqjnunqbaxyx
    ```
 
 ## 3. Cloudflare Pages — IKKI sayt (bitta repodan)

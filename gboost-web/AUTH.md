@@ -10,7 +10,7 @@ Hammasi Supabase Auth orqali ishlaydi. Quyidagilarni bir marta sozlaysiz.
 2. **APIs & Services → OAuth consent screen** → External → ilova nomi `UzDrop`, email, logotip (ixtiyoriy) → saqlang.
 3. **APIs & Services → Credentials → Create credentials → OAuth client ID**:
    - Application type: **Web application**
-   - Authorized redirect URIs: `https://heohxnkmwodsnhzgixst.supabase.co/auth/v1/callback`
+   - Authorized redirect URIs: `https://acwlvsazpqjnunqbaxyx.supabase.co/auth/v1/callback`
 4. Chiqqan **Client ID** va **Client Secret**ni nusxalang.
 5. Supabase → **Authentication → Sign In / Providers → Google** → yoqing, Client ID va Secret'ni joylang → Save.
 6. Supabase → **Authentication → URL Configuration**:
@@ -55,7 +55,7 @@ O'z SMTP'ingizni ulang:
    (Hech qachon `NEXT_PUBLIC_...` ga yozmang — u saytda hammaga ko'rinadi.)
 5. Funksiyani joylang (kompyuteringizda Supabase CLI bilan):
    ```bash
-   supabase functions deploy telegram-auth --no-verify-jwt --project-ref heohxnkmwodsnhzgixst
+   supabase functions deploy telegram-auth --no-verify-jwt --project-ref acwlvsazpqjnunqbaxyx
    ```
    `--no-verify-jwt` kerak — foydalanuvchi hali tizimga kirmagan bo'ladi; xavfsizlikni funksiya o'zi
    Telegram imzosini bot tokeni bilan tekshirib ta'minlaydi.
