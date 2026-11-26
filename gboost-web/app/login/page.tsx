@@ -19,6 +19,26 @@ export default function Login() {
   const redirect = () => `${window.location.origin}/login/done/`;
   const run = async (fn: () => Promise<void>) => { setErr(""); setOk(""); setBusy(true); try { await fn(); } catch (e) { setErr(errText(e)); } setBusy(false); };
 
+  const GOOGLE_ON = process.env.NEXT_PUBLIC_GOOGLE_LOGIN === "1";
+
+  // Tasdiqlash kodini tekshirish (ro'yxatdan o'tish yoki email kod bilan kirish)
+  const verify = async () => {
+    const token = code.trim();
+    if (token.length < 6) throw new Error("Pochtangizga kelgan kodni kiriting");
+    let { error } = await supabase.auth.verifyOtp({ email, token, type: "email" });
+    if (error && mode === "up") ({ error } = await supabase.auth.verifyOtp({ email, token, type: "signup" }));
+    if (error) throw new Error("Kod noto'g'ri yoki muddati o'tgan. \"Kodni qayta yuborish\"ni bosing.");
+    router.push("/");
+  };
+
+  const resend = () => run(async () => {
+    const { error } = mode === "up"
+      ? await supabase.auth.resend({ type: "signup", email, options: { emailRedirectTo: redirect() } })
+      : await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: redirect() } });
+    if (error) throw new Error(error.message.includes("seconds") ? "Biroz kuting va qayta urinib ko'ring (1 daqiqa)." : error.message);
+    setOk(`Yangi kod ${email} ga yuborildi`);
+  });
+
   const google = () => run(async () => {
     const { error } = await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: redirect() } });
     if (error) throw error;
@@ -27,21 +47,28 @@ export default function Login() {
   const submit = (e: React.FormEvent) => { e.preventDefault(); run(async () => {
     if (mode === "in") {
       const { error } = await supabase.auth.signInWithPassword({ email, password: pw });
+      if (error?.message.includes("not confirmed")) {
+        await supabase.auth.resend({ type: "signup", email });
+        setMode("up"); setSent(true);
+        setOk(`Email hali tasdiqlanmagan. ${email} ga kod yuborildi — pastga kiriting.`);
+        return;
+      }
       if (error) throw new Error(error.message.includes("Invalid") ? "Email yoki parol noto'g'ri" : error.message);
       router.push("/");
+    } else if (mode === "up" && sent) {
+      await verify();
     } else if (mode === "up") {
       if (pw.length < 6) throw new Error("Parol kamida 6 belgi");
       const { data, error } = await supabase.auth.signUp({ email, password: pw, options: { data: { full_name: name || email.split("@")[0] }, emailRedirectTo: redirect() } });
-      if (error) throw error;
-      if (data.session) router.push("/"); else setOk("✅ Pochtangizga tasdiqlash xati yuborildi.");
+      if (error) throw new Error(error.message.includes("already") ? "Bu email allaqachon ro'yxatdan o'tgan — Parol orqali kiring." : error.message);
+      if (data.session) { router.push("/"); return; }
+      setSent(true); setOk(`✅ Tasdiqlash kodi ${email} ga yuborildi. Kodni pastga kiriting.`);
     } else if (!sent) {
       const { error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: redirect() } });
       if (error) throw error;
       setSent(true); setOk(`Kod ${email} ga yuborildi`);
     } else {
-      const { error } = await supabase.auth.verifyOtp({ email, token: code, type: "email" });
-      if (error) throw new Error("Kod noto'g'ri yoki muddati o'tgan");
-      router.push("/");
+      await verify();
     }
   }); };
 
@@ -51,9 +78,9 @@ export default function Login() {
         <h1 className="h-title text-center">{mode === "up" ? "Ro'yxatdan o'tish" : "Kirish"}</h1>
         <p className="text-center text-muted text-sm mb-6">UzDrop — o'yin akkauntlari savdosi</p>
 
-        <button onClick={google} disabled={busy} className="btn-ghost w-full mb-3">
+        <button onClick={google} disabled={busy || !GOOGLE_ON} className="btn-ghost w-full mb-3">
           <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>
-          Google orqali
+          Google orqali{!GOOGLE_ON && <span className="text-muted normal-case font-bold">(tez kunda)</span>}
         </button>
 
         <TelegramLogin />
@@ -72,14 +99,25 @@ export default function Login() {
         </div>
 
         <form onSubmit={submit} className="space-y-3">
-          {mode === "up" && <div><label className="label">Nik</label><input className="input" value={name} onChange={e => setName(e.target.value)} /></div>}
-          <div><label className="label">Email</label><input className="input" type="email" required value={email} onChange={e => setEmail(e.target.value)} disabled={mode === "code" && sent} /></div>
-          {mode !== "code" && <div><label className="label">Parol</label><input className="input" type="password" required value={pw} onChange={e => setPw(e.target.value)} /></div>}
-          {mode === "code" && sent && <div><label className="label">6 xonali kod</label><input className="input text-center text-xl tracking-[.5em] font-black" maxLength={6} value={code} onChange={e => setCode(e.target.value.replace(/\D/g, ""))} /></div>}
+          {mode === "up" && !sent && <div><label className="label">Nik</label><input className="input" value={name} onChange={e => setName(e.target.value)} /></div>}
+          <div><label className="label">Email</label><input className="input" type="email" required value={email} onChange={e => setEmail(e.target.value)} disabled={sent} /></div>
+          {mode !== "code" && !sent && <div><label className="label">Parol</label><input className="input" type="password" required value={pw} onChange={e => setPw(e.target.value)} /></div>}
+          {sent && (
+            <div>
+              <label className="label">Pochtangizga kelgan kod</label>
+              <input className="input text-center text-2xl tracking-[.4em] font-black" inputMode="numeric" autoComplete="one-time-code"
+                maxLength={8} value={code} onChange={e => setCode(e.target.value.replace(/\D/g, ""))} placeholder="••••••" autoFocus />
+              <div className="flex justify-between mt-2 text-xs">
+                <button type="button" onClick={resend} disabled={busy} className="text-accent font-bold">Kodni qayta yuborish</button>
+                <button type="button" onClick={() => { setSent(false); setCode(""); setOk(""); }} className="text-muted">Emailni o&apos;zgartirish</button>
+              </div>
+              <p className="text-[11px] text-muted mt-2">Xat kelmasa — Spam papkasini tekshiring.</p>
+            </div>
+          )}
           {err && <p className="text-lose text-sm font-bold">{err}</p>}
           {ok && <p className="text-win text-sm font-bold">{ok}</p>}
           <button disabled={busy} className="btn-accent w-full">
-            {busy ? "…" : mode === "in" ? "Kirish" : mode === "up" ? "Ro'yxatdan o'tish" : sent ? "Tasdiqlash" : "Kod yuborish"}
+            {busy ? "…" : sent ? "Tasdiqlash" : mode === "in" ? "Kirish" : mode === "up" ? "Ro'yxatdan o'tish" : "Kod yuborish"}
           </button>
         </form>
       </div>
