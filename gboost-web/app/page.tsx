@@ -1,51 +1,40 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
-import { game, som, type Account, type Case } from "@/lib/uzdrop";
+import { TELEGRAM_ADMIN, game, telegramLink, type Account } from "@/lib/uzdrop";
 import AccountCard from "@/components/AccountCard";
-import CaseArt from "@/components/CaseArt";
 
 export default function Home() {
-  const [cases, setCases] = useState<Case[] | null>(null);
-  const [counts, setCounts] = useState<Record<string, number>>({});
-  const [latest, setLatest] = useState<Account[]>([]);
-  const [filter, setFilter] = useState("all");
+  const [list, setList] = useState<Account[] | null>(null);
+  const [g, setG] = useState("all");
 
   useEffect(() => {
-    supabase.from("cases").select("*").eq("active", true).order("sort").order("price")
-      .then(({ data }) => setCases((data as Case[]) || []));
-    supabase.from("accounts").select("case_id").eq("status", "pool").then(({ data }) => {
-      const c: Record<string, number> = {};
-      (data || []).forEach((r: any) => { if (r.case_id) c[r.case_id] = (c[r.case_id] || 0) + 1; });
-      setCounts(c);
-    });
-    supabase.from("accounts").select("*").eq("status", "active").order("created_at", { ascending: false }).limit(8)
-      .then(({ data }) => setLatest((data as Account[]) || []));
+    supabase.from("accounts").select("*").eq("status", "active").order("created_at", { ascending: false }).limit(24)
+      .then(({ data }) => setList((data as Account[]) || []));
   }, []);
 
-  const shown = (cases || []).filter(c => filter === "all" || c.game === filter);
-  const games = Array.from(new Set((cases || []).map(c => c.game)));
+  const games = useMemo(() => Array.from(new Set((list || []).map(a => a.game))), [list]);
+  const shown = (list || []).filter(a => g === "all" || a.game === g);
 
   return (
     <div className="wrap py-6 space-y-10">
       {/* Banner */}
-      <section className="relative overflow-hidden rounded-3xl border border-line bg-gradient-to-br from-[#1E1650] via-[#151A33] to-[#0F1325] p-6 sm:p-10">
-        <div className="absolute -right-10 -top-16 w-80 h-80 rounded-full bg-violet/30 blur-3xl" />
-        <div className="absolute right-24 bottom-0 w-60 h-60 rounded-full bg-accent/20 blur-3xl" />
-        <div className="relative max-w-xl">
-          <span className="chip bg-accent/15 text-accent mb-3">🎰 Akkaunt spin</span>
+      <section className="relative overflow-hidden rounded-3xl border border-line bg-gradient-to-br from-[#0B2A17] via-[#0A1A10] to-[#050706] p-6 sm:p-10">
+        <div className="absolute -right-16 -top-20 w-96 h-96 rounded-full bg-accent/20 blur-3xl" />
+        <div className="absolute right-40 bottom-0 w-60 h-60 rounded-full bg-violet/20 blur-3xl" />
+        <div className="relative max-w-2xl">
+          <span className="chip bg-accent/15 text-accent mb-3">🛡️ Admin tekshirgan akkauntlar</span>
           <h1 className="text-3xl sm:text-5xl font-black uppercase leading-[1.05]">
-            Keys oching — <span className="text-accent">akkaunt</span> yuting
+            O&apos;yin <span className="text-accent">akkauntlarini</span> xavfsiz sotib oling
           </h1>
           <p className="text-muted mt-3 text-sm sm:text-base">
-            Balansni to&apos;ldiring, keysni aylantiring va haqiqiy o&apos;yin akkauntini oling.
-            Yoqmasa — bir tugma bilan darhol soting va yana spin qiling.
+            Standoff 2, PUBG, Mobile Legends, Free Fire va boshqalar. Har bir akkauntni admin tekshiradi,
+            xariddan keyin akkaunt Telegram orqali shaxsan topshiriladi.
           </p>
           <div className="flex flex-wrap gap-3 mt-6">
-            <a href="#cases" className="btn-accent">Spin qilish</a>
-            <Link href="/sell?quick=1" className="btn-violet">⚡ Tez sotish</Link>
-            <Link href="/market" className="btn-ghost">Akkaunt sotib olish</Link>
+            <a href="#accounts" className="btn-accent">Akkauntlarni ko&apos;rish</a>
+            <Link href="/sell" className="btn-ghost">💰 Akkauntimni sotaman</Link>
           </div>
         </div>
       </section>
@@ -53,83 +42,73 @@ export default function Home() {
       {/* Qanday ishlaydi */}
       <section className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          ["💳", "Balansni to'ldiring", "Click, Payme, Uzcard, Humo"],
-          ["🎰", "Spin qiling", "Keys ichidan tasodifiy akkaunt"],
-          ["🛒", "Sotib oling", "Bozordan kerakli akkauntni"],
-          ["⚡", "Tez soting", "Akkauntingizni sayt darhol oladi"],
-        ].map(([i, t, d]) => (
+          ["💳", "Balansni to'ldiring", "Admin orqali Telegramda"],
+          ["🛒", "Akkauntni tanlang", "Har biri tekshirilgan, ID raqamli"],
+          ["🔑", "Kod oling", "Xariddan so'ng maxfiy kod beriladi"],
+          ["✅", "Akkauntni oling", "Mas'ul admin Telegramda topshiradi"],
+        ].map(([i, t, d], n) => (
           <div key={t} className="panel p-4 flex gap-3 items-center">
             <span className="text-2xl">{i}</span>
-            <div><p className="font-extrabold text-sm">{t}</p><p className="text-xs text-muted">{d}</p></div>
+            <div><p className="font-extrabold text-sm"><span className="text-accent">{n + 1}.</span> {t}</p><p className="text-xs text-muted">{d}</p></div>
           </div>
         ))}
       </section>
 
-      {/* Keyslar */}
-      <section id="cases" className="scroll-mt-28">
+      {/* Akkauntlar */}
+      <section id="accounts" className="scroll-mt-24">
         <div className="flex flex-wrap items-center gap-2 mb-4">
-          <h2 className="h-title mr-3">Keyslar</h2>
-          {["all", ...games].map(g => (
-            <button key={g} onClick={() => setFilter(g)}
-              className={`chip !px-3 !py-1.5 ${filter === g ? "bg-accent text-[#1B1400]" : "bg-panel text-muted hover:text-white"}`}>
-              {g === "all" ? "Barchasi" : `${game(g).icon} ${game(g).name}`}
+          <h2 className="h-title mr-3">Sotuvdagi akkauntlar</h2>
+          {["all", ...games].map(x => (
+            <button key={x} onClick={() => setG(x)}
+              className={`chip !px-3 !py-1.5 ${g === x ? "bg-accent text-[#03140A]" : "bg-panel text-muted hover:text-white"}`}>
+              {x === "all" ? "Barchasi" : `${game(x).icon} ${game(x).name}`}
             </button>
           ))}
+          <Link href="/market" className="ml-auto text-sm font-bold text-accent">Qidirish va saralash →</Link>
         </div>
-
-        {cases === null ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-            {Array.from({ length: 5 }).map((_, i) => <div key={i} className="panel h-64 animate-pulse" />)}
-          </div>
+        {list === null ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">{Array.from({ length: 8 }).map((_, i) => <div key={i} className="panel h-64 animate-pulse" />)}</div>
         ) : shown.length === 0 ? (
-          <div className="panel p-10 text-center text-muted">Hozircha keyslar yo&apos;q. Admin paneldan keys qo&apos;shing.</div>
+          <div className="panel p-10 text-center text-muted">Hozircha sotuvda akkaunt yo&apos;q. Tez orada qo&apos;shiladi!</div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-            {shown.map(c => (
-              <Link key={c.id} href={`/case?id=${c.id}`}
-                className="group relative rounded-2xl overflow-hidden border border-line bg-panel hover:-translate-y-1 transition-transform">
-                <div className="absolute inset-0 opacity-40 group-hover:opacity-70 transition-opacity"
-                  style={{ background: `radial-gradient(circle at 50% 35%, ${c.color}, transparent 65%)` }} />
-                <div className="relative p-4 flex flex-col items-center text-center">
-                  <div className="h-32 grid place-items-center">
-                    {c.image_url
-                      ? <img src={c.image_url} alt="" className="max-h-full object-contain drop-shadow-2xl group-hover:scale-110 transition-transform" />
-                      : <CaseArt color={c.color} icon={game(c.game).icon} />}
-                  </div>
-                  <p className="font-black uppercase text-sm mt-2">{c.name}</p>
-                  <p className="text-[11px] text-muted">{game(c.game).name} • {counts[c.id] || 0} ta akkaunt</p>
-                  <span className="mt-3 w-full rounded-xl bg-bg/70 border border-line py-2 font-black text-accent group-hover:bg-accent group-hover:text-[#1B1400] transition-colors">
-                    {som(c.price)}
-                  </span>
-                </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+            {shown.map(a => (
+              <Link key={a.id} href={`/market?id=${a.id}`}>
+                <AccountCard a={a} onClick={() => {}} footer={<span className="btn-accent !py-2 w-full">Sotib olish</span>} />
               </Link>
             ))}
           </div>
         )}
       </section>
 
-      {/* Bozordan */}
-      <section>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="h-title">Sotuvdagi akkauntlar</h2>
-          <Link href="/market" className="text-sm font-bold text-accent">Barchasi →</Link>
+      {/* Sotish + Spin tez kunda */}
+      <section className="grid md:grid-cols-2 gap-4">
+        <div className="panel p-6 relative overflow-hidden">
+          <div className="absolute -right-10 -bottom-10 w-48 h-48 rounded-full bg-accent/10 blur-2xl" />
+          <p className="text-3xl">💰</p>
+          <p className="font-black uppercase text-lg mt-2">Akkauntingizni soting</p>
+          <p className="text-sm text-muted mt-1">Adminga Telegramda yozing — u akkauntni tekshirib, rasmlari bilan saytga joylaydi. Sotilganda pul balansingizga tushadi.</p>
+          <div className="flex flex-wrap gap-2 mt-4">
+            <Link href="/sell" className="btn-accent">Batafsil</Link>
+            <a href={telegramLink("Salom! Akkauntimni UzDrop'da sotmoqchiman.")} target="_blank" rel="noopener noreferrer" className="btn-ghost">@{TELEGRAM_ADMIN}</a>
+          </div>
         </div>
-        {latest.length === 0 ? (
-          <div className="panel p-8 text-center text-muted">
-            Hali e&apos;lonlar yo&apos;q. <Link href="/sell" className="text-accent font-bold">Birinchi bo&apos;lib soting</Link>
+        <div className="panel p-6 relative overflow-hidden">
+          <div className="absolute inset-0 opacity-20 pointer-events-none" style={{ background: "repeating-linear-gradient(135deg, transparent 0 18px, rgba(92,255,143,.12) 18px 36px)" }} />
+          <p className="relative text-3xl">🎰</p>
+          <div className="relative flex items-center gap-2 mt-2">
+            <p className="font-black uppercase text-lg">Akkaunt spin</p>
+            <span className="chip bg-accent/15 text-accent">Tez kunda</span>
           </div>
-        ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-            {latest.map(a => <Link key={a.id} href={`/market?id=${a.id}`}><AccountCard a={a} onClick={() => {}} /></Link>)}
-          </div>
-        )}
+          <p className="relative text-sm text-muted mt-1">Keys ochib haqiqiy o&apos;yin akkauntini yutish imkoniyati tez orada qo&apos;shiladi. Kuzatib boring!</p>
+        </div>
       </section>
 
       <section className="grid sm:grid-cols-3 gap-3 text-center">
         {[
-          ["🔒", "Xavfsiz", "Har bir akkaunt admin tomonidan tekshiriladi"],
-          ["🔑", "Kod orqali", "Xariddan keyin kod beriladi — admin Telegramda topshiradi"],
-          ["🎁", "Halol spin", "Natija serverda hisoblanadi, ehtimollar ochiq"],
+          ["🔒", "Xavfsiz", "Login/parol saytda hech kimga ko'rinmaydi — faqat admin topshiradi"],
+          ["🆔", "Har bir akkaunt ID raqamli", "Qaysi admin javobgarligi aniq ko'rinadi"],
+          ["↩️", "Pul qaytarish", "Akkaunt ishlamasa admin pulni balansga qaytaradi"],
         ].map(([i, t, d]) => (
           <div key={t} className="panel p-5"><div className="text-3xl">{i}</div><p className="font-black uppercase mt-2">{t}</p><p className="text-xs text-muted mt-1">{d}</p></div>
         ))}
@@ -137,4 +116,3 @@ export default function Home() {
     </div>
   );
 }
-

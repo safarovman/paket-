@@ -1,10 +1,14 @@
 "use client";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { game, rarity, som, type Spin } from "@/lib/uzdrop";
+import { SPIN_ENABLED, game, rarity, som, type Spin } from "@/lib/uzdrop";
 
-/** Tepadagi jonli yutuqlar lentasi */
+/** Tepadagi jonli yutuqlar lentasi (spin yoqilganda) */
 export default function LiveFeed() {
+  return SPIN_ENABLED ? <Feed /> : null;
+}
+
+function Feed() {
   const [spins, setSpins] = useState<Spin[]>([]);
 
   useEffect(() => {
@@ -19,7 +23,7 @@ export default function LiveFeed() {
   }, []);
 
   return (
-    <div className="border-b border-line bg-[#090C16]">
+    <div className="border-b border-line bg-[#040605]">
       <div className="flex items-stretch h-[72px]">
         <div className="hidden sm:flex flex-col justify-center items-center px-5 border-r border-line shrink-0">
           <span className="flex items-center gap-1.5 text-[11px] font-extrabold uppercase text-win">

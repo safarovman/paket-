@@ -8,10 +8,10 @@ import { useUser } from "@/components/UserProvider";
 import { som } from "@/lib/uzdrop";
 
 const NAV = [
-  { href: "/",       label: "Spin",          icon: "🎰" },
-  { href: "/market", label: "Akkauntlar",    icon: "🛒" },
-  { href: "/sell",   label: "Sotish",        icon: "💰" },
-  { href: "/sell?quick=1", label: "Tez sotish", icon: "⚡" },
+  { href: "/market", label: "Akkauntlar", icon: "🛒" },
+  { href: "/sell",   label: "Sotish",     icon: "💰" },
+  { href: "/wallet", label: "Balans",     icon: "💳" },
+  { href: "/case",   label: "Spin",       icon: "🎰", soon: true },
 ];
 
 export default function Navbar() {
@@ -21,13 +21,13 @@ export default function Navbar() {
   const [menu, setMenu] = useState(false);
 
   const logout = async () => { await supabase.auth.signOut(); setMenu(false); router.push("/"); };
-  const active = (href: string) => href === "/" ? path === "/" || path.startsWith("/case") : path.startsWith(href.split("?")[0]) && !href.includes("?");
+  const active = (href: string) => path.startsWith(href);
 
   return (
     <header className="sticky top-0 z-50 bg-bg/90 backdrop-blur border-b border-line">
       <div className="wrap flex items-center h-16 gap-4">
         <Link href="/" className="flex items-center gap-2 shrink-0">
-          <span className="w-9 h-9 rounded-xl bg-gradient-to-br from-accent to-[#FF7A3D] grid place-items-center font-black text-[#1B1400] text-lg rotate-[-6deg]">U</span>
+          <span className="w-9 h-9 rounded-xl bg-gradient-to-br from-accent to-[#16A34A] grid place-items-center font-black text-[#03140A] text-lg rotate-[-6deg]">U</span>
           <span className="font-black text-xl tracking-tight">Uz<span className="text-accent">Drop</span></span>
         </Link>
 
@@ -37,6 +37,7 @@ export default function Navbar() {
               className={clsx("px-3.5 py-2 rounded-lg text-[13px] font-extrabold uppercase tracking-wide transition-colors",
                 active(n.href) ? "text-accent bg-accent/10" : "text-muted hover:text-white")}>
               <span className="mr-1">{n.icon}</span>{n.label}
+              {n.soon && <span className="ml-1.5 chip bg-accent/15 text-accent !text-[9px] !px-1.5">Tez kunda</span>}
             </Link>
           ))}
         </nav>
@@ -46,7 +47,7 @@ export default function Navbar() {
             <>
               <Link href="/wallet" className="flex items-center rounded-xl bg-panel border border-line overflow-hidden">
                 <span className="px-3 py-2 text-sm font-extrabold text-accent whitespace-nowrap">{som(profile?.balance)}</span>
-                <span className="bg-accent text-[#1B1400] w-9 h-9 grid place-items-center font-black text-lg">+</span>
+                <span className="bg-accent text-[#03140A] w-9 h-9 grid place-items-center font-black text-lg">+</span>
               </Link>
               <div className="relative">
                 <button onClick={() => setMenu(!menu)}
@@ -61,7 +62,6 @@ export default function Navbar() {
                       {[
                         { href: "/profile", l: "🎒 Inventar va profil" },
                         { href: "/wallet",  l: "💳 Balans" },
-                        ...(profile?.is_admin ? [{ href: "/admin", l: "🛠 Admin panel" }] : []),
                       ].map(i => (
                         <Link key={i.href} href={i.href} onClick={() => setMenu(false)}
                           className="block px-3 py-2 rounded-lg text-sm text-muted hover:text-white hover:bg-panel2">{i.l}</Link>
@@ -84,7 +84,7 @@ export default function Navbar() {
           <Link key={n.href} href={n.href}
             className={clsx("flex-1 py-2 text-center text-[10px] font-extrabold uppercase",
               active(n.href) ? "text-accent" : "text-muted")}>
-            <div className="text-base leading-none mb-0.5">{n.icon}</div>{n.label}
+            <div className="text-base leading-none mb-0.5">{n.icon}</div>{n.label}{n.soon && <span className="block text-[8px] text-accent">tez kunda</span>}
           </Link>
         ))}
       </nav>

@@ -11,10 +11,14 @@ import ListedTab from "@/components/admin/ListedTab";
 import CasesTab from "@/components/admin/CasesTab";
 import UsersTab from "@/components/admin/UsersTab";
 import SettingsTab from "@/components/admin/SettingsTab";
+import StatsTab from "@/components/admin/StatsTab";
+import DepositForm from "@/components/admin/DepositForm";
+import Link from "next/link";
 
-type Tab = "code" | "deposits" | "withdrawals" | "add" | "listed" | "cases" | "users" | "settings";
+type Tab = "code" | "stats" | "deposits" | "withdrawals" | "add" | "listed" | "cases" | "users" | "settings";
 const TABS: { id: Tab; label: string }[] = [
   { id: "code",        label: "🔑 Kod" },
+  { id: "stats",       label: "📊 Statistika" },
   { id: "deposits",    label: "💳 To'ldirish" },
   { id: "withdrawals", label: "Yechish" },
   { id: "add",         label: "➕ Akkaunt joylash" },
@@ -28,7 +32,7 @@ interface Deposit { id: string; code: string | null; card_last4?: string | null;
 interface Withdrawal { id: string; user_id: string; amount: number; card: string; created_at: string; }
 
 export default function AdminPage() {
-  const { profile, loading } = useUser();
+  const { user, profile, loading } = useUser();
   const [tab, setTab] = useState<Tab>("code");
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
@@ -94,6 +98,16 @@ export default function AdminPage() {
   };
 
   if (loading) return <div className="wrap py-20 text-center text-muted">Yuklanmoqda…</div>;
+  if (!user) return (
+    <div className="wrap py-20">
+      <div className="panel p-8 max-w-md mx-auto text-center">
+        <p className="text-4xl mb-3">🔐</p>
+        <h1 className="h-title mb-2">Admin paneli</h1>
+        <p className="text-muted text-sm mb-6">Davom etish uchun admin akkauntingiz bilan kiring.</p>
+        <Link href="/login/" className="btn-accent w-full">Kirish</Link>
+      </div>
+    </div>
+  );
   if (!profile?.is_admin) return (
     <div className="wrap py-20">
       <div className="panel p-8 max-w-lg mx-auto text-center">
@@ -108,7 +122,6 @@ export default function AdminPage() {
 
   return (
     <div className="wrap py-8">
-      <h1 className="h-title mb-5">🛠 Admin panel</h1>
 
       <div className="flex gap-1.5 overflow-x-auto pb-2 mb-6">
         {TABS.map(t => (
@@ -128,8 +141,12 @@ export default function AdminPage() {
 
       {tab === "code" && <CodeTab waiting={waiting} users={byId} admins={adminById} me={profile.id} busy={busy} rpc={rpc} />}
 
+      {tab === "stats" && <StatsTab />}
+
       {tab === "deposits" && (
         <div className="space-y-3">
+          <DepositForm users={users} after={after} />
+          <p className="label !mt-6">Saytdan kelgan so&apos;rovlar</p>
           {deposits.length === 0 && <Empty text="To'ldirish so'rovlari yo'q" />}
           {deposits.map(d => (
             <div key={d.id} className="panel p-4 flex flex-col sm:flex-row sm:items-center gap-3">
@@ -176,7 +193,7 @@ export default function AdminPage() {
       {tab === "add" && <AddAccountTab cases={cases} admins={adminOpts} me={profile.id} myTelegram={profile.telegram ?? null} busy={busy} rpc={rpc} after={after} />}
       {tab === "listed" && <ListedTab accounts={listed} cases={cases} users={byId} admins={adminOpts} adminById={adminById} me={profile.id} busy={busy} rpc={rpc} />}
       {tab === "cases" && <CasesTab cases={cases} pool={pool} busy={busy} onSave={args => rpc("admin_save_case", args, "Keys saqlandi")} />}
-      {tab === "users" && <UsersTab users={users} me={profile.id} busy={busy} rpc={rpc} />}
+      {tab === "users" && <UsersTab users={users} me={profile.id} busy={busy} rpc={rpc} after={after} />}
       {tab === "settings" && <SettingsTab me={profile.id} />}
     </div>
   );

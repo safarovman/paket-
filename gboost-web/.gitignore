@@ -18,3 +18,5 @@ build/
 *.log
 .vercel
 *.tsbuildinfo
+/out-admin
+/.next-admin

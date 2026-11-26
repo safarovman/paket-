@@ -77,6 +77,9 @@ export const telegramLink = (text: string, username?: string | null) =>
 
 export const accNo = (n?: number | null) => (n ? `#${n}` : "");
 
+/** Akkaunt spin hozircha o'chiq — "Tez kunda". Yoqish: NEXT_PUBLIC_SPIN=1 */
+export const SPIN_ENABLED = process.env.NEXT_PUBLIC_SPIN === "1";
+
 export const COMMISSION = 0.10;
 
 export const som = (n: number | null | undefined) =>

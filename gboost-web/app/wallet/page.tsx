@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import clsx from "clsx";
 import { supabase, errText } from "@/lib/supabase";
 import { useUser } from "@/components/UserProvider";
-import { som, ago, PAY_METHODS } from "@/lib/uzdrop";
+import { som, ago, PAY_METHODS, TELEGRAM_ADMIN, telegramLink } from "@/lib/uzdrop";
 import { useDepositSettings } from "@/lib/useDeposit";
 import LoginCta from "@/components/profile/LoginCta";
 import CodeCard from "@/components/CodeCard";
@@ -87,7 +87,7 @@ export default function WalletPage() {
       {/* Balans */}
       <div className="panel p-6 sm:p-8 relative overflow-hidden text-center">
         <div className="absolute inset-0 opacity-40 pointer-events-none"
-          style={{ background: "radial-gradient(circle at 50% 120%, rgba(255,200,61,.35), transparent 60%)" }} />
+          style={{ background: "radial-gradient(circle at 50% 120%, rgba(92,255,143,.35), transparent 60%)" }} />
         <p className="label relative">Sizning balansingiz</p>
         <p className="relative text-4xl sm:text-5xl font-black text-accent">{som(profile?.balance)}</p>
       </div>
@@ -96,7 +96,7 @@ export default function WalletPage() {
         {([["in", "💳 To'ldirish"], ["out", "🏦 Yechish"]] as const).map(([id, l]) => (
           <button key={id} onClick={() => { setTab(id); setMsg(null); }}
             className={clsx("py-3 rounded-xl text-sm font-extrabold uppercase transition-colors",
-              tab === id ? "bg-accent text-[#1B1400]" : "text-muted hover:text-white")}>{l}</button>
+              tab === id ? "bg-accent text-[#03140A]" : "text-muted hover:text-white")}>{l}</button>
         ))}
       </div>
 
@@ -105,29 +105,12 @@ export default function WalletPage() {
           msg.ok ? "bg-win/15 text-win" : "bg-lose/15 text-lose")}>{msg.t}</div>
       )}
 
-      {tab === "in" && dep && !dep.enabled ? (
-        <div className="panel p-8 text-center border-lose/40">
-          <p className="text-4xl">⏸️</p>
-          <p className="font-black uppercase mt-2">Balans to&apos;ldirish vaqtincha to&apos;xtatilgan</p>
-          <p className="text-sm text-muted mt-2">{dep.message || "Hozir pul o'tkazmang. Tez orada qayta ishga tushadi."}</p>
-        </div>
-      ) : tab === "in" ? (
+      {tab === "in" ? (
         <div className="grid md:grid-cols-2 gap-4">
-          <div className="panel p-5 space-y-5">
+          <div className="panel p-5 space-y-4">
+            <p className="label">Admin orqali to&apos;ldirish (hozir ishlaydi)</p>
             <div>
-              <p className="label">1. To&apos;lov usuli</p>
-              <div className="grid grid-cols-4 gap-2">
-                {PAY_METHODS.map(m => (
-                  <button key={m.id} onClick={() => setMethod(m.id)}
-                    className={clsx("py-2.5 rounded-xl text-xs font-extrabold border transition-colors",
-                      method === m.id ? "border-accent bg-accent/10 text-accent" : "border-line bg-bg text-muted hover:text-white")}>
-                    {m.name}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div>
-              <p className="label">2. Summa</p>
+              <label className="label">Summa</label>
               <input className="input text-lg font-black" inputMode="numeric" value={fmtInput(amount)}
                 onChange={e => setAmount(digits(e.target.value))} placeholder="50 000" />
               <div className="flex flex-wrap gap-1.5 mt-2">
@@ -140,32 +123,32 @@ export default function WalletPage() {
                 ))}
               </div>
             </div>
+            <div className="rounded-xl bg-bg border border-line p-4 text-center">
+              <p className="text-xs text-muted">Sizning ID raqamingiz</p>
+              <p className="text-3xl font-black text-accent">{profile?.public_id ?? "—"}</p>
+            </div>
+            <ol className="text-xs text-muted space-y-1.5 list-decimal pl-5">
+              <li>Tugmani bosing — Telegramda <b className="text-white">@{TELEGRAM_ADMIN}</b> ga ID va summa bilan xabar ochiladi.</li>
+              <li>Admin to&apos;lov uchun karta raqamini beradi. To&apos;lab, chekni yuboring.</li>
+              <li>Admin tasdiqlashi bilan pul balansingizda ko&apos;rinadi.</li>
+            </ol>
+            <a href={telegramLink(`💳 Balans to'ldirmoqchiman\nMening UzDrop ID: ${profile?.public_id ?? ""}\nSumma: ${som(amount)}`)}
+              target="_blank" rel="noopener noreferrer" className="btn-accent w-full">Telegramda adminga yozish</a>
+            <p className="text-[11px] text-muted">⚠️ Faqat <b className="text-white">@{TELEGRAM_ADMIN}</b> ga to&apos;lang. Boshqa &quot;admin&quot;larga ishonmang — admin sizga birinchi yozmaydi.</p>
           </div>
 
-          <div className="panel p-5 space-y-4">
-            <p className="label">3. Kartaga o&apos;tkazing</p>
-            <div className="rounded-2xl p-5 bg-gradient-to-br from-violet to-[#3A2A99] relative overflow-hidden">
-              <div className="absolute -right-8 -top-8 w-32 h-32 rounded-full bg-white/10" />
-              <p className="text-[11px] font-bold uppercase text-white/70">Karta raqami</p>
-              <p className="text-xl font-black tracking-wider font-mono my-1">{DEPOSIT_CARD}</p>
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-bold text-white/80">{DEPOSIT_CARD_OWNER}</p>
-                <button onClick={() => { navigator.clipboard?.writeText(DEPOSIT_CARD.replace(/\s/g, "")); setCopied(true); setTimeout(() => setCopied(false), 1500); }}
-                  className="chip bg-white/20 text-white !py-1">{copied ? "✓ Nusxalandi" : "Nusxa olish"}</button>
+          <div className="panel p-5 space-y-3">
+            <p className="label">Avtomatik to&apos;lov</p>
+            {PAY_METHODS.map(m => (
+              <div key={m.id} className="flex items-center justify-between rounded-xl border border-line bg-bg px-4 py-3 opacity-70">
+                <span className="font-extrabold">{m.name}</span>
+                <span className="chip bg-accent/15 text-accent">Tez kunda</span>
               </div>
-            </div>
-            <p className="text-xs text-muted">
-              Kartaga aynan <b className="text-accent">{som(amount)}</b> o&apos;tkazing, so&apos;ng «To&apos;ladim» tugmasini bosing.
-              Admin to&apos;lovni bir necha daqiqada tekshirib, balansingizni to&apos;ldiradi.
-            </p>
-            <div>
-              <label className="label">Izoh (ixtiyoriy)</label>
-              <input className="input" value={note} onChange={e => setNote(e.target.value)} placeholder="Karta oxirgi 4 raqami yoki chek raqami" />
-            </div>
-            <button disabled={busy} onClick={deposit} className="btn-accent w-full">✅ To&apos;ladim — {som(amount)}</button>
+            ))}
+            <p className="text-xs text-muted">Kartadan avtomatik to&apos;ldirish tez orada qo&apos;shiladi — to&apos;lov qilishingiz bilan pul darhol balansga tushadi.</p>
           </div>
 
-          <History title="To'ldirish so'rovlari" rows={deps.map(d => ({ id: d.id, a: d.amount, s: d.status, sub: `${d.code ? d.code + " • " : ""}${PAY_METHODS.find(m => m.id === d.method)?.name ?? d.method} • ${ago(d.created_at)} oldin` }))} />
+          <History title="To'ldirishlar tarixi" rows={deps.map(d => ({ id: d.id, a: d.amount, s: d.status, sub: `${d.method === "telegram" ? "Telegram (admin)" : PAY_METHODS.find(m => m.id === d.method)?.name ?? d.method} • ${ago(d.created_at)} oldin` }))} />
         </div>
       ) : (
         <div className="grid md:grid-cols-2 gap-4">

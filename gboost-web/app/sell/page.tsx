@@ -54,7 +54,7 @@ function Sell() {
             ["Telegramda adminga yozing", `@${TELEGRAM_ADMIN} — tayyor xabar avtomatik ochiladi, bo'sh joylarni to'ldiring.`],
             ["Skrinshotlar va ma'lumotlarni yuboring", "Rank, skinlar, inventar rasmlari. Login/parolni admin so'raganda berasiz."],
             ["Admin tekshiradi va saytga joylaydi", quick ? "Narx kelishilgach pul darhol balansingizga tushadi." : "E'lon rasmlari bilan bozorda paydo bo'ladi."],
-            [quick ? "Spin qiling yoki yeching" : "Sotilganda pul keladi", quick ? "Pulga keys oching yoki kartaga yeching." : "Xaridor sotib olishi bilan pul balansingizda."],
+            [quick ? "Pulni ishlating yoki yeching" : "Sotilganda pul keladi", quick ? "Pulga boshqa akkaunt sotib oling yoki kartaga yeching." : "Xaridor sotib olishi bilan pul balansingizda."],
           ].map(([t, d], i) => (
             <li key={t} className="flex gap-3">
               <span className="w-7 h-7 shrink-0 rounded-lg bg-violet grid place-items-center font-black text-sm">{i + 1}</span>

@@ -4,14 +4,14 @@ import Link from "next/link";
 import clsx from "clsx";
 import { supabase, errText } from "@/lib/supabase";
 import { useUser } from "@/components/UserProvider";
-import { som, game, rarity, ago, type Account, type Delivery } from "@/lib/uzdrop";
+import { SPIN_ENABLED, som, game, rarity, ago, type Account, type Delivery } from "@/lib/uzdrop";
 import CodeCard from "@/components/CodeCard";
 import LoginCta from "@/components/profile/LoginCta";
 
 type Tab = "inv" | "buy" | "mine" | "tx";
 const TABS: { id: Tab; label: string }[] = [
-  { id: "inv",  label: "🎒 Inventar" },
   { id: "buy",  label: "🛒 Xaridlar" },
+  ...(SPIN_ENABLED ? [{ id: "inv" as Tab, label: "🎒 Spin yutuqlari" }] : []),
   { id: "mine", label: "📦 E'lonlarim" },
   { id: "tx",   label: "📜 Tarix" },
 ];
@@ -98,7 +98,7 @@ function TelegramField({ value, onSaved }: { value?: string | null; onSaved: () 
 
 export default function ProfilePage() {
   const { user, profile, loading, refresh } = useUser();
-  const [tab, setTab] = useState<Tab>("inv");
+  const [tab, setTab] = useState<Tab>("buy");
   const [inv, setInv] = useState<Account[]>([]);
   const [bought, setBought] = useState<Account[]>([]);
   const [mine, setMine] = useState<Account[]>([]);
@@ -190,7 +190,7 @@ export default function ProfilePage() {
         {TABS.map(t => (
           <button key={t.id} onClick={() => setTab(t.id)}
             className={clsx("px-4 py-2.5 rounded-xl text-[13px] font-extrabold uppercase whitespace-nowrap transition-colors",
-              tab === t.id ? "bg-accent text-[#1B1400]" : "bg-panel text-muted hover:text-white")}>
+              tab === t.id ? "bg-accent text-[#03140A]" : "bg-panel text-muted hover:text-white")}>
             {t.label}
             {t.id === "inv" && inv.filter(a => a.status === "won").length > 0 &&
               <span className="ml-1.5 chip bg-lose text-white !px-1.5">{inv.filter(a => a.status === "won").length}</span>}

@@ -10,6 +10,7 @@ Hammasi bepul: **Cloudflare Pages** (sayt, trafik cheksiz), **Cloudflare R2** (r
    3. `supabase/03_codes.sql` — kod orqali topshirish
    4. `supabase/04_account_admins.sql` — akkaunt ID (#1001…) va mas'ul admin
    5. `supabase/05_settings.sql` — to'lov kartasi sozlamasi (admin panel → ⚙️ Sozlamalar)
+   6. `supabase/06_admin_stats.sql` — statistika va Telegram orqali qo'lda to'ldirish
 2. Saytda ro'yxatdan o'ting, keyin o'zingizni **ega** qiling (o'z emailingiz bilan):
    ```sql
    update public.profiles set is_owner = true, is_admin = true
@@ -26,31 +27,42 @@ Hammasi bepul: **Cloudflare Pages** (sayt, trafik cheksiz), **Cloudflare R2** (r
    Domen hali bo'lmasa: **Public Development URL** ni yoqing (`https://pub-....r2.dev`).
 3. Bucket → Settings → **CORS policy**:
    ```json
-   [{ "AllowedOrigins": ["https://SIZNINGDOMEN.uz", "http://localhost:3000"],
+   [{ "AllowedOrigins": ["https://admin.SIZNINGDOMEN.uz", "https://uzdrop-admin.pages.dev", "http://localhost:3001"],
       "AllowedMethods": ["PUT"], "AllowedHeaders": ["content-type"], "MaxAgeSeconds": 3600 }]
    ```
 4. R2 → **Manage API Tokens** → Create → *Object Read & Write*, faqat `uzdrop-images` bucket. Access Key ID va Secret'ni saqlang.
-5. Supabase → Edge Functions → **Secrets** ga qo'shing (kalitlar faqat shu yerda turadi, saytda emas):
+5. R2 sozlanmaguncha rasmlar avtomatik Supabase Storage'ga yuklanadi (1 GB). R2 tayyor bo'lgach o'zi R2'ga o'tadi.
+6. Supabase → Edge Functions → **Secrets** ga qo'shing (kalitlar faqat shu yerda turadi, saytda emas):
    `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET=uzdrop-images`, `R2_PUBLIC_URL=https://img.SIZNINGDOMEN.uz`
-6. Funksiyani joylang (kompyuterda Supabase CLI bilan):
+7. Funksiyani joylang (kompyuterda Supabase CLI bilan):
    ```bash
    supabase functions deploy r2-upload --project-ref heohxnkmwodsnhzgixst
    ```
 
-## 3. Cloudflare Pages (sayt)
-1. Cloudflare → Workers & Pages → Create → **Pages** → GitHub reponi ulang (`paket-`).
-2. Sozlamalar:
-   - Root directory: `gboost-web`
-   - Build command: `npm run build`
-   - Output directory: `out`
-3. Environment variables:
-   | Nomi | Qiymat |
-   |---|---|
-   | `NEXT_PUBLIC_SUPABASE_URL` | Supabase loyiha URL |
-   | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | anon (ochiq) kalit |
-   | `NEXT_PUBLIC_STORAGE` | `r2` |
-   | `NEXT_PUBLIC_TELEGRAM_ADMIN` | admin Telegram username (@ siz) |
-   | `NODE_VERSION` | `20` |
+## 3. Cloudflare Pages — IKKI sayt (bitta repodan)
+Cloudflare → Workers & Pages → Create → **Pages** → GitHub reponi ulang. Ikki marta qiling:
+
+| | Asosiy sayt (`uzdrop`) | Admin sayti (`uzdrop-admin`) |
+|---|---|---|
+| Root directory | `gboost-web` | `gboost-web` |
+| Build command | `npm run build` | `npm run build:admin` |
+| Output directory | `out` | `out-admin` |
+| Domen (keyin) | `uzdrop.uz` | `admin.uzdrop.uz` (yoki boshqa, sir saqlangan nom) |
+
+Ikkalasiga bir xil environment variables:
+| Nomi | Qiymat |
+|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase loyiha URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | anon (ochiq) kalit |
+| `NEXT_PUBLIC_TELEGRAM_ADMIN` | asosiy admin Telegram username (@ siz) |
+| `NEXT_PUBLIC_TELEGRAM_BOT` | Telegram login bot username (AUTH.md) |
+| `NODE_VERSION` | `20` |
+
+Admin panel kodi asosiy saytga **umuman kirmaydi** (alohida yig'iladi). Admin saytga faqat `is_admin` bo'lganlar kira oladi —
+bu bazada tekshiriladi, shuning uchun manzil oshkor bo'lsa ham boshqalar hech narsa qila olmaydi.
+Akkaunt spin hozircha o'chiq ("Tez kunda"); yoqish uchun asosiy saytga `NEXT_PUBLIC_SPIN=1` qo'shasiz.
+
+Kirish (Google, Telegram, email kod) sozlamalari: **[AUTH.md](AUTH.md)**.
 
 ## 4. Domen
 1. Domen sotib oling: `.com` — Cloudflare Registrar (ustama yo'q); `.uz` — mahalliy registrator (cctld.uz ro'yxatidagilar).
@@ -58,7 +70,7 @@ Hammasi bepul: **Cloudflare Pages** (sayt, trafik cheksiz), **Cloudflare R2** (r
 3. Pages loyiha → **Custom domains** → `SIZNINGDOMEN.uz` va `www`.
 4. Supabase → Authentication → URL Configuration:
    - Site URL: `https://SIZNINGDOMEN.uz`
-   - Redirect URLs: `https://SIZNINGDOMEN.uz/login/done/`
+   - Redirect URLs: `https://SIZNINGDOMEN.uz/login/done/` va `https://admin.SIZNINGDOMEN.uz/login/done/`
 5. Google kirish ishlatilsa: Google Cloud Console'da ham shu domenni qo'shing.
 
 ## Xavfsizlik — qanday ishlaydi
