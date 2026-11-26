@@ -1,5 +1,5 @@
 -- ============================================================
---  UzDrop — BITTA FAYLDA HAMMASI (01…11 birlashtirilgan)
+--  UzDrop — BITTA FAYLDA HAMMASI (01…13 birlashtirilgan)
 --  Supabase → SQL Editor → hammasini nusxalab qo'ying → Run
 --  Qayta ishga tushirish xavfsiz.
 -- ============================================================
@@ -1157,3 +1157,58 @@ grant execute on function public.set_telegram(text) to authenticated;
 --    grant execute on function public.request_withdraw(bigint,text) to authenticated;
 -- ============================================================
 revoke execute on function public.request_withdraw(bigint, text) from authenticated, anon, public;
+
+-- >>>>>>>>>>>>>>>> 12_notify.sql <<<<<<<<<<<<<<<<
+-- ============================================================
+--  UzDrop v12 — TELEGRAM XABARNOMA (11 dan keyin)
+--  Har bir yangi tranzaksiyada notify-admin funksiyasi chaqiriladi.
+--  Funksiyaga faqat tranzaksiya ID si yuboriladi; u bazadan o'zi tekshiradi.
+--  Xabar yuborishdagi xato xarid/to'ldirishni HECH QACHON to'xtatmaydi.
+-- ============================================================
+create extension if not exists pg_net with schema extensions;
+
+alter table public.transactions add column if not exists notified_at timestamptz;
+
+create or replace function public._notify_admin() returns trigger
+language plpgsql security definer set search_path = public, extensions as $$
+begin
+  begin
+    perform net.http_post(
+      url     := 'https://acwlvsazpqjnunqbaxyx.supabase.co/functions/v1/notify-admin',
+      body    := jsonb_build_object('id', new.id),
+      headers := '{"Content-Type":"application/json"}'::jsonb
+    );
+  exception when others then
+    null; -- xabarnoma ishlamasa ham asosiy amal davom etadi
+  end;
+  return new;
+end $$;
+revoke execute on function public._notify_admin() from anon, authenticated, public;
+
+drop trigger if exists transactions_notify on public.transactions;
+create trigger transactions_notify after insert on public.transactions
+  for each row execute function public._notify_admin();
+
+-- >>>>>>>>>>>>>>>> 13_usage.sql <<<<<<<<<<<<<<<<
+-- ============================================================
+--  UzDrop v13 — BEPUL TARIF LIMITLARI (12 dan keyin)
+--  Admin panel → Statistika: baza hajmi, fayllar, faol foydalanuvchilar.
+-- ============================================================
+create or replace function public.admin_usage() returns jsonb
+language plpgsql stable security definer set search_path = public, storage, auth as $$
+begin
+  perform public._require_admin();
+  return jsonb_build_object(
+    'db_bytes',       pg_database_size(current_database()),
+    'storage_bytes',  coalesce((select sum((metadata->>'size')::bigint) from storage.objects), 0),
+    'storage_files',  (select count(*) from storage.objects),
+    'mau',            (select count(*) from auth.users where last_sign_in_at > now() - interval '30 days'),
+    'users',          (select count(*) from auth.users),
+    'tables', coalesce((
+      select jsonb_agg(jsonb_build_object('name', s.relname, 'bytes', pg_total_relation_size(c.oid), 'rows', s.n_live_tup) order by pg_total_relation_size(c.oid) desc)
+      from pg_stat_user_tables s join pg_class c on c.oid = s.relid
+      where s.schemaname = 'public'), '[]'::jsonb)
+  );
+end $$;
+revoke execute on function public.admin_usage() from anon, public;
+grant execute on function public.admin_usage() to authenticated;

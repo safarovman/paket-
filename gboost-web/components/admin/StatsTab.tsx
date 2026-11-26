@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase, errText } from "@/lib/supabase";
 import { game, som } from "@/lib/uzdrop";
 import { Empty, Tg, dt } from "./shared";
+import UsageCard from "./UsageCard";
 
 interface Stats {
   totals: { users: number; new_today: number; new_7d: number; deposits_sum: number; sales_count: number; active_listings: number };
@@ -38,6 +39,7 @@ export default function StatsTab() {
 
   return (
     <div className="space-y-6">
+      <UsageCard />
       <div className="flex justify-end"><button onClick={load} className="btn-ghost !py-2">↻ Yangilash</button></div>
       <div className="grid grid-cols-2 lg:grid-cols-6 gap-3">
         <Card label="Foydalanuvchilar" value={t.users} />
