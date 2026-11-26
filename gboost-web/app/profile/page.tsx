@@ -190,7 +190,7 @@ export default function ProfilePage() {
         {TABS.map(t => (
           <button key={t.id} onClick={() => setTab(t.id)}
             className={clsx("px-4 py-2.5 rounded-xl text-[13px] font-extrabold uppercase whitespace-nowrap transition-colors",
-              tab === t.id ? "bg-accent text-[#03140A]" : "bg-panel text-muted hover:text-white")}>
+              tab === t.id ? "bg-accent text-[#1B1400]" : "bg-panel text-muted hover:text-white")}>
             {t.label}
             {t.id === "inv" && inv.filter(a => a.status === "won").length > 0 &&
               <span className="ml-1.5 chip bg-lose text-white !px-1.5">{inv.filter(a => a.status === "won").length}</span>}

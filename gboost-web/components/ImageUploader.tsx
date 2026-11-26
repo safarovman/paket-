@@ -30,7 +30,7 @@ export default function ImageUploader({ value, onChange, max = 8 }: { value: str
         {value.map((u, i) => (
           <div key={u} className="relative aspect-video rounded-lg overflow-hidden border border-line group">
             <img src={u} alt="" className="w-full h-full object-cover" />
-            {i === 0 && <span className="absolute left-1 top-1 chip bg-accent text-[#03140A]">Muqova</span>}
+            {i === 0 && <span className="absolute left-1 top-1 chip bg-accent text-[#1B1400]">Muqova</span>}
             <div className="absolute inset-x-0 bottom-0 flex justify-between bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity text-xs">
               <button type="button" onClick={() => move(i, -1)} className="px-2 py-1">◀</button>
               <button type="button" onClick={() => onChange(value.filter(x => x !== u))} className="px-2 py-1 text-lose font-bold">✕</button>

@@ -20,7 +20,7 @@ export default function Home() {
   return (
     <div className="wrap py-6 space-y-10">
       {/* Banner */}
-      <section className="relative overflow-hidden rounded-3xl border border-line bg-gradient-to-br from-[#0B2A17] via-[#0A1A10] to-[#050706] p-6 sm:p-10">
+      <section className="relative overflow-hidden rounded-3xl border border-line bg-gradient-to-br from-[#4A0D0D] via-[#240A0A] to-[#070505] p-6 sm:p-10">
         <div className="absolute -right-16 -top-20 w-96 h-96 rounded-full bg-accent/20 blur-3xl" />
         <div className="absolute right-40 bottom-0 w-60 h-60 rounded-full bg-violet/20 blur-3xl" />
         <div className="relative max-w-2xl">
@@ -60,7 +60,7 @@ export default function Home() {
           <h2 className="h-title mr-3">Sotuvdagi akkauntlar</h2>
           {["all", ...games].map(x => (
             <button key={x} onClick={() => setG(x)}
-              className={`chip !px-3 !py-1.5 ${g === x ? "bg-accent text-[#03140A]" : "bg-panel text-muted hover:text-white"}`}>
+              className={`chip !px-3 !py-1.5 ${g === x ? "bg-accent text-[#1B1400]" : "bg-panel text-muted hover:text-white"}`}>
               {x === "all" ? "Barchasi" : `${game(x).icon} ${game(x).name}`}
             </button>
           ))}
@@ -94,7 +94,7 @@ export default function Home() {
           </div>
         </div>
         <div className="panel p-6 relative overflow-hidden">
-          <div className="absolute inset-0 opacity-20 pointer-events-none" style={{ background: "repeating-linear-gradient(135deg, transparent 0 18px, rgba(92,255,143,.12) 18px 36px)" }} />
+          <div className="absolute inset-0 opacity-20 pointer-events-none" style={{ background: "repeating-linear-gradient(135deg, transparent 0 18px, rgba(255,200,61,.12) 18px 36px)" }} />
           <p className="relative text-3xl">🎰</p>
           <div className="relative flex items-center gap-2 mt-2">
             <p className="font-black uppercase text-lg">Akkaunt spin</p>

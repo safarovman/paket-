@@ -100,10 +100,10 @@ function CasePage() {
       </div>
 
       {/* Ruletka */}
-      <div ref={boxRef} className="relative mt-6 h-[210px] rounded-2xl border border-line bg-[#030504] overflow-hidden">
-        <div className="absolute inset-y-0 left-0 w-24 z-10 bg-gradient-to-r from-[#030504] to-transparent" />
-        <div className="absolute inset-y-0 right-0 w-24 z-10 bg-gradient-to-l from-[#030504] to-transparent" />
-        <div className="absolute left-1/2 top-0 bottom-0 w-[3px] -translate-x-1/2 bg-accent z-20 shadow-[0_0_16px_#5CFF8F]" />
+      <div ref={boxRef} className="relative mt-6 h-[210px] rounded-2xl border border-line bg-[#050303] overflow-hidden">
+        <div className="absolute inset-y-0 left-0 w-24 z-10 bg-gradient-to-r from-[#050303] to-transparent" />
+        <div className="absolute inset-y-0 right-0 w-24 z-10 bg-gradient-to-l from-[#050303] to-transparent" />
+        <div className="absolute left-1/2 top-0 bottom-0 w-[3px] -translate-x-1/2 bg-accent z-20 shadow-[0_0_16px_#FFC83D]" />
         <div className="absolute left-1/2 -translate-x-1/2 top-0 z-20 w-0 h-0 border-x-[10px] border-x-transparent border-t-[12px] border-t-accent" />
         <div className="absolute left-1/2 -translate-x-1/2 bottom-0 z-20 w-0 h-0 border-x-[10px] border-x-transparent border-b-[12px] border-b-accent" />
         {items.length === 0 ? (

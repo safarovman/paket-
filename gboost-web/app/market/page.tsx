@@ -62,7 +62,7 @@ function Market() {
         <div className="flex gap-1.5 overflow-x-auto">
           {[{ id: "all", name: "Barchasi", icon: "🎮" }, ...GAMES].map(x => (
             <button key={x.id} onClick={() => setG(x.id)}
-              className={`chip !px-3 !py-2 whitespace-nowrap ${g === x.id ? "bg-accent text-[#03140A]" : "bg-bg text-muted hover:text-white"}`}>
+              className={`chip !px-3 !py-2 whitespace-nowrap ${g === x.id ? "bg-accent text-[#1B1400]" : "bg-bg text-muted hover:text-white"}`}>
               {x.icon} {x.name}
             </button>
           ))}

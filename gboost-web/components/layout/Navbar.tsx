@@ -27,7 +27,7 @@ export default function Navbar() {
     <header className="sticky top-0 z-50 bg-bg/90 backdrop-blur border-b border-line">
       <div className="wrap flex items-center h-16 gap-4">
         <Link href="/" className="flex items-center gap-2 shrink-0">
-          <span className="w-9 h-9 rounded-xl bg-gradient-to-br from-accent to-[#16A34A] grid place-items-center font-black text-[#03140A] text-lg rotate-[-6deg]">U</span>
+          <span className="w-9 h-9 rounded-xl bg-gradient-to-br from-accent to-[#DC2626] grid place-items-center font-black text-[#1B1400] text-lg rotate-[-6deg]">U</span>
           <span className="font-black text-xl tracking-tight">Uz<span className="text-accent">Drop</span></span>
         </Link>
 
@@ -47,7 +47,7 @@ export default function Navbar() {
             <>
               <Link href="/wallet" className="flex items-center rounded-xl bg-panel border border-line overflow-hidden">
                 <span className="px-3 py-2 text-sm font-extrabold text-accent whitespace-nowrap">{som(profile?.balance)}</span>
-                <span className="bg-accent text-[#03140A] w-9 h-9 grid place-items-center font-black text-lg">+</span>
+                <span className="bg-accent text-[#1B1400] w-9 h-9 grid place-items-center font-black text-lg">+</span>
               </Link>
               <div className="relative">
                 <button onClick={() => setMenu(!menu)}

@@ -5,13 +5,13 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        bg:     "#050706",
-        panel:  "#0C110E",
-        panel2: "#131A16",
-        line:   "#1E2A23",
-        muted:  "#8A9B90",
-        accent: { DEFAULT: "#5CFF8F", dark: "#34E070" },
-        violet: { DEFAULT: "#16A34A", light: "#86EFAC" },
+        bg:     "#070505",
+        panel:  "#130C0C",
+        panel2: "#1D1313",
+        line:   "#2F1E1E",
+        muted:  "#A89494",
+        accent: { DEFAULT: "#FFC83D", dark: "#F0A800" },
+        violet: { DEFAULT: "#DC2626", light: "#FF6B6B" },
         win:    "#2BD67B",
         lose:   "#FF4D6A",
       },

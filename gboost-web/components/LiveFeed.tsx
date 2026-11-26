@@ -23,7 +23,7 @@ function Feed() {
   }, []);
 
   return (
-    <div className="border-b border-line bg-[#040605]">
+    <div className="border-b border-line bg-[#060404]">
       <div className="flex items-stretch h-[72px]">
         <div className="hidden sm:flex flex-col justify-center items-center px-5 border-r border-line shrink-0">
           <span className="flex items-center gap-1.5 text-[11px] font-extrabold uppercase text-win">

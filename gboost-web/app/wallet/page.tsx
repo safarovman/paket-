@@ -87,7 +87,7 @@ export default function WalletPage() {
       {/* Balans */}
       <div className="panel p-6 sm:p-8 relative overflow-hidden text-center">
         <div className="absolute inset-0 opacity-40 pointer-events-none"
-          style={{ background: "radial-gradient(circle at 50% 120%, rgba(92,255,143,.35), transparent 60%)" }} />
+          style={{ background: "radial-gradient(circle at 50% 120%, rgba(255,200,61,.35), transparent 60%)" }} />
         <p className="label relative">Sizning balansingiz</p>
         <p className="relative text-4xl sm:text-5xl font-black text-accent">{som(profile?.balance)}</p>
       </div>
@@ -96,7 +96,7 @@ export default function WalletPage() {
         {([["in", "💳 To'ldirish"], ["out", "🏦 Yechish"]] as const).map(([id, l]) => (
           <button key={id} onClick={() => { setTab(id); setMsg(null); }}
             className={clsx("py-3 rounded-xl text-sm font-extrabold uppercase transition-colors",
-              tab === id ? "bg-accent text-[#03140A]" : "text-muted hover:text-white")}>{l}</button>
+              tab === id ? "bg-accent text-[#1B1400]" : "text-muted hover:text-white")}>{l}</button>
         ))}
       </div>
 
