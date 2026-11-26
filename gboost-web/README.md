@@ -16,3 +16,4 @@ Next.js 14 + Tailwind + Supabase. Sahifalar:
 To'liq yo'riqnoma: **[DEPLOY.md](DEPLOY.md)** (Supabase, Cloudflare Pages, R2, domen).
 
 <!-- deploy: env sozlamalari bilan qayta yig'ish 2026-11-26 -->
+<!-- deploy: admin sayt env bilan 2026-11-26 -->
