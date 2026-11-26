@@ -19,7 +19,8 @@ export default function Login() {
   const redirect = () => `${window.location.origin}/login/done/`;
   const run = async (fn: () => Promise<void>) => { setErr(""); setOk(""); setBusy(true); try { await fn(); } catch (e) { setErr(errText(e)); } setBusy(false); };
 
-  const GOOGLE_ON = process.env.NEXT_PUBLIC_GOOGLE_LOGIN === "1";
+  // Google orqali kirish yoqilgan (o'chirish: NEXT_PUBLIC_GOOGLE_LOGIN=0)
+  const GOOGLE_ON = process.env.NEXT_PUBLIC_GOOGLE_LOGIN !== "0";
 
   // Tasdiqlash kodini tekshirish (ro'yxatdan o'tish yoki email kod bilan kirish)
   const verify = async () => {
@@ -41,7 +42,7 @@ export default function Login() {
 
   const google = () => run(async () => {
     const { error } = await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: redirect() } });
-    if (error) throw error;
+    if (error) throw new Error(error.message.includes("not enabled") ? "Google orqali kirish hali sozlanmagan." : error.message);
   });
 
   const submit = (e: React.FormEvent) => { e.preventDefault(); run(async () => {
