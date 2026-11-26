@@ -5,6 +5,26 @@
 // Shu sababli admin panel kodi asosiy saytga umuman kirmaydi.
 const isAdmin = process.env.NEXT_PUBLIC_SITE === "admin";
 
+// XAVFSIZLIK: brauzerga faqat OCHIQ (publishable / anon) kalit ketishi mumkin.
+// Maxfiy kalit (sb_secret_... yoki service_role) kiritilsa — build to'xtatiladi,
+// aks holda u sayt kodiga yozilib, hammaga oshkor bo'lardi.
+const anonKey = (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "").trim();
+const looksSecret =
+  anonKey.startsWith("sb_secret_") ||
+  (() => {
+    try {
+      const payload = JSON.parse(Buffer.from(anonKey.split(".")[1] || "", "base64").toString());
+      return payload.role === "service_role";
+    } catch { return false; }
+  })();
+if (looksSecret) {
+  throw new Error(
+    "\n\n❌ NEXT_PUBLIC_SUPABASE_ANON_KEY ga MAXFIY kalit qo'yilgan!\n" +
+    "   Supabase → Project Settings → API Keys → 'Publishable key' (sb_publishable_...) ni qo'ying.\n" +
+    "   Maxfiy kalitni (sb_secret_...) darhol Supabase'da o'chiring va yangisini yarating.\n"
+  );
+}
+
 const nextConfig = {
   output: "export",
   trailingSlash: true,
