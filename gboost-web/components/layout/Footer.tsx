@@ -9,6 +9,8 @@ export default function Footer() {
           <Link href="/market" className="hover:text-white">Akkauntlar</Link>
           <Link href="/sell" className="hover:text-white">Sotish</Link>
           <Link href="/wallet" className="hover:text-white">Balans</Link>
+          <Link href="/privacy" className="hover:text-white">Maxfiylik</Link>
+          <Link href="/terms" className="hover:text-white">Shartlar</Link>
         </div>
       </div>
     </footer>
