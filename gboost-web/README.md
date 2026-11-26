@@ -17,3 +17,4 @@ To'liq yo'riqnoma: **[DEPLOY.md](DEPLOY.md)** (Supabase, Cloudflare Pages, R2, d
 
 <!-- deploy: env sozlamalari bilan qayta yig'ish 2026-11-26 -->
 <!-- deploy: admin sayt env bilan 2026-11-26 -->
+<!-- deploy: admin sayt publishable kalit bilan 2026-11-26 -->
