@@ -15,9 +15,10 @@ import StatsTab from "@/components/admin/StatsTab";
 import DepositForm from "@/components/admin/DepositForm";
 import ActivityTab from "@/components/admin/ActivityTab";
 import UserHistory from "@/components/admin/UserHistory";
+import BansTab from "@/components/admin/BansTab";
 import Link from "next/link";
 
-type Tab = "code" | "activity" | "stats" | "deposits" | "withdrawals" | "add" | "listed" | "cases" | "users" | "settings";
+type Tab = "code" | "activity" | "stats" | "deposits" | "withdrawals" | "add" | "listed" | "cases" | "users" | "bans" | "settings";
 const TABS: { id: Tab; label: string }[] = [
   { id: "code",        label: "🔑 Kod" },
   { id: "activity",    label: "🔔 Faollik" },
@@ -27,6 +28,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "listed",      label: "📦 Saytdagi" },
   { id: "cases",       label: "Keyslar" },
   { id: "users",       label: "Foydalanuvchilar" },
+  { id: "bans",        label: "🚫 Banlar" },
   { id: "settings",    label: "⚙️ Sozlamalar" },
 ];
 
@@ -215,6 +217,7 @@ export default function AdminPage() {
       {tab === "listed" && <ListedTab accounts={listed} cases={cases} users={byId} admins={adminOpts} adminById={adminById} me={profile.id} busy={busy} rpc={rpc} />}
       {tab === "cases" && <CasesTab cases={cases} pool={pool} busy={busy} onSave={args => rpc("admin_save_case", args, "Keys saqlandi")} />}
       {tab === "users" && <UsersTab users={users} me={profile.id} busy={busy} rpc={rpc} after={after} onHistory={setHistory} />}
+      {tab === "bans" && <BansTab after={after} />}
       {tab === "settings" && <SettingsTab me={profile.id} />}
 
       {history !== null && <UserHistory publicId={history} users={users} after={after} onClose={() => setHistory(null)} />}

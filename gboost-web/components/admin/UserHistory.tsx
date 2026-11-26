@@ -4,6 +4,7 @@ import clsx from "clsx";
 import { supabase, errText } from "@/lib/supabase";
 import { som } from "@/lib/uzdrop";
 import { CopyBtn, Empty, Tg, dt, type ProfileRow } from "./shared";
+import BanDialog from "./BanDialog";
 import { txLabel } from "./activity";
 import DepositForm from "./DepositForm";
 
@@ -53,6 +54,7 @@ export default function UserHistory({ publicId, users, after, onClose }: {
   const [err, setErr] = useState("");
   const [sec, setSec] = useState<Sec>("tx");
   const [dep, setDep] = useState(false);
+  const [ban, setBan] = useState(false);
 
   const load = async () => {
     setErr("");
@@ -95,7 +97,10 @@ export default function UserHistory({ publicId, users, after, onClose }: {
               <div className="text-left sm:text-right">
                 <p className="label !mb-0.5">Balans</p>
                 <p className="text-2xl font-black text-accent whitespace-nowrap">{som(u.balance)}</p>
-                <button onClick={() => setDep(!dep)} className="btn-win !py-2 mt-2">💰 Depozit qo&apos;shish</button>
+                <div className="flex gap-2 mt-2 sm:justify-end">
+                  <button onClick={() => setDep(!dep)} className="btn-win !py-2">💰 Depozit qo&apos;shish</button>
+                  <button onClick={() => setBan(true)} className="btn !py-2 bg-lose/15 text-lose hover:bg-lose/25">🚫 Ban</button>
+                </div>
               </div>
             </div>
 
@@ -105,6 +110,10 @@ export default function UserHistory({ publicId, users, after, onClose }: {
                   after={async (ok, text) => { await after(ok, text); if (ok) { setDep(false); load(); } }}
                   onClose={() => setDep(false)} />
               </div>
+            )}
+            {ban && u.public_id != null && (
+              <BanDialog user={{ public_id: u.public_id, username: u.username, ip: null }} onClose={() => setBan(false)}
+                after={async (ok, text) => { await after(ok, text); load(); }} />
             )}
 
             {/* Xulosa */}

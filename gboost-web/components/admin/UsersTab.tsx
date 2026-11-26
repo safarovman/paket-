@@ -4,6 +4,7 @@ import { supabase } from "@/lib/supabase";
 import { som } from "@/lib/uzdrop";
 import { Empty, Tg, type ProfileRow, type Rpc } from "./shared";
 import DepositForm from "./DepositForm";
+import BanDialog, { type SecUser } from "./BanDialog";
 
 export default function UsersTab({ users, me, busy, rpc, after, onHistory }: { users: ProfileRow[]; me: string; busy: boolean; rpc: Rpc; after: (ok: boolean, text: string) => Promise<void>; onHistory?: (publicId: number) => void }) {
   const [dep, setDep] = useState<string | null>(null);
@@ -14,6 +15,12 @@ export default function UsersTab({ users, me, busy, rpc, after, onHistory }: { u
       .then(({ data }) => setOwner(!!(data as { is_owner?: boolean } | null)?.is_owner));
   }, [me]);
   const [edit, setEdit] = useState<{ id: string; delta: string; note: string } | null>(null);
+  const [sec, setSec] = useState<Record<number, SecUser>>({});
+  const [ban, setBan] = useState<SecUser | { public_id: number; username: string | null; ip: null } | null>(null);
+  const loadSec = () => supabase.rpc("admin_users_security").then(({ data }) => {
+    if (Array.isArray(data)) setSec(Object.fromEntries((data as SecUser[]).map(x => [x.public_id, x])));
+  });
+  useEffect(() => { loadSec(); }, []);
   const s = q.trim().toLowerCase().replace(/^@/, "");
   const list = users.filter(u => !s ||
     String(u.public_id ?? "").includes(s) || (u.username ?? "").toLowerCase().includes(s) ||
@@ -29,13 +36,23 @@ export default function UsersTab({ users, me, busy, rpc, after, onHistory }: { u
           <div className="flex flex-wrap items-center gap-3">
             <span className="font-mono font-black text-accent text-lg w-24">ID {u.public_id ?? "—"}</span>
             <div className="flex-1 min-w-0">
-              <p className="font-bold truncate">{u.username || "—"} {u.is_admin && <span className="chip bg-accent/15 text-accent ml-1">admin</span>}</p>
+              <p className="font-bold truncate">{u.username || "—"} {u.is_admin && <span className="chip bg-accent/15 text-accent ml-1">admin</span>}
+                {u.public_id != null && sec[u.public_id]?.is_banned && <span className="chip bg-lose text-white ml-1">BLOKLANGAN</span>}</p>
               <p className="text-xs text-muted truncate">{u.email || "—"} • <Tg u={u.telegram} /></p>
             </div>
             <p className="font-extrabold text-accent">{som(u.balance)}</p>
             {onHistory && u.public_id != null && <button className="btn-ghost !py-2" onClick={() => onHistory(u.public_id as number)}>📜 Tarix</button>}
             <button className="btn-win !py-2" onClick={() => { setDep(dep === u.id ? null : u.id); setEdit(null); }}>💰 Depozit qo&apos;shish</button>
             <button className="btn-ghost !py-2" title="Xatoni tuzatish uchun (statistikaga kirmaydi)" onClick={() => { setEdit(edit?.id === u.id ? null : { id: u.id, delta: "", note: "" }); setDep(null); }}>Tuzatish (±)</button>
+            {u.id !== me && u.public_id != null && !sec[u.public_id]?.is_banned && (
+              <button disabled={busy} className="btn !py-2 bg-lose/15 text-lose hover:bg-lose/25"
+                onClick={() => setBan(sec[u.public_id as number] ?? { public_id: u.public_id as number, username: u.username, ip: null })}>🚫 Ban</button>
+            )}
+            {u.public_id != null && sec[u.public_id]?.is_banned && (
+              <button disabled={busy} className="btn-win !py-2"
+                onClick={() => confirm(`ID ${u.public_id} bandan chiqarilsinmi?`) &&
+                  rpc("admin_unban_user", { p_public_id: u.public_id, p_unban_ip: false }, `ID ${u.public_id} bandan chiqarildi`).then(loadSec)}>Bandan chiqarish</button>
+            )}
             {owner && u.id !== me && (
               <button disabled={busy} className={u.is_admin ? "btn-ghost !py-2 !text-lose" : "btn-violet !py-2"}
                 onClick={() => {
@@ -63,6 +80,7 @@ export default function UsersTab({ users, me, busy, rpc, after, onHistory }: { u
           )}
         </div>
       ))}
+      {ban && <BanDialog user={ban} onClose={() => setBan(null)} after={async (ok, t) => { await after(ok, t); loadSec(); }} />}
     </div>
   );
 }
