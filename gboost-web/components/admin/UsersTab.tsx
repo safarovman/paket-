@@ -5,7 +5,7 @@ import { som } from "@/lib/uzdrop";
 import { Empty, Tg, type ProfileRow, type Rpc } from "./shared";
 import DepositForm from "./DepositForm";
 
-export default function UsersTab({ users, me, busy, rpc, after }: { users: ProfileRow[]; me: string; busy: boolean; rpc: Rpc; after: (ok: boolean, text: string) => Promise<void> }) {
+export default function UsersTab({ users, me, busy, rpc, after, onHistory }: { users: ProfileRow[]; me: string; busy: boolean; rpc: Rpc; after: (ok: boolean, text: string) => Promise<void>; onHistory?: (publicId: number) => void }) {
   const [dep, setDep] = useState<string | null>(null);
   const [q, setQ] = useState("");
   const [owner, setOwner] = useState(false);
@@ -33,6 +33,7 @@ export default function UsersTab({ users, me, busy, rpc, after }: { users: Profi
               <p className="text-xs text-muted truncate">{u.email || "—"} • <Tg u={u.telegram} /></p>
             </div>
             <p className="font-extrabold text-accent">{som(u.balance)}</p>
+            {onHistory && u.public_id != null && <button className="btn-ghost !py-2" onClick={() => onHistory(u.public_id as number)}>📜 Tarix</button>}
             <button className="btn-win !py-2" onClick={() => { setDep(dep === u.id ? null : u.id); setEdit(null); }}>💰 Depozit qo&apos;shish</button>
             <button className="btn-ghost !py-2" title="Xatoni tuzatish uchun (statistikaga kirmaydi)" onClick={() => { setEdit(edit?.id === u.id ? null : { id: u.id, delta: "", note: "" }); setDep(null); }}>Tuzatish (±)</button>
             {owner && u.id !== me && (

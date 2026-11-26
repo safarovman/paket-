@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import clsx from "clsx";
 import { supabase, errText } from "@/lib/supabase";
 import { useUser } from "@/components/UserProvider";
@@ -13,11 +13,14 @@ import UsersTab from "@/components/admin/UsersTab";
 import SettingsTab from "@/components/admin/SettingsTab";
 import StatsTab from "@/components/admin/StatsTab";
 import DepositForm from "@/components/admin/DepositForm";
+import ActivityTab from "@/components/admin/ActivityTab";
+import UserHistory from "@/components/admin/UserHistory";
 import Link from "next/link";
 
-type Tab = "code" | "stats" | "deposits" | "withdrawals" | "add" | "listed" | "cases" | "users" | "settings";
+type Tab = "code" | "activity" | "stats" | "deposits" | "withdrawals" | "add" | "listed" | "cases" | "users" | "settings";
 const TABS: { id: Tab; label: string }[] = [
   { id: "code",        label: "🔑 Kod" },
+  { id: "activity",    label: "🔔 Faollik" },
   { id: "stats",       label: "📊 Statistika" },
   { id: "deposits",    label: "💳 To'ldirish" },
   { id: "withdrawals", label: "Yechish" },
@@ -45,6 +48,9 @@ export default function AdminPage() {
   const [listed, setListed]           = useState<Account[]>([]);
   const [users, setUsers]             = useState<ProfileRow[]>([]);
   const [admins, setAdmins]           = useState<AdminOpt[]>([]);
+  const [liveTick, setLiveTick]       = useState(0);
+  const [unseen, setUnseen]           = useState(0);
+  const [history, setHistory]         = useState<number | null>(null);
 
   const flash = (ok: boolean, text: string) => { setMsg({ ok, text }); setTimeout(() => setMsg(null), 4000); };
 
@@ -70,6 +76,20 @@ export default function AdminPage() {
   }, []);
 
   useEffect(() => { if (profile?.is_admin) load(); }, [profile?.is_admin, load]);
+
+  // Jonli: har yangi tranzaksiyada Faollik lentasi yangilanadi, boshqa tabda bo'lsa hisoblagich oshadi
+  const tabRef = useRef<Tab>("code");
+  useEffect(() => { tabRef.current = tab; if (tab === "activity") setUnseen(0); }, [tab]);
+  useEffect(() => {
+    if (!profile?.is_admin) return;
+    const ch = supabase.channel("admin-tx")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "transactions" }, () => {
+        setLiveTick(t => t + 1);
+        if (tabRef.current !== "activity") setUnseen(n => n + 1);
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [profile?.is_admin]);
 
   // Adminlar ro'yxati (telegram'i borlar) + o'zim har doim
   const adminOpts = useMemo<AdminOpt[]>(() => {
@@ -118,7 +138,7 @@ export default function AdminPage() {
     </div>
   );
 
-  const counts: Partial<Record<Tab, number>> = { code: waiting.length, deposits: deposits.length, withdrawals: withdrawals.length };
+  const counts: Partial<Record<Tab, number>> = { activity: unseen, code: waiting.length, deposits: deposits.length, withdrawals: withdrawals.length };
 
   return (
     <div className="wrap py-8">
@@ -140,6 +160,8 @@ export default function AdminPage() {
       )}
 
       {tab === "code" && <CodeTab waiting={waiting} users={byId} admins={adminById} me={profile.id} busy={busy} rpc={rpc} />}
+
+      {tab === "activity" && <ActivityTab tick={liveTick} onOpenUser={setHistory} />}
 
       {tab === "stats" && <StatsTab />}
 
@@ -193,8 +215,10 @@ export default function AdminPage() {
       {tab === "add" && <AddAccountTab cases={cases} admins={adminOpts} me={profile.id} myTelegram={profile.telegram ?? null} busy={busy} rpc={rpc} after={after} />}
       {tab === "listed" && <ListedTab accounts={listed} cases={cases} users={byId} admins={adminOpts} adminById={adminById} me={profile.id} busy={busy} rpc={rpc} />}
       {tab === "cases" && <CasesTab cases={cases} pool={pool} busy={busy} onSave={args => rpc("admin_save_case", args, "Keys saqlandi")} />}
-      {tab === "users" && <UsersTab users={users} me={profile.id} busy={busy} rpc={rpc} after={after} />}
+      {tab === "users" && <UsersTab users={users} me={profile.id} busy={busy} rpc={rpc} after={after} onHistory={setHistory} />}
       {tab === "settings" && <SettingsTab me={profile.id} />}
+
+      {history !== null && <UserHistory publicId={history} users={users} after={after} onClose={() => setHistory(null)} />}
     </div>
   );
 }

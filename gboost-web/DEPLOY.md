@@ -1,5 +1,7 @@
 # UzDrop — ishga tushirish (Cloudflare Pages + R2 + Supabase + domen)
 
+> Qisqa, bosqichma-bosqich variant: **[QADAMLAR.md](QADAMLAR.md)**
+
 Hammasi bepul: **Cloudflare Pages** (sayt, trafik cheksiz), **Cloudflare R2** (rasmlar, 10 GB, trafik bepul),
 **Supabase** (baza, kirish, balans). Faqat domen pullik (~$10/yil `.com`, `.uz` — mahalliy registratorda).
 
@@ -11,6 +13,7 @@ Hammasi bepul: **Cloudflare Pages** (sayt, trafik cheksiz), **Cloudflare R2** (r
    4. `supabase/04_account_admins.sql` — akkaunt ID (#1001…) va mas'ul admin
    5. `supabase/05_settings.sql` — to'lov kartasi sozlamasi (admin panel → ⚙️ Sozlamalar)
    6. `supabase/06_admin_stats.sql` — statistika va Telegram orqali qo'lda to'ldirish
+   7. `supabase/07_activity.sql` — admin uchun jonli faollik lentasi va foydalanuvchi tarixi
 2. Saytda ro'yxatdan o'ting, keyin o'zingizni **ega** qiling (o'z emailingiz bilan):
    ```sql
    update public.profiles set is_owner = true, is_admin = true
