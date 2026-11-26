@@ -15,7 +15,15 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const load = useCallback(async (u: User | null) => {
     setUser(u);
     if (!u) { setProfile(null); setLoading(false); return; }
-    const { data } = await supabase.from("profiles").select("id,public_id,username,email,telegram,balance,is_admin").eq("id", u.id).maybeSingle();
+    const q = () => supabase.from("profiles").select("id,public_id,username,email,telegram,balance,is_admin").eq("id", u.id).maybeSingle();
+    let { data, error } = await q();
+    if (error) console.error("Profil o'qilmadi:", error.message);
+    if (!data) {
+      // Profil yo'q bo'lsa — yaratib, qayta o'qiymiz
+      const r = await supabase.rpc("ensure_profile");
+      if (r.error) console.error("Profil yaratilmadi:", r.error.message);
+      ({ data } = await q());
+    }
     setProfile(data as Profile | null);
     setLoading(false);
   }, []);

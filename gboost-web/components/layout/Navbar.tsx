@@ -45,6 +45,11 @@ export default function Navbar() {
         <div className="ml-auto flex items-center gap-2">
           {user ? (
             <>
+              <Link href="/profile" title="Sizning ID raqamingiz"
+                className="hidden sm:flex flex-col items-end leading-tight px-2">
+                <span className="text-[10px] font-bold uppercase text-muted">ID</span>
+                <span className="text-sm font-black text-accent">{profile?.public_id ?? "…"}</span>
+              </Link>
               <Link href="/wallet" className="flex items-center rounded-xl bg-panel border border-line overflow-hidden">
                 <span className="px-3 py-2 text-sm font-extrabold text-accent whitespace-nowrap">{som(profile?.balance)}</span>
                 <span className="bg-accent text-[#1B1400] w-9 h-9 grid place-items-center font-black text-lg">+</span>
@@ -58,7 +63,8 @@ export default function Navbar() {
                   <>
                     <div className="fixed inset-0 z-40" onClick={() => setMenu(false)} />
                     <div className="absolute right-0 top-12 z-50 w-56 panel p-1.5 shadow-2xl animate-fade-in">
-                      <p className="px-3 py-2 text-sm font-bold truncate">{profile?.username || user.email}</p>
+                      <p className="px-3 pt-2 text-sm font-bold truncate">{profile?.username || user.email}</p>
+                      <p className="px-3 pb-2 text-xs text-muted">ID: <b className="text-accent">{profile?.public_id ?? "—"}</b></p>
                       {[
                         { href: "/profile", l: "🎒 Inventar va profil" },
                         { href: "/wallet",  l: "💳 Balans" },
