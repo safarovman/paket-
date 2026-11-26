@@ -23,7 +23,6 @@ const SECS: { id: Sec; label: string }[] = [
   { id: "buy", label: "Xaridlar" },
   { id: "sold", label: "Sotgan akkauntlari" },
   { id: "dep", label: "To'ldirishlar" },
-  { id: "wd", label: "Yechishlar" },
 ];
 
 const D_ST: Record<string, { t: string; c: string }> = {

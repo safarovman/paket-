@@ -21,8 +21,7 @@ export default function Privacy() {
           <ul className="list-disc pl-5 space-y-1">
             <li>Email manzil va ism (ro&apos;yxatdan o&apos;tishda yoki Google / Telegram orqali kirishda).</li>
             <li>Telegram username (agar o&apos;zingiz kiritsangiz).</li>
-            <li>Balans, to&apos;ldirish, xarid va yechish tarixi.</li>
-            <li>Pul yechish uchun kiritilgan karta raqami.</li>
+            <li>Balans, to&apos;ldirish va xarid tarixi.</li>
           </ul>
           <p className="mt-2">Biz parolingizni ochiq ko&apos;rinishda saqlamaymiz va Google akkauntingiz paroliga kirish huquqiga ega emasmiz.</p>
         </section>

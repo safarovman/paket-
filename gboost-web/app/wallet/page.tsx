@@ -78,7 +78,7 @@ export default function WalletPage() {
   };
 
   if (loading) return <div className="wrap py-20 text-center text-muted">Yuklanmoqda...</div>;
-  if (!user) return <LoginCta text="Balansni to'ldirish va pul yechish uchun hisobingizga kiring." />;
+  if (!user) return <LoginCta text="Balansni to'ldirish uchun hisobingizga kiring." />;
 
   const cardFmt = (v: string) => v.replace(/\D/g, "").slice(0, 16).replace(/(.{4})/g, "$1 ").trim();
 
@@ -92,20 +92,14 @@ export default function WalletPage() {
         <p className="relative text-4xl sm:text-5xl font-black text-accent">{som(profile?.balance)}</p>
       </div>
 
-      <div className="grid grid-cols-2 gap-1.5 mt-6 mb-5 panel p-1.5">
-        {([["in", "💳 To'ldirish"], ["out", "🏦 Yechish"]] as const).map(([id, l]) => (
-          <button key={id} onClick={() => { setTab(id); setMsg(null); }}
-            className={clsx("py-3 rounded-xl text-sm font-extrabold uppercase transition-colors",
-              tab === id ? "bg-accent text-[#1B1400]" : "text-muted hover:text-white")}>{l}</button>
-        ))}
-      </div>
+      <div className="mt-6" />
 
       {msg && (
         <div className={clsx("mb-4 rounded-xl px-4 py-3 text-sm font-bold animate-fade-in",
           msg.ok ? "bg-win/15 text-win" : "bg-lose/15 text-lose")}>{msg.t}</div>
       )}
 
-      {tab === "in" ? (
+      {(
         <div className="grid md:grid-cols-2 gap-4">
           <div className="panel p-5 space-y-4">
             <p className="label">Admin orqali to&apos;ldirish (hozir ishlaydi)</p>
@@ -149,27 +143,6 @@ export default function WalletPage() {
           </div>
 
           <History title="To'ldirishlar tarixi" rows={deps.map(d => ({ id: d.id, a: d.amount, s: d.status, sub: `${d.method === "telegram" ? "Telegram (admin)" : PAY_METHODS.find(m => m.id === d.method)?.name ?? d.method} • ${ago(d.created_at)} oldin` }))} />
-        </div>
-      ) : (
-        <div className="grid md:grid-cols-2 gap-4">
-          <div className="panel p-5 space-y-4">
-            <div>
-              <label className="label">Summa (min 10 000)</label>
-              <input className="input text-lg font-black" inputMode="numeric" value={fmtInput(wAmount)}
-                onChange={e => setWAmount(digits(e.target.value))} placeholder="100 000" />
-              <button onClick={() => setWAmount(profile?.balance ?? 0)} className="text-xs font-bold text-accent mt-1.5">
-                Hammasi: {som(profile?.balance)}
-              </button>
-            </div>
-            <div>
-              <label className="label">Karta raqami (Uzcard / Humo)</label>
-              <input className="input font-mono" inputMode="numeric" value={card}
-                onChange={e => setCard(cardFmt(e.target.value))} placeholder="8600 1234 5678 9012" />
-            </div>
-            <p className="text-xs text-muted">Summa balansdan darhol bloklanadi. Agar so&apos;rov rad etilsa, pul balansga qaytariladi.</p>
-            <button disabled={busy} onClick={withdraw} className="btn-violet w-full">🏦 Yechib olish</button>
-          </div>
-          <History title="Yechish so'rovlari" rows={wds.map(w => ({ id: w.id, a: w.amount, s: w.status, sub: `•••• ${w.card.replace(/\D/g, "").slice(-4)} • ${ago(w.created_at)} oldin` }))} />
         </div>
       )}
       {payCode && (
