@@ -6,6 +6,8 @@ import { supabase, errText } from "@/lib/supabase";
 import { useUser } from "@/components/UserProvider";
 import { GAMES, game, som, type Account } from "@/lib/uzdrop";
 import AccountCard from "@/components/AccountCard";
+import ImageCarousel from "@/components/ImageCarousel";
+import Mascot from "@/components/Mascot";
 import CodeCard from "@/components/CodeCard";
 
 function Market() {
@@ -57,6 +59,9 @@ function Market() {
         <Link href="/sell" className="btn-violet">+ Akkaunt sotish</Link>
       </div>
 
+      <Mascot id="market-intro" pose="think" className="mb-5"
+        text={<>Pastdagi qidiruv va o&apos;yin tugmalari bilan kerakli akkauntni toping, narx bo&apos;yicha saralang. Sotib olganingizda sizga <b className="text-accent">maxfiy kod</b> beriladi — uni Telegramda mas&apos;ul adminga yuborasiz va admin akkauntni shaxsan topshiradi.</>} />
+
       <div className="panel p-3 flex flex-col lg:flex-row gap-3 mb-5">
         <input className="input lg:max-w-xs" placeholder="Qidirish: rank, skin, nom…" value={q} onChange={e => setQ(e.target.value)} />
         <div className="flex gap-1.5 overflow-x-auto">
@@ -98,7 +103,9 @@ function Market() {
               <>
                 {sel.images?.length > 0 ? (
                   <div>
-                    <img src={sel.images[img] ?? sel.images[0]} alt="" className="w-full aspect-video object-cover rounded-xl border border-line" />
+                    <div className="w-full aspect-video rounded-xl border border-line overflow-hidden">
+                      <ImageCarousel images={sel.images} index={img} onIndex={setImg} arrows alt={sel.title} interval={3500} />
+                    </div>
                     {sel.images.length > 1 && (
                       <div className="flex gap-1.5 mt-2 overflow-x-auto">
                         {sel.images.map((u, i) => (

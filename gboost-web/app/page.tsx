@@ -4,12 +4,16 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { TELEGRAM_ADMIN, game, telegramLink, type Account } from "@/lib/uzdrop";
 import AccountCard from "@/components/AccountCard";
+import Mascot from "@/components/Mascot";
 
 export default function Home() {
   const [list, setList] = useState<Account[] | null>(null);
   const [g, setG] = useState("all");
+  const [top, setTop] = useState<Account[] | null>(null);
 
   useEffect(() => {
+    supabase.from("accounts").select("*").eq("status", "active").order("price", { ascending: false }).limit(10)
+      .then(({ data }) => setTop((data as Account[]) || []));
     supabase.from("accounts").select("*").eq("status", "active").order("created_at", { ascending: false }).limit(24)
       .then(({ data }) => setList((data as Account[]) || []));
   }, []);
@@ -23,7 +27,8 @@ export default function Home() {
       <section className="relative overflow-hidden rounded-3xl border border-line bg-gradient-to-br from-[#4A0D0D] via-[#240A0A] to-[#070505] p-6 sm:p-10">
         <div className="absolute -right-16 -top-20 w-96 h-96 rounded-full bg-accent/20 blur-3xl" />
         <div className="absolute right-40 bottom-0 w-60 h-60 rounded-full bg-violet/20 blur-3xl" />
-        <div className="relative max-w-2xl">
+        <div className="relative grid lg:grid-cols-[1fr_auto] gap-6 items-center">
+        <div className="max-w-2xl">
           <span className="chip bg-accent/15 text-accent mb-3">🛡️ Admin tekshirgan akkauntlar</span>
           <h1 className="text-3xl sm:text-5xl font-black uppercase leading-[1.05]">
             O&apos;yin <span className="text-accent">akkauntlarini</span> xavfsiz sotib oling
@@ -36,6 +41,9 @@ export default function Home() {
             <a href="#accounts" className="btn-accent">Akkauntlarni ko&apos;rish</a>
             <Link href="/sell" className="btn-ghost">💰 Akkauntimni sotaman</Link>
           </div>
+        </div>
+        <Mascot id="home-hero" pose="desk" className="lg:max-w-sm"
+          text="Salom! Men UzDrop yordamchisiman. Bu yerda tekshirilgan o'yin akkauntlarini xavfsiz sotib olasiz." />
         </div>
       </section>
 
@@ -53,6 +61,31 @@ export default function Home() {
           </div>
         ))}
       </section>
+
+      {/* Top 10 */}
+      {top && top.length > 0 && (
+        <section>
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-3 mb-4">
+            <h2 className="h-title">🏆 Top 10 akkauntlar</h2>
+            <Mascot id="home-top10" pose="point-right" side="right" className="lg:max-w-md"
+              text="Eng qimmat va noyob akkauntlar shu yerda. Kartani bosib batafsil ko'ring." />
+          </div>
+          <div className="flex gap-4 overflow-x-auto pb-3 snap-x">
+            {top.map((a, i) => {
+              const medal = i === 0 ? "#FFC83D" : i === 1 ? "#C9D1DA" : i === 2 ? "#CD7F32" : null;
+              return (
+                <Link key={a.id} href={`/market?id=${a.id}`} className="relative shrink-0 w-56 snap-start">
+                  <span className="absolute -left-1 -top-2 z-30 min-w-9 h-9 px-2 rounded-xl grid place-items-center font-black text-sm shadow-lg"
+                    style={medal ? { background: medal, color: "#1B1400" } : { background: "#1D1313", color: "#F7EDED", border: "1px solid #2F1E1E" }}>
+                    #{i + 1}
+                  </span>
+                  <AccountCard a={a} compact onClick={() => {}} />
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       {/* Akkauntlar */}
       <section id="accounts" className="scroll-mt-24">
