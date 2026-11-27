@@ -9,6 +9,7 @@ import { som } from "@/lib/uzdrop";
 
 const NAV = [
   { href: "/market", label: "Akkauntlar", icon: "🛒" },
+  { href: "/auction", label: "Auksion", icon: "🔨" },
   { href: "/sell",   label: "Sotish",     icon: "💰" },
   { href: "/wallet", label: "Balans",     icon: "💳" },
   { href: "/case",   label: "Spin",       icon: "🎰", soon: true },
