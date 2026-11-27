@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase, errText } from "@/lib/supabase";
+import Turnstile, { TURNSTILE_KEY } from "@/components/Turnstile";
 import TelegramLogin from "@/components/TelegramLogin";
 
 export default function Login() {
@@ -17,7 +18,17 @@ export default function Login() {
   const [ok, setOk] = useState("");
 
   const redirect = () => `${window.location.origin}/login/done/`;
-  const run = async (fn: () => Promise<void>) => { setErr(""); setOk(""); setBusy(true); try { await fn(); } catch (e) { setErr(errText(e)); } setBusy(false); };
+  // Bot himoyasi (Cloudflare Turnstile): har bir urinishdan keyin token yangilanadi
+  const [captcha, setCaptcha] = useState<string | null>(null);
+  const [captchaReset, setCaptchaReset] = useState(0);
+  const cap = () => (TURNSTILE_KEY ? { captchaToken: captcha ?? undefined } : {});
+  const needCaptcha = () => { if (TURNSTILE_KEY && !captcha) throw new Error("\"Men robot emasman\" tekshiruvi tugashini kuting"); };
+
+  const run = async (fn: () => Promise<void>) => {
+    setErr(""); setOk(""); setBusy(true);
+    try { await fn(); } catch (e) { setErr(errText(e).includes("captcha") ? "Tekshiruv muddati o'tdi — qayta urinib ko'ring." : errText(e)); }
+    setBusy(false); setCaptchaReset(n => n + 1);
+  };
 
   // Google orqali kirish yoqilgan (o'chirish: NEXT_PUBLIC_GOOGLE_LOGIN=0)
   const GOOGLE_ON = process.env.NEXT_PUBLIC_GOOGLE_LOGIN !== "0";
@@ -33,9 +44,10 @@ export default function Login() {
   };
 
   const resend = () => run(async () => {
+    needCaptcha();
     const { error } = mode === "up"
-      ? await supabase.auth.resend({ type: "signup", email, options: { emailRedirectTo: redirect() } })
-      : await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: redirect() } });
+      ? await supabase.auth.resend({ type: "signup", email, options: { emailRedirectTo: redirect(), ...cap() } })
+      : await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: redirect(), ...cap() } });
     if (error) throw new Error(error.message.includes("seconds") ? "Biroz kuting va qayta urinib ko'ring (1 daqiqa)." : error.message);
     setOk(`Yangi kod ${email} ga yuborildi`);
   });
@@ -47,11 +59,11 @@ export default function Login() {
 
   const submit = (e: React.FormEvent) => { e.preventDefault(); run(async () => {
     if (mode === "in") {
-      const { error } = await supabase.auth.signInWithPassword({ email, password: pw });
+      needCaptcha();
+      const { error } = await supabase.auth.signInWithPassword({ email, password: pw, options: { ...cap() } });
       if (error?.message.includes("not confirmed")) {
-        await supabase.auth.resend({ type: "signup", email });
         setMode("up"); setSent(true);
-        setOk(`Email hali tasdiqlanmagan. ${email} ga kod yuborildi — pastga kiriting.`);
+        setOk(`Email hali tasdiqlanmagan. "Kodni qayta yuborish" ni bosing.`);
         return;
       }
       if (error) throw new Error(error.message.includes("Invalid") ? "Email yoki parol noto'g'ri" : error.message);
@@ -60,12 +72,14 @@ export default function Login() {
       await verify();
     } else if (mode === "up") {
       if (pw.length < 6) throw new Error("Parol kamida 6 belgi");
-      const { data, error } = await supabase.auth.signUp({ email, password: pw, options: { data: { full_name: name || email.split("@")[0] }, emailRedirectTo: redirect() } });
+      needCaptcha();
+      const { data, error } = await supabase.auth.signUp({ email, password: pw, options: { data: { full_name: name || email.split("@")[0] }, emailRedirectTo: redirect(), ...cap() } });
       if (error) throw new Error(error.message.includes("already") ? "Bu email allaqachon ro'yxatdan o'tgan — Parol orqali kiring." : error.message);
       if (data.session) { router.push("/"); return; }
       setSent(true); setOk(`✅ Tasdiqlash kodi ${email} ga yuborildi. Kodni pastga kiriting.`);
     } else if (!sent) {
-      const { error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: redirect() } });
+      needCaptcha();
+      const { error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: redirect(), ...cap() } });
       if (error) throw error;
       setSent(true); setOk(`Kod ${email} ga yuborildi`);
     } else {
@@ -117,6 +131,7 @@ export default function Login() {
           )}
           {err && <p className="text-lose text-sm font-bold">{err}</p>}
           {ok && <p className="text-win text-sm font-bold">{ok}</p>}
+          <Turnstile onToken={setCaptcha} resetKey={captchaReset} />
           <button disabled={busy} className="btn-accent w-full">
             {busy ? "…" : sent ? "Tasdiqlash" : mode === "in" ? "Kirish" : mode === "up" ? "Ro'yxatdan o'tish" : "Kod yuborish"}
           </button>
