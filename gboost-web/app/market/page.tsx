@@ -6,6 +6,7 @@ import { supabase, errText } from "@/lib/supabase";
 import { useUser } from "@/components/UserProvider";
 import { GAMES, game, som, type Account } from "@/lib/uzdrop";
 import AccountCard from "@/components/AccountCard";
+import GameFrame from "@/components/GameFrame";
 import ImageCarousel from "@/components/ImageCarousel";
 import Mascot from "@/components/Mascot";
 import CodeCard from "@/components/CodeCard";
@@ -103,9 +104,11 @@ function Market() {
               <>
                 {sel.images?.length > 0 ? (
                   <div>
-                    <div className="w-full aspect-video rounded-xl border border-line overflow-hidden">
-                      <ImageCarousel images={sel.images} index={img} onIndex={setImg} arrows alt={sel.title} interval={3500} />
-                    </div>
+                    <GameFrame game={sel.game} frame={sel.frame} className="w-full rounded-xl overflow-hidden">
+                      <div className="absolute inset-0">
+                        <ImageCarousel images={sel.images} index={img} onIndex={setImg} arrows alt={sel.title} interval={3500} />
+                      </div>
+                    </GameFrame>
                     {sel.images.length > 1 && (
                       <div className="flex gap-1.5 mt-2 overflow-x-auto">
                         {sel.images.map((u, i) => (

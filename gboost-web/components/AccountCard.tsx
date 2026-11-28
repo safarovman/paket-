@@ -11,7 +11,7 @@ export default function AccountCard({ a, footer, onClick, compact }: {
   const g = game(a.game);
   const imgs = (a.images && a.images.length ? a.images : a.image_url ? [a.image_url] : []);
   return (
-    <GameFrame game={a.game} frame={(a as { frame?: string | null }).frame} className="h-full">
+    <div className="h-full">
       <div onClick={onClick}
         className={`group relative panel overflow-hidden h-full transition-transform ${onClick ? "cursor-pointer hover:-translate-y-1" : ""}`}>
         <div className="absolute inset-0 opacity-25 group-hover:opacity-40 transition-opacity"
@@ -22,17 +22,19 @@ export default function AccountCard({ a, footer, onClick, compact }: {
             <span className="chip bg-bg/60 text-muted">{g.icon} {g.name}</span>
             <span className="chip" style={{ color: r.color, background: r.color + "22" }}>{r.name}</span>
           </div>
-          <div className="aspect-video grid place-items-center rounded-lg overflow-hidden bg-bg/40">
-            {imgs.length
-              ? <ImageCarousel images={imgs} alt={a.title} className="rounded-lg" />
-              : <span className={`${compact ? "text-4xl" : "text-6xl"} drop-shadow-xl`}>{g.icon}</span>}
-          </div>
+          <GameFrame game={a.game} frame={(a as { frame?: string | null }).frame} className="rounded-lg overflow-hidden bg-bg/40">
+            <div className="absolute inset-0 grid place-items-center">
+              {imgs.length
+                ? <ImageCarousel images={imgs} alt={a.title} className="rounded-lg" />
+                : <span className={`${compact ? "text-4xl" : "text-6xl"} drop-shadow-xl`}>{g.icon}</span>}
+            </div>
+          </GameFrame>
           <p className="font-extrabold text-sm truncate mt-2">{a.title}</p>
           <p className="text-xs text-muted truncate">{a.public_no ? <b className="text-white/70 mr-1">{accNo(a.public_no)}</b> : null}{a.rank || "—"}</p>
           <p className="mt-1 font-black" style={{ color: r.color }}>{som(a.price)}</p>
           {footer && <div className="mt-3 relative z-20">{footer}</div>}
         </div>
       </div>
-    </GameFrame>
+    </div>
   );
 }
