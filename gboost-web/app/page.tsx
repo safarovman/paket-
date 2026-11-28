@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase";
 import { TELEGRAM_ADMIN, game, telegramLink, type Account } from "@/lib/uzdrop";
 import AccountCard from "@/components/AccountCard";
 import Mascot from "@/components/Mascot";
+import HeroSlider from "@/components/HeroSlider";
 
 export default function Home() {
   const [list, setList] = useState<Account[] | null>(null);
@@ -23,29 +24,8 @@ export default function Home() {
 
   return (
     <div className="wrap py-6 space-y-10">
-      {/* Banner */}
-      <section className="relative overflow-hidden rounded-3xl border border-line bg-gradient-to-br from-[#4A0D0D] via-[#240A0A] to-[#070505] p-6 sm:p-10">
-        <div className="absolute -right-16 -top-20 w-96 h-96 rounded-full bg-accent/20 blur-3xl" />
-        <div className="absolute right-40 bottom-0 w-60 h-60 rounded-full bg-violet/20 blur-3xl" />
-        <div className="relative grid lg:grid-cols-[1fr_auto] gap-6 items-center">
-        <div className="max-w-2xl">
-          <span className="chip bg-accent/15 text-accent mb-3">🛡️ Admin tekshirgan akkauntlar</span>
-          <h1 className="text-3xl sm:text-5xl font-black uppercase leading-[1.05]">
-            O&apos;yin <span className="text-accent">akkauntlarini</span> xavfsiz sotib oling
-          </h1>
-          <p className="text-muted mt-3 text-sm sm:text-base">
-            Standoff 2, PUBG, Mobile Legends, Free Fire va boshqalar. Har bir akkauntni admin tekshiradi,
-            xariddan keyin akkaunt Telegram orqali shaxsan topshiriladi.
-          </p>
-          <div className="flex flex-wrap gap-3 mt-6">
-            <a href="#accounts" className="btn-accent">Akkauntlarni ko&apos;rish</a>
-            <Link href="/sell" className="btn-ghost">💰 Akkauntimni sotaman</Link>
-          </div>
-        </div>
-        <Mascot id="home-hero" pose="desk" className="lg:max-w-sm"
-          text="Salom! Men UzDrop yordamchisiman. Bu yerda tekshirilgan o'yin akkauntlarini xavfsiz sotib olasiz." />
-        </div>
-      </section>
+      {/* Promo-banner: avatar banner ichida */}
+      <HeroSlider />
 
       {/* Qanday ishlaydi */}
       <section className="grid grid-cols-2 lg:grid-cols-4 gap-3">
