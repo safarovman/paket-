@@ -127,7 +127,7 @@ export default function ImageCropper({ file, game, frame, index, total, onDone, 
                   <span className="chip bg-accent/15 text-accent">Namuna</span>
                 </div>
                 <GameFrame game={game} frame={frame ?? null} className="rounded-lg overflow-hidden">
-                  <canvas ref={preview} className="absolute inset-0 w-full h-full rounded-lg block" />
+                  <canvas ref={preview} className="absolute inset-0 w-full h-full block object-cover" />
                 </GameFrame>
                 <p className="font-extrabold text-sm mt-2">Akkaunt nomi</p>
                 <p className="text-xs text-muted">#1001 Rank</p>
