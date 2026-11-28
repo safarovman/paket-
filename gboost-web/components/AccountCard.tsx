@@ -1,6 +1,7 @@
 import { accNo, game, rarity, som, type Account } from "@/lib/uzdrop";
 import ImageCarousel from "@/components/ImageCarousel";
 import GameFrame from "@/components/GameFrame";
+import { GameIcon } from "@/components/Icon";
 
 /**
  * Akkaunt kartasi = faqat ramkali skrinshot (ramka kartaning o'zi, ichida yana ramka yo'q).
@@ -26,7 +27,7 @@ export default function AccountCard({ a, footer, onClick, compact }: {
           <div className="absolute inset-0 grid place-items-center bg-gradient-to-br from-[#2a1015] to-[#0b0606]">
             {imgs.length
               ? <ImageCarousel images={imgs} alt={a.title} />
-              : <span className={`${compact ? "text-3xl" : "text-5xl"} drop-shadow-xl`}>{g.icon}</span>}
+              : <GameIcon game={a.game} className={compact ? "w-10 h-10" : "w-16 h-16"} />}
           </div>
 
           {/* Sichqoncha ustida — nom */}
@@ -49,7 +50,7 @@ export default function AccountCard({ a, footer, onClick, compact }: {
 
           {/* #ID va o'yin — chap past */}
           <span className="absolute left-[7%] bottom-[10%] z-20 chip !text-[10px] !px-1.5 bg-black/65 backdrop-blur-sm text-white">
-            {g.icon} {a.public_no ? accNo(a.public_no) : g.name}
+            <GameIcon game={a.game} className="w-3.5 h-3.5" /> {a.public_no ? accNo(a.public_no) : g.name}
           </span>
         </GameFrame>
       </div>

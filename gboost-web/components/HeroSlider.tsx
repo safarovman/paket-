@@ -1,6 +1,7 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import Icon from "@/components/Icon";
 
 /**
  * Bosh sahifadagi promo-banner: katta niqobli yordamchi banner ICHIDA, yozuvlar yonida.
@@ -25,41 +26,41 @@ const SLIDES: Slide[] = [
     title: <>O&apos;yin <span className="text-accent">akkauntlarini</span> xavfsiz sotib oling</>,
     text: "Har bir akkauntni admin tekshiradi. Xariddan keyin akkaunt Telegram orqali shaxsan topshiriladi.",
     cta: { label: "Akkauntlarni ko'rish", href: "#accounts" },
-    cta2: { label: "💰 Akkauntimni sotaman", href: "/sell" },
+    cta2: { label: "Akkauntimni sotaman", href: "/sell" },
     pose: "desk",
     bg: "from-[#5A0F12] via-[#2A0B0C] to-[#0B0606]",
     glow: "rgba(220,38,38,.55)",
-    badge: "🛡️ Tekshirilgan",
+    badge: "Tekshirilgan",
   },
   {
     tag: "AUKSION",
     title: <>O&apos;z narxingizni <span className="text-accent">taklif qiling</span></>,
     text: "Noyob akkauntlar auksionda. Eng yuqori taklif bergan oladi — oxirgi daqiqada vaqt uzayadi.",
-    cta: { label: "🔨 Auksionga o'tish", href: "/auction" },
+    cta: { label: "Auksionga o'tish", href: "/auction" },
     pose: "point-right",
     bg: "from-[#4A2A05] via-[#22140A] to-[#0B0606]",
     glow: "rgba(255,200,61,.5)",
-    badge: "🔨 Jonli",
+    badge: "Jonli",
   },
   {
     tag: "SOTISH",
     title: <>Akkauntingizni <span className="text-accent">pulga</span> aylantiring</>,
     text: "Adminga Telegramda yozing — akkauntni tekshirib, rasmlari bilan saytga joylaydi. Sotilganda pul balansingizda.",
-    cta: { label: "💰 Qanday sotiladi?", href: "/sell" },
+    cta: { label: "Qanday sotiladi?", href: "/sell" },
     pose: "wave",
     bg: "from-[#3D0A1E] via-[#1F0A12] to-[#0B0606]",
     glow: "rgba(255,107,107,.5)",
-    badge: "⚡ Tez",
+    badge: "Tez",
   },
   {
     tag: "XAVFSIZLIK",
     title: <>Maxfiy <span className="text-accent">kod</span> — faqat sizga</>,
     text: "Sotib olgach maxfiy kod va akkaunt ID beriladi. Mas'ul admin kodni tekshirib, login/parolni shaxsan beradi.",
-    cta: { label: "🔑 Batafsil", href: "/terms" },
+    cta: { label: "Batafsil", href: "/terms" },
     pose: "think",
     bg: "from-[#2A0A0A] via-[#160808] to-[#0B0606]",
     glow: "rgba(220,38,38,.45)",
-    badge: "🔑 Kod",
+    badge: "Maxfiy kod",
   },
 ];
 
@@ -163,7 +164,7 @@ export default function HeroSlider() {
         <div className="absolute inset-x-0 top-0 h-[70%] flex justify-center items-end pointer-events-none">
           <MascotImg pose="point-left" className="h-full w-auto object-contain object-bottom group-hover:scale-105 transition-transform duration-500" />
         </div>
-        <span className="absolute top-4 left-4 chip bg-black/50 text-accent backdrop-blur">🔨 Jonli auksion</span>
+        <span className="absolute top-4 left-4 chip bg-black/50 text-accent backdrop-blur gap-1.5"><Icon name="gavel" className="w-3.5 h-3.5" />Jonli auksion</span>
         <div className="relative rounded-2xl bg-black/60 border border-white/10 backdrop-blur-md p-3 flex items-center justify-between">
           <div>
             <p className="font-black text-sm">Auksionda qatnashing</p>

@@ -3,6 +3,7 @@ import { createContext, useCallback, useContext, useEffect, useState } from "rea
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import { TELEGRAM_ADMIN, type Profile } from "@/lib/uzdrop";
+import Icon from "@/components/Icon";
 
 interface Ban { banned: boolean; kind?: "account" | "ip"; reason?: string | null; }
 interface Ctx { user: User | null; profile: Profile | null; loading: boolean; ban: Ban | null; refresh: () => Promise<void>; }
@@ -58,7 +59,7 @@ function BanScreen({ ban }: { ban: Ban }) {
   return (
     <div className="min-h-screen grid place-items-center p-4">
       <div className="panel max-w-md w-full p-8 text-center">
-        <p className="text-5xl">🚫</p>
+        <Icon name="ban" className="w-14 h-14 text-lose mx-auto" strokeWidth={1.6} />
         <h1 className="h-title mt-3">{ban.kind === "ip" ? "Tarmog'ingiz bloklangan" : "Hisobingiz bloklangan"}</h1>
         <p className="text-muted text-sm mt-2">
           {ban.kind === "ip"

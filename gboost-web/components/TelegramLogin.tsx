@@ -39,7 +39,7 @@ export default function TelegramLogin() {
     return () => { delete window.onUzdropTelegramAuth; };
   }, [router]);
 
-  if (!BOT) return <button disabled className="btn-ghost w-full">✈️ Telegram orqali (tez kunda)</button>;
+  if (!BOT) return <button disabled className="btn-ghost w-full">Telegram orqali (tez kunda)</button>;
   return (
     <div className="text-center">
       <div ref={box} className={`flex justify-center min-h-[40px] ${busy ? "opacity-50 pointer-events-none" : ""}`} />

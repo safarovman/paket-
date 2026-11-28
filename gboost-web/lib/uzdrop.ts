@@ -85,18 +85,18 @@ export const SPIN_ENABLED = process.env.NEXT_PUBLIC_SPIN === "1";
 
 /** Akkauntga ulanadigan platformalar (privyazkalar) */
 export const BINDINGS: { id: string; name: string; icon: string }[] = [
-  { id: "gmail", name: "Gmail / Google", icon: "📧" },
-  { id: "facebook", name: "Facebook", icon: "📘" },
-  { id: "vk", name: "VK", icon: "🟦" },
-  { id: "twitter", name: "X (Twitter)", icon: "✖️" },
-  { id: "apple", name: "Apple ID", icon: "🍏" },
-  { id: "game_center", name: "Game Center", icon: "🎮" },
-  { id: "google_play", name: "Google Play", icon: "▶️" },
-  { id: "phone", name: "Telefon raqam", icon: "📱" },
-  { id: "email", name: "Email (pochta)", icon: "✉️" },
-  { id: "telegram", name: "Telegram", icon: "✈️" },
-  { id: "huawei", name: "Huawei ID", icon: "📲" },
-  { id: "guest", name: "Mehmon (guest)", icon: "👤" },
+  { id: "gmail", name: "Gmail / Google", icon: "mail" },
+  { id: "facebook", name: "Facebook", icon: "facebook" },
+  { id: "vk", name: "VK", icon: "globe" },
+  { id: "twitter", name: "X (Twitter)", icon: "x" },
+  { id: "apple", name: "Apple ID", icon: "apple" },
+  { id: "game_center", name: "Game Center", icon: "gamepad" },
+  { id: "google_play", name: "Google Play", icon: "arrow" },
+  { id: "phone", name: "Telefon raqam", icon: "phone" },
+  { id: "email", name: "Email (pochta)", icon: "at" },
+  { id: "telegram", name: "Telegram", icon: "send" },
+  { id: "huawei", name: "Huawei ID", icon: "phone" },
+  { id: "guest", name: "Mehmon (guest)", icon: "user" },
 ];
 export const binding = (id?: string | null) => BINDINGS.find(b => b.id === id);
 

@@ -6,6 +6,7 @@ import { accNo, som } from "@/lib/uzdrop";
 import CodeCard from "@/components/CodeCard";
 import AuctionCard from "@/components/auction/AuctionCard";
 import type { AuctionItem } from "@/components/auction/types";
+import Icon from "@/components/Icon";
 
 export default function AuctionPage() {
   const { user } = useUser();
@@ -54,7 +55,7 @@ export default function AuctionPage() {
   return (
     <div className="wrap py-6 space-y-8">
       <div>
-        <h1 className="h-title">🔨 Akkaunt auksioni</h1>
+        <h1 className="h-title"><Icon name="gavel" className="w-6 h-6 text-accent mr-2" />Akkaunt auksioni</h1>
         <p className="text-muted text-sm mt-1">
           Eng yuqori taklif bergan yutadi. Taklif summasi balansdan darhol yechiladi — taklifingiz oshib ketilsa, pul to&apos;liq qaytariladi.
           Oxirgi 2 daqiqada taklif tushsa, auksion 2 daqiqaga uzayadi.
@@ -63,7 +64,7 @@ export default function AuctionPage() {
 
       {myWins.length > 0 && (
         <section className="space-y-3">
-          <h2 className="font-black uppercase text-win">🏆 Siz yutdingiz!</h2>
+          <h2 className="font-black uppercase text-win"><Icon name="trophy" className="mr-1.5" />Siz yutdingiz!</h2>
           <div className="grid md:grid-cols-2 gap-4">
             {myWins.map(w => (
               <div key={w.code} className="panel p-5 border-win/40">
@@ -94,7 +95,7 @@ export default function AuctionPage() {
               <div key={e.id} className="flex flex-wrap items-center gap-3 px-4 py-3 text-sm">
                 <span className="font-bold flex-1 min-w-0 truncate">{accNo(e.account.public_no)} {e.account.title}</span>
                 {e.winner
-                  ? <span>🏆 <b className={e.is_mine_won ? "text-win" : ""}>{e.is_mine_won ? "Siz" : e.winner.name}</b> <span className="text-muted">ID {e.winner.public_id}</span></span>
+                  ? <span><Icon name="trophy" className="w-3.5 h-3.5 mr-1 text-accent" /><b className={e.is_mine_won ? "text-win" : ""}>{e.is_mine_won ? "Siz" : e.winner.name}</b> <span className="text-muted">ID {e.winner.public_id}</span></span>
                   : <span className="text-muted">Taklif bo&apos;lmadi</span>}
                 <b className="text-accent">{e.current_bid ? som(e.current_bid) : "—"}</b>
               </div>

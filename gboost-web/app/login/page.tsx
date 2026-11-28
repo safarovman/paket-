@@ -76,7 +76,7 @@ export default function Login() {
       const { data, error } = await supabase.auth.signUp({ email, password: pw, options: { data: { full_name: name || email.split("@")[0] }, emailRedirectTo: redirect(), ...cap() } });
       if (error) throw new Error(error.message.includes("already") ? "Bu email allaqachon ro'yxatdan o'tgan — Parol orqali kiring." : error.message);
       if (data.session) { router.push("/"); return; }
-      setSent(true); setOk(`✅ Tasdiqlash kodi ${email} ga yuborildi. Kodni pastga kiriting.`);
+      setSent(true); setOk(`Tasdiqlash kodi ${email} ga yuborildi. Kodni pastga kiriting.`);
     } else if (!sent) {
       needCaptcha();
       const { error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: redirect(), ...cap() } });
