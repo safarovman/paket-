@@ -9,8 +9,9 @@ import AccountCard from "@/components/AccountCard";
 import ImageCarousel from "@/components/ImageCarousel";
 import AccountBindings from "@/components/AccountBindings";
 import Icon, { GameIcon } from "@/components/Icon";
+import HeroSlider from "@/components/HeroSlider";
 
-export default function MarketView() {
+export default function MarketView({ hero = false }: { hero?: boolean }) {
   const params = useSearchParams();
   const { user, profile, refresh } = useUser();
   const [list, setList] = useState<Account[] | null>(null);
@@ -99,6 +100,9 @@ export default function MarketView() {
         </div>
       </div>
 
+      {/* Avatar banner (faqat bosh sahifada) — qidiruvdan keyin, akkauntlardan oldin */}
+      {hero && <div className="mb-4"><HeroSlider compact /></div>}
+
       {/* O'yinlar */}
       <div className="flex gap-1.5 overflow-x-auto pb-1 mb-4 -mx-1 px-1">
         {[{ id: "all", name: "Barchasi" }, ...GAMES].map(x => (
@@ -109,6 +113,7 @@ export default function MarketView() {
         ))}
       </div>
 
+      <div id="accounts" className="scroll-mt-24" />
       {list === null ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-6">{Array.from({ length: 8 }).map((_, i) => <div key={i} className="panel aspect-video animate-pulse" />)}</div>
       ) : shown.length === 0 ? (
