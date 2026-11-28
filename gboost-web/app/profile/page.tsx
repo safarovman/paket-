@@ -61,6 +61,7 @@ function AccCard({ a, children }: { a: Account; children?: React.ReactNode }) {
 }
 
 const D_STATUS: Record<Delivery["status"], { t: string; c: string }> = {
+  pending:   { t: "⏳ Ko'rib chiqilmoqda", c: "text-accent" },
   waiting:   { t: "⏳ Adminga yozing",  c: "text-accent" },
   delivered: { t: "✅ Topshirildi",     c: "text-win" },
   cancelled: { t: "↩️ Bekor, pul qaytdi", c: "text-lose" },
@@ -69,6 +70,13 @@ const D_STATUS: Record<Delivery["status"], { t: string; c: string }> = {
 function DeliveryBox({ d, onOpen }: { d?: Delivery; onOpen: () => void }) {
   if (!d) return <p className="text-xs text-muted">Kod topilmadi</p>;
   const st = D_STATUS[d.status];
+  if (d.status === "pending") return (
+    <Link href="/orders" className="block w-full rounded-xl border border-dashed border-line bg-bg px-3 py-2 text-left hover:border-accent transition-colors">
+      <p className="text-[10px] uppercase font-bold text-muted">Ariza</p>
+      <p className="font-black tracking-wider text-accent">{d.code}</p>
+      <p className={clsx("text-[11px] font-bold", st.c)}>{st.t} → Arizalar</p>
+    </Link>
+  );
   return (
     <button onClick={onOpen} className="w-full rounded-xl border border-dashed border-line bg-bg px-3 py-2 text-left hover:border-accent transition-colors">
       <p className="text-[10px] uppercase font-bold text-muted">Kod</p>

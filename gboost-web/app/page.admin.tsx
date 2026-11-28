@@ -17,10 +17,12 @@ import DepositForm from "@/components/admin/DepositForm";
 import ActivityTab from "@/components/admin/ActivityTab";
 import UserHistory from "@/components/admin/UserHistory";
 import BansTab from "@/components/admin/BansTab";
+import OrdersTab from "@/components/admin/OrdersTab";
 import Link from "next/link";
 
-type Tab = "code" | "activity" | "stats" | "deposits" | "withdrawals" | "add" | "listed" | "auctions" | "cases" | "users" | "bans" | "settings";
+type Tab = "orders" | "code" | "activity" | "stats" | "deposits" | "withdrawals" | "add" | "listed" | "auctions" | "cases" | "users" | "bans" | "settings";
 const TABS: { id: Tab; label: string }[] = [
+  { id: "orders",      label: "📥 Arizalar" },
   { id: "code",        label: "🔑 Kod" },
   { id: "activity",    label: "🔔 Faollik" },
   { id: "stats",       label: "📊 Statistika" },
@@ -39,7 +41,8 @@ interface Withdrawal { id: string; user_id: string; amount: number; card: string
 
 export default function AdminPage() {
   const { user, profile, loading } = useUser();
-  const [tab, setTab] = useState<Tab>("code");
+  const [tab, setTab] = useState<Tab>("orders");
+  const [ordersCount, setOrdersCount] = useState(0);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -141,7 +144,7 @@ export default function AdminPage() {
     </div>
   );
 
-  const counts: Partial<Record<Tab, number>> = { activity: unseen, code: waiting.length, deposits: deposits.length, withdrawals: withdrawals.length };
+  const counts: Partial<Record<Tab, number>> = { orders: ordersCount, activity: unseen, code: waiting.length, deposits: deposits.length, withdrawals: withdrawals.length };
 
   return (
     <div className="wrap py-8">
@@ -162,6 +165,7 @@ export default function AdminPage() {
           msg.ok ? "border-win text-win" : "border-lose text-lose")}>{msg.text}</div>
       )}
 
+      {tab === "orders" && <OrdersTab onCount={setOrdersCount} />}
       {tab === "code" && <CodeTab waiting={waiting} users={byId} admins={adminById} me={profile.id} busy={busy} rpc={rpc} />}
 
       {tab === "activity" && <ActivityTab tick={liveTick} onOpenUser={setHistory} />}

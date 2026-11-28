@@ -12,6 +12,8 @@ export interface Account {
   images: string[];
   public_no?: number | null;
   frame?: string | null;
+  bindings?: Record<string, number> | null;
+  origin?: string | null;
   admin_id?: string | null;
   price: number;
   asked_price: number | null;
@@ -47,7 +49,7 @@ export interface Spin {
 
 export interface Profile { id: string; public_id: number | null; username: string | null; email?: string | null; telegram?: string | null; balance: number; is_admin: boolean; }
 
-export interface Delivery { id: string; code: string; account_id: string; source: "buy" | "spin"; price: number; status: "waiting" | "delivered" | "cancelled"; admin_note: string | null; created_at: string; }
+export interface Delivery { id: string; code: string; account_id: string; source: "buy" | "spin"; price: number; status: "pending" | "waiting" | "delivered" | "cancelled"; admin_note: string | null; created_at: string; approved_at?: string | null; }
 
 export const GAMES = [
   { id: "standoff2", name: "Standoff 2",      icon: "🔫", color: "#FFC83D" },
@@ -72,7 +74,7 @@ export const DEPOSIT_CARD = process.env.NEXT_PUBLIC_DEPOSIT_CARD || "8600 0000 0
 export const DEPOSIT_CARD_OWNER = process.env.NEXT_PUBLIC_DEPOSIT_CARD_OWNER || "UZDROP";
 
 /** Sotuvchilar yozadigan admin Telegram username (@siz) */
-export const TELEGRAM_ADMIN = (process.env.NEXT_PUBLIC_TELEGRAM_ADMIN || "uzdrop_admin").replace(/^@/, "");
+export const TELEGRAM_ADMIN = (process.env.NEXT_PUBLIC_TELEGRAM_ADMIN || "perdeloto").replace(/^@/, "");
 export const telegramLink = (text: string, username?: string | null) =>
   `https://t.me/${(username || TELEGRAM_ADMIN).replace(/^@/, "")}?text=${encodeURIComponent(text)}`;
 
@@ -80,6 +82,23 @@ export const accNo = (n?: number | null) => (n ? `#${n}` : "");
 
 /** Akkaunt spin hozircha o'chiq — "Tez kunda". Yoqish: NEXT_PUBLIC_SPIN=1 */
 export const SPIN_ENABLED = process.env.NEXT_PUBLIC_SPIN === "1";
+
+/** Akkauntga ulanadigan platformalar (privyazkalar) */
+export const BINDINGS: { id: string; name: string; icon: string }[] = [
+  { id: "gmail", name: "Gmail / Google", icon: "📧" },
+  { id: "facebook", name: "Facebook", icon: "📘" },
+  { id: "vk", name: "VK", icon: "🟦" },
+  { id: "twitter", name: "X (Twitter)", icon: "✖️" },
+  { id: "apple", name: "Apple ID", icon: "🍏" },
+  { id: "game_center", name: "Game Center", icon: "🎮" },
+  { id: "google_play", name: "Google Play", icon: "▶️" },
+  { id: "phone", name: "Telefon raqam", icon: "📱" },
+  { id: "email", name: "Email (pochta)", icon: "✉️" },
+  { id: "telegram", name: "Telegram", icon: "✈️" },
+  { id: "huawei", name: "Huawei ID", icon: "📲" },
+  { id: "guest", name: "Mehmon (guest)", icon: "👤" },
+];
+export const binding = (id?: string | null) => BINDINGS.find(b => b.id === id);
 
 /** Akkaunt rasmlarining yagona o'lchami (eni:bo'yi). Admin shu o'lchamda kesadi, kartalar shu o'lchamda ko'rsatadi. */
 export const IMAGE_ASPECT = 16 / 9;
