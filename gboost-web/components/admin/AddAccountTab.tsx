@@ -27,7 +27,7 @@ export default function AddAccountTab({ cases, admins, me, myTelegram, busy, aft
   const [created, setCreated] = useState<{ no: number | null; title: string; admin: AdminOpt | undefined } | null>(null);
   const [f, setF] = useState(empty);
   const [images, setImages] = useState<string[]>([]);
-  const [frame, setFrame] = useState("");
+  const [frame, setFrame] = useState("none");
   const [bindings, setBindings] = useState<Record<string, number>>({});
   const [origin, setOrigin] = useState("");
   const [seller, setSeller] = useState<Seller | null | "none">(null);
@@ -79,7 +79,7 @@ export default function AddAccountTab({ cases, admins, me, myTelegram, busy, aft
     const { data: row } = await supabase.from("accounts").select("public_no").eq("id", id).maybeSingle();
     setCreated({ no: (row as { public_no: number | null } | null)?.public_no ?? null, title: f.title.trim(), admin: admins.find(a => a.id === adminId) });
     setSaving(false);
-    setF({ ...empty, game: f.game }); setImages([]); setSeller(null); setFrame(""); setBindings({}); setOrigin("");
+    setF({ ...empty, game: f.game }); setImages([]); setSeller(null); setFrame("none"); setBindings({}); setOrigin("");
     await after(!assignErr, (mode === "quick" ? "Akkaunt joylandi, sotuvchiga pul tushdi" : "Akkaunt saytga joylandi") + assignErr);
   };
 
