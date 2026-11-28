@@ -138,7 +138,7 @@ function Market() {
 
                 {/* Rasm — katta, to'liq kenglikda */}
                 <div className="relative z-10">
-                  <GameFrame game={sel.game} frame={sel.frame} className="w-full rounded-xl overflow-hidden bg-bg">
+                  <GameFrame game={sel.game} frame="none" className="w-full rounded-2xl overflow-hidden bg-bg border border-white/10">
                     <div className="absolute inset-0 grid place-items-center bg-gradient-to-br from-[#2a1015] to-[#0b0606]">
                       {gallery.length
                         ? <ImageCarousel images={gallery} index={img} onIndex={setImg} alt={sel.title} interval={3500} />
@@ -147,7 +147,7 @@ function Market() {
                     {gallery.length > 1 && [-1, 1].map(d => (
                       <button key={d} onClick={() => setImg((img + d + gallery.length) % gallery.length)}
                         aria-label={d < 0 ? "Oldingi" : "Keyingi"}
-                        className={`absolute z-20 top-1/2 -translate-y-1/2 ${d < 0 ? "left-[6%]" : "right-[6%]"} w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-black/60 backdrop-blur text-white text-2xl grid place-items-center hover:bg-black/85`}>
+                        className={`absolute z-20 top-1/2 -translate-y-1/2 ${d < 0 ? "left-3 sm:left-5" : "right-3 sm:right-5"} w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-black/60 backdrop-blur text-white text-2xl grid place-items-center hover:bg-black/85`}>
                         {d < 0 ? "‹" : "›"}
                       </button>
                     ))}
