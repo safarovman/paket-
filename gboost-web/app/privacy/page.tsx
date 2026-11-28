@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-export const metadata: Metadata = { title: "Maxfiylik siyosati — UzDrop" };
+export const metadata: Metadata = { title: "Maxfiylik siyosati — UzzDrop" };
 
 const UPDATED = "2026-yil 27-noyabr";
 
@@ -14,7 +14,7 @@ export default function Privacy() {
       <div className="panel p-6 mt-6 space-y-5 text-sm leading-relaxed text-white/85">
         <section>
           <h2 className="font-black uppercase text-accent mb-1">1. Umumiy</h2>
-          <p>UzDrop (&quot;sayt&quot;) — o&apos;yin akkauntlarini sotish va sotib olish platformasi. Ushbu siyosat qaysi ma&apos;lumotlarni yig&apos;ishimiz, ulardan qanday foydalanishimiz va qanday himoya qilishimizni tushuntiradi.</p>
+          <p>UzzDrop (&quot;sayt&quot;) — o&apos;yin akkauntlarini sotish va sotib olish platformasi. Ushbu siyosat qaysi ma&apos;lumotlarni yig&apos;ishimiz, ulardan qanday foydalanishimiz va qanday himoya qilishimizni tushuntiradi.</p>
         </section>
         <section>
           <h2 className="font-black uppercase text-accent mb-1">2. Qanday ma&apos;lumotlarni yig&apos;amiz</h2>

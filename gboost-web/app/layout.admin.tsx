@@ -4,7 +4,7 @@ import { UserProvider } from "@/components/UserProvider";
 import AdminHeader from "@/components/admin/AdminHeader";
 
 export const metadata: Metadata = {
-  title: "UzDrop Admin",
+  title: "UzzDrop Admin",
   robots: { index: false, follow: false },
 };
 

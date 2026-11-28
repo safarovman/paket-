@@ -52,7 +52,7 @@ export default function CodeTab({ waiting, users, admins, me, busy, rpc }: {
   };
 
   const tgText = f?.secret && f.account ? [
-    `UzDrop — akkauntingiz: #${f.account.public_no ?? ""} ${f.account.title}`,
+    `UzzDrop — akkauntingiz: #${f.account.public_no ?? ""} ${f.account.title}`,
     `Kod: ${f.code}`,
     ``,
     `Login: ${f.secret.login ?? ""}`,

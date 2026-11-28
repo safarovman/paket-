@@ -22,7 +22,7 @@ type Slide = {
 
 const SLIDES: Slide[] = [
   {
-    tag: "UZDROP",
+    tag: "UZZDROP",
     title: <>O&apos;yin <span className="text-accent">akkauntlarini</span> xavfsiz sotib oling</>,
     text: "Har bir akkauntni admin tekshiradi. Xariddan keyin akkaunt Telegram orqali shaxsan topshiriladi.",
     cta: { label: "Akkauntlarni ko'rish", href: "#accounts" },

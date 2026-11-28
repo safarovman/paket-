@@ -17,7 +17,7 @@ import { useState } from "react";
 export const FRAME_GAMES = ["pubg", "standoff2", "mlbb", "freefire", "cs2", "brawl", "default"] as const;
 const NAMES: Record<string, string> = {
   pubg: "PUBG", standoff2: "Standoff 2", mlbb: "Mobile Legends", freefire: "Free Fire",
-  cs2: "CS2", brawl: "Brawl Stars", default: "UzDrop",
+  cs2: "CS2", brawl: "Brawl Stars", default: "UzzDrop",
 };
 
 /** Admin tanlashi mumkin bo'lgan ramkalar ("" = o'yin bo'yicha avtomatik) */

@@ -47,7 +47,7 @@ export default function AuctionCard({ a, onChanged }: { a: AuctionItem; onChange
 
   return (
     <div className="panel p-4 grid md:grid-cols-[240px_1fr] gap-4">
-      <AccountCard a={a.account} compact />
+      <AccountCard a={a.account} compact hidePrice />
 
       <div className="flex flex-col gap-3 min-w-0">
         <div className="flex flex-wrap items-center justify-between gap-2">

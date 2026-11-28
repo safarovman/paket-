@@ -6,7 +6,7 @@ import LiveFeed from "@/components/LiveFeed";
 import { UserProvider } from "@/components/UserProvider";
 
 export const metadata: Metadata = {
-  title: "UzDrop — akkaunt sotish va akkaunt spin",
+  title: "UzzDrop — akkaunt sotish va akkaunt spin",
   description: "O'yin akkauntlarini sotib oling, soting yoki spin qilib yuting. Standoff 2, PUBG, MLBB, Free Fire.",
 };
 
