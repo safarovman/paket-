@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { SPIN_ENABLED, game, rarity, som, type Spin } from "@/lib/uzdrop";
+import { GameIcon } from "@/components/Icon";
 
 /** Tepadagi jonli yutuqlar lentasi (spin yoqilganda) */
 export default function LiveFeed() {
@@ -42,7 +43,7 @@ function Feed() {
                 className="relative w-[132px] shrink-0 rounded-lg bg-panel overflow-hidden px-2.5 py-1.5 animate-ticker-in">
                 <div className="absolute inset-x-0 bottom-0 h-[3px]" style={{ background: r.color }} />
                 <div className="absolute inset-0 opacity-20" style={{ background: `radial-gradient(circle at 50% 120%, ${r.color}, transparent 70%)` }} />
-                <p className="relative text-[10px] text-muted truncate">{game(s.game).icon} {s.username ?? "Mehmon"}</p>
+                <p className="relative text-[10px] text-muted truncate"><GameIcon game={s.game} className="w-3 h-3 mr-0.5" />{s.username ?? "Mehmon"}</p>
                 <p className="relative text-[11px] font-bold truncate">{s.title}</p>
                 <p className="relative text-[11px] font-extrabold" style={{ color: r.color }}>{som(s.value)}</p>
               </div>

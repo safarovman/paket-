@@ -7,6 +7,7 @@ import { accNo, game, som } from "@/lib/uzdrop";
 import GameFrame from "@/components/GameFrame";
 import CodeCard from "@/components/CodeCard";
 import LoginCta from "@/components/profile/LoginCta";
+import Icon, { GameIcon } from "@/components/Icon";
 
 const GRACE_MS = 5 * 60 * 1000; // bekor qilish muddati (20_orders.sql bilan bir xil)
 
@@ -58,7 +59,7 @@ export default function OrdersPage() {
     const { error } = await supabase.rpc("cancel_order", { p_order: o.id });
     setBusy(null);
     if (error) { setMsg({ ok: false, t: errText(error) }); load(); return; }
-    setMsg({ ok: true, t: `↩️ Ariza bekor qilindi, ${som(o.price)} balansingizga qaytdi` });
+    setMsg({ ok: true, t: `Ariza bekor qilindi, ${som(o.price)} balansingizga qaytdi` });
     await Promise.all([load(), refresh()]);
   };
 
@@ -76,7 +77,7 @@ export default function OrdersPage() {
       <div className="panel p-4 grid sm:grid-cols-[220px_1fr] gap-4">
         <GameFrame game={a?.game} frame={a?.frame} className="rounded-xl overflow-hidden bg-bg">
           <div className="absolute inset-0 grid place-items-center bg-gradient-to-br from-[#2a1015] to-[#0b0606]">
-            {imgs.length ? <img src={imgs[0]} alt="" className="w-full h-full object-cover" /> : <span className="text-4xl">{game(a?.game).icon}</span>}
+            {imgs.length ? <img src={imgs[0]} alt="" className="w-full h-full object-cover" /> : <GameIcon game={a?.game} className="w-10 h-10" />}
           </div>
         </GameFrame>
 
@@ -86,14 +87,14 @@ export default function OrdersPage() {
             <p className="font-black text-accent whitespace-nowrap">{som(o.price)}</p>
           </div>
           <p className="text-xs text-muted">
-            {game(a?.game).icon} {game(a?.game).name}{a?.public_no ? ` • ${accNo(a.public_no)}` : ""} • Ariza: <b className="text-white/80 font-mono">{o.code}</b>
+            {game(a?.game).name}{a?.public_no ? ` • ${accNo(a.public_no)}` : ""} • Ariza: <b className="text-white/80 font-mono">{o.code}</b>
           </p>
           <p className="text-[11px] text-muted mt-0.5">{new Date(o.created_at).toLocaleString("uz-UZ")}</p>
 
           <div className="mt-3">
             {o.status === "pending" && left > 0 && (
               <div className="rounded-xl border border-accent/40 bg-accent/10 p-3">
-                <p className="font-black text-accent">⏳ Ko&apos;rib chiqilmoqda</p>
+                <p className="font-black text-accent"><Icon name="clock" className="mr-1.5" />Ko&apos;rib chiqilmoqda</p>
                 <p className="text-sm mt-1">Adashib olgan bo&apos;lsangiz — bekor qilish uchun <b className="text-white">{mmss(left)}</b> qoldi.</p>
                 <button onClick={() => cancel(o)} disabled={busy === o.id}
                   className="btn !bg-lose text-white !py-2 mt-2 w-full sm:w-auto">{busy === o.id ? "…" : "Arizani bekor qilish"}</button>
@@ -101,19 +102,19 @@ export default function OrdersPage() {
             )}
             {o.status === "pending" && left <= 0 && (
               <div className="rounded-xl border border-line bg-bg p-3">
-                <p className="font-black">🛡️ Admin ko&apos;rib chiqmoqda</p>
+                <p className="font-black"><Icon name="shield" className="mr-1.5" />Admin ko&apos;rib chiqmoqda</p>
                 <p className="text-sm text-muted mt-1">Bekor qilish muddati tugadi. Admin arizani tasdiqlagach shu yerda maxfiy kod va mas&apos;ul admin chiqadi.</p>
               </div>
             )}
             {o.status === "waiting" && (
               <div className="rounded-xl border border-win/40 bg-win/10 p-3">
-                <p className="font-black text-win mb-2">✅ Tasdiqlandi</p>
+                <p className="font-black text-win mb-2"><Icon name="check" className="mr-1.5" />Tasdiqlandi</p>
                 <CodeCard code={o.code} kind={o.source} title={a?.title} accountId={o.account_id} />
               </div>
             )}
-            {o.status === "delivered" && <p className="font-black text-win">📦 Topshirildi</p>}
+            {o.status === "delivered" && <p className="font-black text-win"><Icon name="box" className="mr-1.5" />Topshirildi</p>}
             {o.status === "cancelled" && (
-              <p className="text-sm"><b className="text-lose">❌ Bekor qilingan</b>{o.admin_note ? <span className="text-muted"> — {o.admin_note}</span> : null}</p>
+              <p className="text-sm"><b className="text-lose"><Icon name="x" className="mr-1.5" />Bekor qilingan</b>{o.admin_note ? <span className="text-muted"> — {o.admin_note}</span> : null}</p>
             )}
           </div>
         </div>
@@ -123,7 +124,7 @@ export default function OrdersPage() {
 
   return (
     <div className="wrap py-8 max-w-4xl animate-fade-in">
-      <h1 className="h-title">📥 Arizalarim</h1>
+      <h1 className="h-title"><Icon name="inbox" className="w-6 h-6 text-accent mr-2" />Arizalarim</h1>
       <p className="text-muted text-sm mt-1">
         Sotib olingan akkaunt avval ariza bo&apos;ladi: 5 daqiqa ichida bekor qilishingiz mumkin, keyin admin tasdiqlaydi va maxfiy kod chiqadi.
       </p>
@@ -135,7 +136,7 @@ export default function OrdersPage() {
       ) : list.length === 0 ? (
         <div className="panel p-10 text-center mt-6">
           <p className="text-muted mb-4">Hali arizalar yo&apos;q.</p>
-          <Link href="/market" className="btn-accent">🛒 Akkauntlarni ko&apos;rish</Link>
+          <Link href="/market" className="btn-accent gap-2"><Icon name="cart" />Akkauntlarni ko&apos;rish</Link>
         </div>
       ) : (
         <>

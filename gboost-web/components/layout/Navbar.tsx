@@ -6,14 +6,15 @@ import clsx from "clsx";
 import { supabase } from "@/lib/supabase";
 import { useUser } from "@/components/UserProvider";
 import { som } from "@/lib/uzdrop";
+import Icon from "@/components/Icon";
 
 const NAV = [
-  { href: "/market", label: "Akkauntlar", icon: "🛒" },
-  { href: "/auction", label: "Auksion", icon: "🔨" },
-  { href: "/sell",   label: "Sotish",     icon: "💰" },
-  { href: "/wallet", label: "Balans",     icon: "💳" },
-  { href: "/orders", label: "Arizalar",   icon: "📥" },
-  { href: "/case",   label: "Spin",       icon: "🎰", soon: true },
+  { href: "/", label: "Akkauntlar", icon: "cart" },
+  { href: "/auction", label: "Auksion", icon: "gavel" },
+  { href: "/sell",   label: "Sotish",     icon: "coins" },
+  { href: "/wallet", label: "Balans",     icon: "wallet" },
+  { href: "/orders", label: "Arizalar",   icon: "inbox" },
+  { href: "/case",   label: "Spin",       icon: "dice", soon: true },
 ];
 
 export default function Navbar() {
@@ -23,7 +24,7 @@ export default function Navbar() {
   const [menu, setMenu] = useState(false);
 
   const logout = async () => { await supabase.auth.signOut(); setMenu(false); router.push("/"); };
-  const active = (href: string) => path.startsWith(href);
+  const active = (href: string) => href === "/" ? path === "/" || path.startsWith("/market") : path.startsWith(href);
 
   return (
     <header className="sticky top-0 z-50 bg-bg/90 backdrop-blur border-b border-line">
@@ -36,9 +37,9 @@ export default function Navbar() {
         <nav className="hidden md:flex items-center gap-1 ml-4">
           {NAV.map(n => (
             <Link key={n.href} href={n.href}
-              className={clsx("px-3.5 py-2 rounded-lg text-[13px] font-extrabold uppercase tracking-wide transition-colors",
+              className={clsx("inline-flex items-center px-3.5 py-2 rounded-lg text-[13px] font-extrabold uppercase tracking-wide transition-colors",
                 active(n.href) ? "text-accent bg-accent/10" : "text-muted hover:text-white")}>
-              <span className="mr-1">{n.icon}</span>{n.label}
+              <Icon name={n.icon} className="w-4 h-4 mr-1.5" />{n.label}
               {n.soon && <span className="ml-1.5 chip bg-accent/15 text-accent !text-[9px] !px-1.5">Tez kunda</span>}
             </Link>
           ))}
@@ -68,13 +69,13 @@ export default function Navbar() {
                       <p className="px-3 pt-2 text-sm font-bold truncate">{profile?.username || user.email}</p>
                       <p className="px-3 pb-2 text-xs text-muted">ID: <b className="text-accent">{profile?.public_id ?? "—"}</b></p>
                       {[
-                        { href: "/profile", l: "🎒 Inventar va profil" },
-                        { href: "/wallet",  l: "💳 Balans" },
+                        { href: "/profile", l: "Inventar va profil", i: "user" },
+                        { href: "/wallet",  l: "Balans", i: "wallet" },
                       ].map(i => (
                         <Link key={i.href} href={i.href} onClick={() => setMenu(false)}
-                          className="block px-3 py-2 rounded-lg text-sm text-muted hover:text-white hover:bg-panel2">{i.l}</Link>
+                          className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-muted hover:text-white hover:bg-panel2"><Icon name={i.i} />{i.l}</Link>
                       ))}
-                      <button onClick={logout} className="w-full text-left px-3 py-2 rounded-lg text-sm text-lose hover:bg-lose/10">🚪 Chiqish</button>
+                      <button onClick={logout} className="w-full flex items-center gap-2 text-left px-3 py-2 rounded-lg text-sm text-lose hover:bg-lose/10"><Icon name="logout" />Chiqish</button>
                     </div>
                   </>
                 )}
@@ -92,7 +93,7 @@ export default function Navbar() {
           <Link key={n.href} href={n.href}
             className={clsx("flex-1 py-2 text-center text-[10px] font-extrabold uppercase",
               active(n.href) ? "text-accent" : "text-muted")}>
-            <div className="text-base leading-none mb-0.5">{n.icon}</div>{n.label}{n.soon && <span className="block text-[8px] text-accent">tez kunda</span>}
+            <span className="flex justify-center mb-1"><Icon name={n.icon} className="w-5 h-5" /></span>{n.label}{n.soon && <span className="block text-[8px] text-accent">tez kunda</span>}
           </Link>
         ))}
       </nav>

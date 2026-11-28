@@ -2,6 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Sayt faqat qorong'i: brauzerning avtomatik qorong'i rejimi ranglarni o'zgartirmasin */
+:root { color-scheme: dark; }
+html, body { background-color: #070505; }
+
 html { scroll-behavior: smooth; }
 body {
   background: #070505 radial-gradient(1200px 600px at 50% -200px, rgba(255,200,61,.08), transparent 70%) no-repeat;

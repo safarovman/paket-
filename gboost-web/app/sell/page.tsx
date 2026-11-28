@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useUser } from "@/components/UserProvider";
 import { COMMISSION, TELEGRAM_ADMIN, telegramLink } from "@/lib/uzdrop";
+import Icon, { GameIcon } from "@/components/Icon";
 
 function Sell() {
   const params = useSearchParams();
@@ -14,7 +15,7 @@ function Sell() {
 
   const who = profile?.email || user?.email || "";
   const message = [
-    quick ? "⚡ Salom! Akkauntimni TEZ SOTMOQCHIMAN." : "🛒 Salom! Akkauntimni UzDrop bozorida sotmoqchiman.",
+    quick ? "Salom! Akkauntimni TEZ SOTMOQCHIMAN." : "Salom! Akkauntimni UzDrop bozorida sotmoqchiman.",
     "",
     `UzDrop akkauntim: ${who}`,
     `ID: ${user?.id ?? ""}`,
@@ -34,12 +35,12 @@ function Sell() {
 
       <div className="grid sm:grid-cols-2 gap-3 mb-6">
         {[
-          { q: false, i: "🛒", t: "Bozorga qo'yish", d: `Narxni o'zingiz aytasiz. Sotilganda ${100 - COMMISSION * 100}% balansingizga tushadi.` },
-          { q: true,  i: "⚡", t: "Tez sotish",      d: "UzDrop akkauntni o'zi sotib oladi — admin tasdiqlashi bilan pul darhol balansda." },
+          { q: false, i: "cart", t: "Bozorga qo'yish", d: `Narxni o'zingiz aytasiz. Sotilganda ${100 - COMMISSION * 100}% balansingizga tushadi.` },
+          { q: true,  i: "zap", t: "Tez sotish",      d: "UzDrop akkauntni o'zi sotib oladi — admin tasdiqlashi bilan pul darhol balansda." },
         ].map(o => (
           <button key={o.t} type="button" onClick={() => setQuick(o.q)}
             className={`panel p-4 text-left transition-colors ${quick === o.q ? "!border-accent bg-accent/5" : "hover:border-violet"}`}>
-            <p className="text-2xl">{o.i}</p>
+            <Icon name={o.i} className="w-7 h-7 text-accent" />
             <p className="font-black uppercase mt-1">{o.t}</p>
             <p className="text-xs text-muted mt-1">{o.d}</p>
           </button>
@@ -72,7 +73,7 @@ function Sell() {
                 Telegramda yozish
               </a>
               <button onClick={() => { navigator.clipboard.writeText(message); setCopied(true); setTimeout(() => setCopied(false), 2000); }} className="btn-ghost">
-                {copied ? "✅ Nusxalandi" : "Xabarni nusxalash"}
+                {copied ? "Nusxalandi" : "Xabarni nusxalash"}
               </button>
             </div>
           </>
@@ -81,7 +82,7 @@ function Sell() {
         )}
       </div>
 
-      <p className="text-xs text-muted mt-4">🔒 Login va parolingiz faqat admin va xaridorga ko&apos;rinadi. Admin hech qachon kartangiz PIN-kodi yoki SMS kodini so&apos;ramaydi.</p>
+      <p className="text-xs text-muted mt-4"><Icon name="lock" className="w-3.5 h-3.5 mr-1" />Login va parolingiz faqat admin va xaridorga ko&apos;rinadi. Admin hech qachon kartangiz PIN-kodi yoki SMS kodini so&apos;ramaydi.</p>
     </div>
   );
 }

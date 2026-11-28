@@ -7,6 +7,7 @@ import { accNo, ago, som } from "@/lib/uzdrop";
 import AccountCard from "@/components/AccountCard";
 import Countdown from "./Countdown";
 import type { AuctionBid, AuctionItem } from "./types";
+import Icon from "@/components/Icon";
 
 const fmt = (n: number) => (n ? n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ") : "");
 const digits = (s: string) => Number(s.replace(/\D/g, "")) || 0;
@@ -36,7 +37,7 @@ export default function AuctionCard({ a, onChanged }: { a: AuctionItem; onChange
     const { error } = await supabase.rpc("place_bid", { p_auction: a.id, p_amount: amount });
     setBusy(false);
     if (error) return setMsg({ ok: false, t: errText(error) });
-    setMsg({ ok: true, t: `✅ Taklifingiz qabul qilindi: ${som(amount)}` });
+    setMsg({ ok: true, t: `Taklifingiz qabul qilindi: ${som(amount)}` });
     await refresh();
     onChanged();
   };
@@ -51,7 +52,7 @@ export default function AuctionCard({ a, onChanged }: { a: AuctionItem; onChange
       <div className="flex flex-col gap-3 min-w-0">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <p className="font-black text-lg truncate">{accNo(a.account.public_no)} {a.account.title}</p>
-          <span className="chip bg-lose/15 text-lose">🔨 Jonli auksion</span>
+          <span className="chip bg-lose/15 text-lose gap-1"><Icon name="gavel" className="w-3.5 h-3.5" />Jonli auksion</span>
         </div>
 
         <div className="grid grid-cols-3 gap-2 text-center">
@@ -74,7 +75,7 @@ export default function AuctionCard({ a, onChanged }: { a: AuctionItem; onChange
           {a.leader && <> · Yetakchi: <b className={a.is_mine_leading ? "text-win" : "text-white"}>{a.is_mine_leading ? "Siz" : `${a.leader.name} (ID ${a.leader.public_id})`}</b></>}
         </p>
 
-        {a.is_mine_leading && <p className="text-xs font-bold text-win">🏆 Hozir siz yetakchisiz! Taklifingiz oshib ketilsa, pulingiz balansga to&apos;liq qaytadi.</p>}
+        {a.is_mine_leading && <p className="text-xs font-bold text-win"><Icon name="trophy" className="w-3.5 h-3.5 mr-1" />Hozir siz yetakchisiz! Taklifingiz oshib ketilsa, pulingiz balansga to&apos;liq qaytadi.</p>}
 
         <div className="flex flex-col sm:flex-row gap-2">
           <div className="flex-1">
@@ -108,7 +109,7 @@ export default function AuctionCard({ a, onChanged }: { a: AuctionItem; onChange
               : bids.length === 0 ? <p className="p-3 text-muted">Hali taklif yo&apos;q — birinchi bo&apos;ling!</p>
               : bids.map((b, i) => (
                 <div key={i} className={`flex justify-between px-3 py-2 ${i === 0 ? "bg-accent/5" : ""}`}>
-                  <span>{i === 0 && "🏆 "}<b className={b.is_mine ? "text-win" : ""}>{b.is_mine ? "Siz" : b.bidder_name}</b> <span className="text-muted text-xs">ID {b.bidder_public_id}</span></span>
+                  <span>{i === 0 && <Icon name="trophy" className="w-3.5 h-3.5 mr-1 text-accent" />}<b className={b.is_mine ? "text-win" : ""}>{b.is_mine ? "Siz" : b.bidder_name}</b> <span className="text-muted text-xs">ID {b.bidder_public_id}</span></span>
                   <span><b className="text-accent">{som(b.amount)}</b> <span className="text-muted text-xs">{ago(b.created_at)} oldin</span></span>
                 </div>
               ))}

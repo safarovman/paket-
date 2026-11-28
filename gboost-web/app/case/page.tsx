@@ -75,7 +75,7 @@ function CasePage() {
     const { error } = await supabase.rpc("sell_won", { p_account: won.id });
     setBusy(false);
     if (error) { setMsg(errText(error)); return; }
-    setMsg(`✅ ${som(won.price)} balansingizga qo'shildi`); setWon(null); refresh(); load();
+    setMsg(`${som(won.price)} balansingizga qo'shildi`); setWon(null); refresh(); load();
   };
   const keep = async () => {
     if (!won) return; setBusy(true);
@@ -148,7 +148,7 @@ function CasePage() {
             <p className="text-xs font-extrabold uppercase text-muted">Siz yutdingiz!</p>
             <div className="my-4"><AccountCard a={won} /></div>
             <div className="grid gap-2">
-              <button onClick={sell} disabled={busy} className="btn-win">⚡ Sotish +{som(won.price)}</button>
+              <button onClick={sell} disabled={busy} className="btn-win">Sotish +{som(won.price)}</button>
               <button onClick={keep} disabled={busy} className="btn-violet">Akkauntni olish</button>
               <button onClick={() => setWon(null)} className="btn-ghost">Keyinroq (inventarda qoladi)</button>
             </div>
@@ -159,7 +159,7 @@ function CasePage() {
       {code && (
         <div className="fixed inset-0 z-[60] bg-black/70 backdrop-blur-sm grid place-items-center p-4 animate-fade-in" onClick={() => setCode(null)}>
           <div className="panel w-full max-w-sm p-6 max-h-[92vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-            <p className="font-black text-center mb-3">🎉 {code.title}</p>
+            <p className="font-black text-center mb-3">{code.title}</p>
             <CodeCard code={code.code} kind="spin" title={code.title} accountId={code.id} />
             <button onClick={() => setCode(null)} className="btn-ghost w-full mt-3">Yopish</button>
           </div>
@@ -179,6 +179,6 @@ function CasePage() {
 }
 
 export default function Page() {
-  if (!SPIN_ENABLED) return <ComingSoon icon="🎰" title="Akkaunt spin" text="Keys ochib akkaunt yutish tez orada ishga tushadi. Hozircha akkauntlarni bozordan sotib olishingiz mumkin." />;
+  if (!SPIN_ENABLED) return <ComingSoon icon="dice" title="Akkaunt spin" text="Keys ochib akkaunt yutish tez orada ishga tushadi. Hozircha akkauntlarni bozordan sotib olishingiz mumkin." />;
   return <Suspense><CasePage /></Suspense>;
 }

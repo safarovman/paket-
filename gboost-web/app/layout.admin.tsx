@@ -12,6 +12,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <html lang="uz">
       <head>
+        {/* Sayt o'zi qorong'i — telefon "majburiy qorong'i rejimi" ranglarni buzmasin */}
+        <meta name="color-scheme" content="dark" />
+        <meta name="theme-color" content="#070505" />
         <meta name="robots" content="noindex,nofollow" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />

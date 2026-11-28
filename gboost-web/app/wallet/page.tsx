@@ -7,6 +7,7 @@ import { som, ago, PAY_METHODS, TELEGRAM_ADMIN, telegramLink } from "@/lib/uzdro
 import { useDepositSettings } from "@/lib/useDeposit";
 import LoginCta from "@/components/profile/LoginCta";
 import CodeCard from "@/components/CodeCard";
+import Icon from "@/components/Icon";
 
 const PRESETS = [10_000, 25_000, 50_000, 100_000, 250_000];
 
@@ -73,7 +74,7 @@ export default function WalletPage() {
     setBusy(false);
     if (error) return setMsg({ ok: false, t: errText(error) });
     setWAmount(0); setCard("");
-    setMsg({ ok: true, t: "✅ Yechish so'rovi qabul qilindi. Pul kartangizga tez orada o'tkaziladi." });
+    setMsg({ ok: true, t: "Yechish so'rovi qabul qilindi. Pul kartangizga tez orada o'tkaziladi." });
     await Promise.all([refresh(), load()]);
   };
 
@@ -126,9 +127,9 @@ export default function WalletPage() {
               <li>Admin to&apos;lov uchun karta raqamini beradi. To&apos;lab, chekni yuboring.</li>
               <li>Admin tasdiqlashi bilan pul balansingizda ko&apos;rinadi.</li>
             </ol>
-            <a href={telegramLink(`💳 Balans to'ldirmoqchiman\nMening UzDrop ID: ${profile?.public_id ?? ""}\nSumma: ${som(amount)}`)}
+            <a href={telegramLink(`Balans to'ldirmoqchiman\nMening UzDrop ID: ${profile?.public_id ?? ""}\nSumma: ${som(amount)}`)}
               target="_blank" rel="noopener noreferrer" className="btn-accent w-full">Telegramda adminga yozish</a>
-            <p className="text-[11px] text-muted">⚠️ Faqat <b className="text-white">@{TELEGRAM_ADMIN}</b> ga to&apos;lang. Boshqa &quot;admin&quot;larga ishonmang — admin sizga birinchi yozmaydi.</p>
+            <p className="text-[11px] text-muted"><Icon name="alert" className="w-3.5 h-3.5 mr-1 text-accent" />Faqat <b className="text-white">@{TELEGRAM_ADMIN}</b> ga to&apos;lang. Boshqa &quot;admin&quot;larga ishonmang — admin sizga birinchi yozmaydi.</p>
           </div>
 
           <div className="panel p-5 space-y-3">

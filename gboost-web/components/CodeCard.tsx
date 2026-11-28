@@ -23,7 +23,7 @@ export default function CodeCard({ code, kind, title, amount, accountId }: {
 
   const admin = contact?.admin_telegram || TELEGRAM_ADMIN;
   const no = accNo(contact?.public_no);
-  const head = kind === "deposit" ? "💳 Balans to'ldirish" : kind === "spin" ? "🎰 Spin yutug'i" : "🛒 Akkaunt xaridi";
+  const head = kind === "deposit" ? "Balans to'ldirish" : kind === "spin" ? "Spin yutug'i" : "Akkaunt xaridi";
   const msg = [
     head,
     no ? `Akkaunt ID: ${no}` : "",
@@ -63,7 +63,7 @@ export default function CodeCard({ code, kind, title, amount, accountId }: {
       </ol>
       <div className="grid gap-2 mt-4">
         <a href={telegramLink(msg, admin)} target="_blank" rel="noopener noreferrer" className="btn-accent">@{admin} ga yozish</a>
-        <button onClick={copy} className="btn-ghost">{copied ? "✅ Nusxalandi" : "Xabarni nusxalash"}</button>
+        <button onClick={copy} className="btn-ghost">{copied ? "Nusxalandi" : "Xabarni nusxalash"}</button>
       </div>
     </div>
   );

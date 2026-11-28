@@ -7,13 +7,14 @@ import { useUser } from "@/components/UserProvider";
 import { SPIN_ENABLED, som, game, rarity, ago, type Account, type Delivery } from "@/lib/uzdrop";
 import CodeCard from "@/components/CodeCard";
 import LoginCta from "@/components/profile/LoginCta";
+import Icon, { GameIcon } from "@/components/Icon";
 
 type Tab = "inv" | "buy" | "mine" | "tx";
 const TABS: { id: Tab; label: string }[] = [
-  { id: "buy",  label: "🛒 Xaridlar" },
-  ...(SPIN_ENABLED ? [{ id: "inv" as Tab, label: "🎒 Spin yutuqlari" }] : []),
-  { id: "mine", label: "📦 E'lonlarim" },
-  { id: "tx",   label: "📜 Tarix" },
+  { id: "buy",  label: "Xaridlar" },
+  ...(SPIN_ENABLED ? [{ id: "inv" as Tab, label: "Spin yutuqlari" }] : []),
+  { id: "mine", label: "E'lonlarim" },
+  { id: "tx",   label: "Tarix" },
 ];
 
 const TX_LABEL: Record<string, string> = {
@@ -43,16 +44,16 @@ function AccCard({ a, children }: { a: Account; children?: React.ReactNode }) {
       <div className="relative h-28 grid place-items-center">
         {a.image_url
           ? <img src={a.image_url} alt={a.title} className="h-full w-full object-cover" />
-          : <span className="text-5xl">{g.icon}</span>}
+          : <GameIcon game={g.id} className="w-12 h-12" />}
       </div>
       <div className="absolute inset-x-0 top-[108px] h-[3px]" style={{ background: r.color }} />
       <div className="relative p-3.5 flex flex-col gap-2 flex-1">
         <div className="flex items-center justify-between gap-2">
-          <span className="chip bg-panel2 text-muted">{g.icon} {g.name}</span>
+          <span className="chip bg-panel2 text-muted">{g.name}</span>
           <span className="chip" style={{ background: r.color + "22", color: r.color }}>{r.name}</span>
         </div>
         <p className="font-extrabold leading-tight">{a.public_no ? <span className="text-muted mr-1">#{a.public_no}</span> : null}{a.title}</p>
-        {a.rank && <p className="text-xs text-muted">🏆 {a.rank}</p>}
+        {a.rank && <p className="text-xs text-muted">{a.rank}</p>}
         <p className="font-black" style={{ color: r.color }}>{som(a.price)}</p>
         <div className="mt-auto pt-1 space-y-2">{children}</div>
       </div>
@@ -61,10 +62,10 @@ function AccCard({ a, children }: { a: Account; children?: React.ReactNode }) {
 }
 
 const D_STATUS: Record<Delivery["status"], { t: string; c: string }> = {
-  pending:   { t: "⏳ Ko'rib chiqilmoqda", c: "text-accent" },
-  waiting:   { t: "⏳ Adminga yozing",  c: "text-accent" },
-  delivered: { t: "✅ Topshirildi",     c: "text-win" },
-  cancelled: { t: "↩️ Bekor, pul qaytdi", c: "text-lose" },
+  pending:   { t: "Ko'rib chiqilmoqda", c: "text-accent" },
+  waiting:   { t: "Adminga yozing",  c: "text-accent" },
+  delivered: { t: "Topshirildi",     c: "text-win" },
+  cancelled: { t: "Bekor, pul qaytdi", c: "text-lose" },
 };
 
 function DeliveryBox({ d, onOpen }: { d?: Delivery; onOpen: () => void }) {
@@ -92,7 +93,7 @@ function TelegramField({ value, onSaved }: { value?: string | null; onSaved: () 
   const save = async () => {
     setState("…");
     const { error } = await supabase.rpc("set_telegram", { p_username: v });
-    setState(error ? errText(error) : "✅ Saqlandi");
+    setState(error ? errText(error) : "Saqlandi");
     if (!error) onSaved();
   };
   return (
@@ -144,7 +145,7 @@ export default function ProfilePage() {
     const { error } = await supabase.rpc("sell_won", { p_account: a.id });
     setBusy(null);
     if (error) return flash(false, errText(error));
-    flash(true, `⚡ Sotildi! +${som(a.price)} balansga qo'shildi`);
+    flash(true, `Sotildi! +${som(a.price)} balansga qo'shildi`);
     await Promise.all([refresh(), load()]);
   };
 
@@ -211,14 +212,14 @@ export default function ProfilePage() {
           msg.ok ? "bg-win/15 text-win" : "bg-lose/15 text-lose")}>{msg.t}</div>
       )}
 
-      {tab === "inv" && (inv.length === 0 ? empty("Inventar bo'sh. Keys ochib akkaunt yuting!", "/", "🎰 Spin qilish") : (
+      {tab === "inv" && (inv.length === 0 ? empty("Inventar bo'sh. Keys ochib akkaunt yuting!", "/", "Spin qilish") : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {inv.map(a => (
             <AccCard key={a.id} a={a}>
               {a.status === "won" ? (
                 <>
                   <button disabled={busy === a.id} onClick={() => sell(a)} className="btn-win w-full !py-2.5">
-                    ⚡ Sotish +{som(a.price)}
+                    Sotish +{som(a.price)}
                   </button>
                   <button disabled={busy === a.id} onClick={() => setConfirm(a)} className="btn-ghost w-full !py-2.5">
                     Olish
@@ -230,26 +231,26 @@ export default function ProfilePage() {
         </div>
       ))}
 
-      {tab === "buy" && (bought.length === 0 ? empty("Hali xarid qilmagansiz.", "/market", "🛒 Akkauntlar") : (
+      {tab === "buy" && (bought.length === 0 ? empty("Hali xarid qilmagansiz.", "/market", "Akkauntlar") : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {bought.map(a => <AccCard key={a.id} a={a}><DeliveryBox d={deliv[a.id]} onOpen={() => deliv[a.id] && setShowCode({ d: deliv[a.id], title: a.title })} /></AccCard>)}
         </div>
       ))}
 
-      {tab === "mine" && (mine.length === 0 ? empty("Sizda e'lonlar yo'q.", "/sell", "💰 Akkaunt sotish") : (
+      {tab === "mine" && (mine.length === 0 ? empty("Sizda e'lonlar yo'q.", "/sell", "Akkaunt sotish") : (
         <div className="space-y-2">
           {mine.map(a => {
             const st = STATUS[a.status] ?? STATUS.pending;
             return (
               <div key={a.id} className="panel p-4 flex flex-col sm:flex-row sm:items-center gap-3">
-                <span className="text-3xl">{game(a.game).icon}</span>
+                <GameIcon game={a.game} className="w-8 h-8" />
                 <div className="flex-1 min-w-0">
                   <p className="font-extrabold truncate">{a.title}</p>
                   <p className="text-xs text-muted">{game(a.game).name}{a.rank ? ` • ${a.rank}` : ""} • {ago(a.created_at)} oldin</p>
                   {a.status === "rejected" && a.reject_note && <p className="text-xs text-lose mt-1">Sabab: {a.reject_note}</p>}
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
-                  {a.kind === "quick" && <span className="chip bg-accent/15 text-accent">⚡ Tez sotish</span>}
+                  {a.kind === "quick" && <span className="chip bg-accent/15 text-accent">Tez sotish</span>}
                   <span className={clsx("chip", st.c)}>{st.t}</span>
                   <span className="font-black whitespace-nowrap">{som(a.kind === "quick" ? a.asked_price ?? a.price : a.price)}</span>
                 </div>
