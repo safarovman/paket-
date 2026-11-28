@@ -127,27 +127,35 @@ function Market() {
                 </div>
               </div>
             ) : (
-              <div className="grid lg:grid-cols-[2fr_1fr] gap-6 lg:gap-10 max-w-[1600px] mx-auto">
-                {/* Rasm */}
-                <div>
+              <div className="relative max-w-[1400px] mx-auto">
+                {/* Orqa fon: joriy skrinshotning xira (blur) nusxasi — rasm va yozuvlar orasini yumshoq bog'laydi */}
+                <div aria-hidden className="pointer-events-none absolute -inset-x-10 -top-6 h-[calc(100%+2rem)] overflow-hidden"
+                  style={{ maskImage: "radial-gradient(ellipse 60% 55% at 50% 55%, black 40%, transparent 100%)", WebkitMaskImage: "radial-gradient(ellipse 60% 55% at 50% 55%, black 40%, transparent 100%)" }}>
+                  {gallery[img]
+                    ? <img src={gallery[img]} alt="" className="w-full h-full object-cover scale-110 blur-3xl opacity-40 transition-all duration-700" />
+                    : <div className="w-full h-full bg-gradient-to-b from-violet/30 to-transparent blur-3xl" />}
+                </div>
+
+                {/* Rasm — katta, to'liq kenglikda */}
+                <div className="relative z-10">
                   <GameFrame game={sel.game} frame={sel.frame} className="w-full rounded-xl overflow-hidden bg-bg">
                     <div className="absolute inset-0 grid place-items-center bg-gradient-to-br from-[#2a1015] to-[#0b0606]">
                       {gallery.length
                         ? <ImageCarousel images={gallery} index={img} onIndex={setImg} alt={sel.title} interval={3500} />
-                        : <span className="text-7xl">{game(sel.game).icon}</span>}
+                        : <span className="text-8xl">{game(sel.game).icon}</span>}
                     </div>
                     {gallery.length > 1 && [-1, 1].map(d => (
                       <button key={d} onClick={() => setImg((img + d + gallery.length) % gallery.length)}
                         aria-label={d < 0 ? "Oldingi" : "Keyingi"}
-                        className={`absolute z-20 top-1/2 -translate-y-1/2 ${d < 0 ? "left-[7%]" : "right-[7%]"} w-9 h-9 rounded-full bg-black/65 text-white text-xl grid place-items-center hover:bg-black/85`}>
+                        className={`absolute z-20 top-1/2 -translate-y-1/2 ${d < 0 ? "left-[6%]" : "right-[6%]"} w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-black/60 backdrop-blur text-white text-2xl grid place-items-center hover:bg-black/85`}>
                         {d < 0 ? "‹" : "›"}
                       </button>
                     ))}
                   </GameFrame>
                   {gallery.length > 1 && (
-                    <div className="flex gap-1.5 mt-2 overflow-x-auto">
+                    <div className="flex gap-1.5 mt-3 overflow-x-auto justify-center">
                       {gallery.map((u, i) => (
-                        <button key={u + i} onClick={() => setImg(i)} className={`shrink-0 w-24 sm:w-28 aspect-video rounded-md overflow-hidden border-2 ${i === img ? "border-accent" : "border-transparent opacity-60"}`}>
+                        <button key={u + i} onClick={() => setImg(i)} className={`shrink-0 w-20 sm:w-28 aspect-video rounded-md overflow-hidden border-2 ${i === img ? "border-accent" : "border-transparent opacity-60"}`}>
                           <img src={u} alt="" className="w-full h-full object-cover" />
                         </button>
                       ))}
@@ -155,39 +163,45 @@ function Market() {
                   )}
                 </div>
 
-                {/* Ma'lumot */}
-                <div className="flex flex-col">
-                  <span className="chip bg-bg text-muted self-start">{game(sel.game).icon} {game(sel.game).name}</span>
-                  <h2 className="text-2xl sm:text-3xl font-black mt-2 leading-tight">{sel.title}</h2>
-                  <p className="text-3xl font-black text-accent mt-2">{som(sel.price)}</p>
-                  <div className="mt-3 space-y-1.5 text-sm">
-                    {sel.public_no != null && <div className="flex justify-between"><span className="text-muted">Akkaunt ID</span><b>#{sel.public_no}</b></div>}
-                    {sel.rank && <div className="flex justify-between"><span className="text-muted">Rank</span><b>{sel.rank}</b></div>}
-                    {sel.level != null && <div className="flex justify-between"><span className="text-muted">Daraja (level)</span><b>{sel.level}</b></div>}
-                    {user && <div className="flex justify-between"><span className="text-muted">Balansingiz</span><b>{som(profile?.balance)}</b></div>}
+                {/* Ma'lumot — rasm ostida, xira shisha (blur) panelda */}
+                <div className="relative z-10 mt-6 rounded-2xl border border-white/10 bg-bg/50 backdrop-blur-xl p-4 sm:p-6">
+                  <div className="grid md:grid-cols-2 gap-5 lg:gap-8">
+                    <div>
+                      <span className="chip bg-bg text-muted">{game(sel.game).icon} {game(sel.game).name}</span>
+                      <h2 className="text-2xl sm:text-3xl font-black mt-2 leading-tight">{sel.title}</h2>
+                      <p className="text-3xl font-black text-accent mt-2">{som(sel.price)}</p>
+                      <div className="mt-3 space-y-1.5 text-sm">
+                        {sel.public_no != null && <div className="flex justify-between"><span className="text-muted">Akkaunt ID</span><b>#{sel.public_no}</b></div>}
+                        {sel.rank && <div className="flex justify-between"><span className="text-muted">Rank</span><b>{sel.rank}</b></div>}
+                        {sel.level != null && <div className="flex justify-between"><span className="text-muted">Daraja (level)</span><b>{sel.level}</b></div>}
+                        {user && <div className="flex justify-between"><span className="text-muted">Balansingiz</span><b>{som(profile?.balance)}</b></div>}
+                      </div>
+                      {sel.description && (
+                        <div className="mt-3 rounded-xl bg-bg/70 border border-line p-3 text-sm text-white/85 whitespace-pre-line max-h-48 overflow-y-auto">{sel.description}</div>
+                      )}
+                    </div>
+                    <div className="space-y-3">
+                      <AccountBindings bindings={sel.bindings} origin={sel.origin} />
+                      <div className="rounded-xl border border-accent/40 bg-accent/10 p-3">
+                        <p className="text-sm">
+                          Qo&apos;shimcha ma&apos;lumot kerak bo&apos;lsa — Telegram orqali adminga murojaat qiling:
+                          {" "}<b className="text-accent">@{TELEGRAM_ADMIN}</b>
+                        </p>
+                        <a href={telegramLink(`Salom! #${sel.public_no ?? ""} akkaunt haqida savolim bor`)} target="_blank" rel="noopener noreferrer"
+                          className="btn-ghost !py-2 w-full mt-2">✈️ Telegramda yozish</a>
+                      </div>
+                    </div>
                   </div>
-                  <div className="mt-3"><AccountBindings bindings={sel.bindings} origin={sel.origin} /></div>
-                  {sel.description && (
-                    <div className="mt-3 rounded-xl bg-bg border border-line p-3 text-sm text-white/85 whitespace-pre-line max-h-48 overflow-y-auto">{sel.description}</div>
-                  )}
 
-                  <div className="mt-3 rounded-xl border border-accent/40 bg-accent/10 p-3">
-                    <p className="text-sm">
-                      Qo&apos;shimcha ma&apos;lumot kerak bo&apos;lsa — Telegram orqali adminga murojaat qiling:
-                      {" "}<b className="text-accent">@{TELEGRAM_ADMIN}</b>
-                    </p>
-                    <a href={telegramLink(`Salom! #${sel.public_no ?? ""} akkaunt haqida savolim bor`)} target="_blank" rel="noopener noreferrer"
-                      className="btn-ghost !py-2 w-full mt-2">✈️ Telegramda yozish</a>
-                  </div>
-
-                  {msg && <p className="text-lose text-sm font-bold mt-3">{msg}</p>}
-                  <div className="grid gap-2 mt-4 md:mt-auto md:pt-4">
+                  {/* Sotib olish — pastki o'ng burchakda, kichik */}
+                  <div className="mt-5 flex flex-col sm:flex-row sm:items-center sm:justify-end gap-2 sm:gap-4">
+                    {msg && <p className="text-lose text-sm font-bold sm:mr-auto">{msg}</p>}
+                    <p className="text-[11px] text-muted sm:text-right sm:max-w-xs">Sotib olgach ariza yaratiladi. 5 daqiqa ichida bekor qilishingiz mumkin, keyin admin tasdiqlaydi.</p>
                     {!user
-                      ? <Link href="/login" className="btn-accent">Sotib olish uchun kiring</Link>
+                      ? <Link href="/login" className="btn-accent !py-2 !px-5 !text-sm self-end shrink-0">Sotib olish uchun kiring</Link>
                       : (profile?.balance ?? 0) < sel.price
-                        ? <Link href="/wallet" className="btn-accent">Balansni to&apos;ldirish</Link>
-                        : <button onClick={buy} disabled={busy} className="btn-accent text-base">{busy ? "…" : `Sotib olish • ${som(sel.price)}`}</button>}
-                    <p className="text-[11px] text-muted text-center">Sotib olgach ariza yaratiladi. 5 daqiqa ichida bekor qilishingiz mumkin, keyin admin tasdiqlaydi.</p>
+                        ? <Link href="/wallet" className="btn-accent !py-2 !px-5 !text-sm self-end shrink-0">Balansni to&apos;ldirish</Link>
+                        : <button onClick={buy} disabled={busy} className="btn-accent !py-2 !px-5 !text-sm self-end shrink-0">{busy ? "…" : `🛒 Sotib olish • ${som(sel.price)}`}</button>}
                   </div>
                 </div>
               </div>
