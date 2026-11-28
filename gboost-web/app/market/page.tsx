@@ -147,8 +147,10 @@ function Market() {
                     {gallery.length > 1 && [-1, 1].map(d => (
                       <button key={d} onClick={() => setImg((img + d + gallery.length) % gallery.length)}
                         aria-label={d < 0 ? "Oldingi" : "Keyingi"}
-                        className={`absolute z-20 top-1/2 -translate-y-1/2 ${d < 0 ? "left-3 sm:left-5" : "right-3 sm:right-5"} w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-black/60 backdrop-blur text-white text-2xl grid place-items-center hover:bg-black/85`}>
-                        {d < 0 ? "‹" : "›"}
+                        className={`group absolute z-20 top-1/2 -translate-y-1/2 ${d < 0 ? "left-3 sm:left-5" : "right-3 sm:right-5"} w-11 h-11 sm:w-14 sm:h-14 rounded-2xl bg-white/10 border border-white/25 backdrop-blur-md shadow-[0_8px_24px_rgba(0,0,0,.45)] grid place-items-center text-white transition-all hover:bg-accent hover:border-accent hover:text-[#1B1400] hover:scale-105 active:scale-95`}>
+                        <svg viewBox="0 0 24 24" className={`w-6 h-6 sm:w-7 sm:h-7 ${d < 0 ? "rotate-180" : ""}`} fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                          <path d="M9 5l7 7-7 7" />
+                        </svg>
                       </button>
                     ))}
                   </GameFrame>
