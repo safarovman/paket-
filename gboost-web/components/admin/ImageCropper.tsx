@@ -120,18 +120,20 @@ export default function ImageCropper({ file, game, frame, index, total, onDone, 
           {/* Saytda qanday ko'rinadi */}
           <div>
             <p className="label">Saytda shunday ko&apos;rinadi</p>
-            <GameFrame game={game} frame={frame ?? null}>
+            <div>
               <div className="panel p-3 relative overflow-hidden">
                 <div className="flex justify-between items-center mb-2">
                   <span className="chip bg-bg/60 text-muted">{g.icon} {g.name}</span>
                   <span className="chip bg-accent/15 text-accent">Namuna</span>
                 </div>
-                <canvas ref={preview} className="w-full rounded-lg block" style={{ aspectRatio: String(IMAGE_ASPECT) }} />
+                <GameFrame game={game} frame={frame ?? null} className="rounded-lg overflow-hidden">
+                  <canvas ref={preview} className="absolute inset-0 w-full h-full rounded-lg block" />
+                </GameFrame>
                 <p className="font-extrabold text-sm mt-2">Akkaunt nomi</p>
                 <p className="text-xs text-muted">#1001 Rank</p>
                 <p className="font-black text-accent mt-1">150 000 so&apos;m</p>
               </div>
-            </GameFrame>
+            </div>
           </div>
         </div>
 
