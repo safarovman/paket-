@@ -12,6 +12,7 @@ const NAV = [
   { href: "/auction", label: "Auksion", icon: "🔨" },
   { href: "/sell",   label: "Sotish",     icon: "💰" },
   { href: "/wallet", label: "Balans",     icon: "💳" },
+  { href: "/orders", label: "Arizalar",   icon: "📥" },
   { href: "/case",   label: "Spin",       icon: "🎰", soon: true },
 ];
 

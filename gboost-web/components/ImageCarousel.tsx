@@ -45,12 +45,12 @@ export default function ImageCarousel({ images, className = "", interval = 3000,
       {arrows && (
         <>
           <button type="button" onClick={e => { e.stopPropagation(); set(cur - 1); }} aria-label="Oldingi"
-            className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/60 text-white grid place-items-center hover:bg-black/80">‹</button>
+            className="absolute left-[6%] top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-black/60 text-white grid place-items-center hover:bg-black/80">‹</button>
           <button type="button" onClick={e => { e.stopPropagation(); set(cur + 1); }} aria-label="Keyingi"
-            className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/60 text-white grid place-items-center hover:bg-black/80">›</button>
+            className="absolute right-[6%] top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-black/60 text-white grid place-items-center hover:bg-black/80">›</button>
         </>
       )}
-      <div className="absolute bottom-1.5 inset-x-0 flex justify-center gap-1">
+      <div className="absolute bottom-[9%] inset-x-0 flex justify-center gap-1 z-20">
         {list.map((_, i) => (
           <button key={i} type="button" aria-label={`${i + 1}-rasm`} onClick={e => { e.stopPropagation(); set(i); }}
             className={`h-1.5 rounded-full transition-all ${i === cur ? "w-4 bg-accent" : "w-1.5 bg-white/50"}`} />
