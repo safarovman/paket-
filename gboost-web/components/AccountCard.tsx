@@ -4,7 +4,7 @@ import GameFrame from "@/components/GameFrame";
 
 /**
  * Akkaunt kartasi = faqat ramkali skrinshot (ramka kartaning o'zi, ichida yana ramka yo'q).
- * Narx — o'ng yuqori burchakda, #ID va o'yin — chap pastda, nom — sichqoncha ustiga kelganda.
+ * Narx — pastki o'ng burchakda (kichik, to'q qizil), #ID va o'yin — chap pastda, nom — sichqoncha ustiga kelganda.
  * Belgilar ramka bezaklari ustiga tushmasligi uchun ichkariga (~7%) surilgan.
  */
 export default function AccountCard({ a, footer, onClick, compact }: {
@@ -35,9 +35,8 @@ export default function AccountCard({ a, footer, onClick, compact }: {
             {a.title}
           </p>
 
-          {/* Narx — o'ng yuqori burchak */}
-          <span className="absolute right-[7%] top-[10%] z-20 rounded-full px-2 sm:px-2.5 py-0.5 sm:py-1 text-[11px] sm:text-sm font-black text-accent bg-black/70 backdrop-blur-sm shadow-lg whitespace-nowrap"
-            style={{ border: `1px solid ${r.color}` }}>
+          {/* Narx — pastki o'ng burchak: kichik, ramkasiz, to'q qizil */}
+          <span className="absolute right-[7%] bottom-[10%] z-20 rounded-md px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-xs font-black text-white bg-[#8B1515] shadow-lg whitespace-nowrap">
             {som(a.price)}
           </span>
 
