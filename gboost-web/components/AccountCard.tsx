@@ -40,12 +40,6 @@ export default function AccountCard({ a, footer, onClick, compact }: {
             {a.title}
           </p>
 
-          {/* Narx — rasmning pastki o'ng burchagiga tekis yopishgan, chap tomoni qiya (to'rtburchak, yumaloq emas) */}
-          <span className="absolute right-0 bottom-0 z-20 flex items-baseline gap-1 bg-[#8B1515] text-white pl-5 sm:pl-6 pr-2.5 sm:pr-3 py-1 sm:py-1.5 whitespace-nowrap shadow-[0_-2px_12px_rgba(0,0,0,.35)]"
-            style={{ clipPath: "polygon(14px 0, 100% 0, 100% 100%, 0 100%)" }}>
-            <b className="text-xs sm:text-sm font-black tracking-tight tabular-nums">{a.price.toLocaleString("ru-RU").replace(/\u00a0/g, " ")}</b>
-            <span className="text-[9px] sm:text-[10px] font-bold text-white/75">so&apos;m</span>
-          </span>
 
           {/* Noyoblik — chap yuqori */}
           {!compact && (
@@ -59,6 +53,12 @@ export default function AccountCard({ a, footer, onClick, compact }: {
             <GameIcon game={a.game} className="w-3.5 h-3.5" /> {a.public_no ? accNo(a.public_no) : g.name}
           </span>
         </GameFrame>
+          {/* Narx — kartaning tashqi pastki o'ng burchagida, ramka ustida tekis (har qanday ramkada bir xil) */}
+        <span className="absolute right-0 bottom-0 z-30 rounded-br-xl flex items-baseline gap-1 bg-[#8B1515] text-white pl-5 sm:pl-6 pr-3 sm:pr-3.5 py-1 sm:py-1.5 whitespace-nowrap shadow-[0_-2px_12px_rgba(0,0,0,.35)]"
+          style={{ clipPath: "polygon(14px 0, 100% 0, 100% 100%, 0 100%)" }}>
+          <b className="text-xs sm:text-sm font-black tracking-tight tabular-nums">{a.price.toLocaleString("ru-RU").replace(/\u00a0/g, " ")}</b>
+          <span className="text-[9px] sm:text-[10px] font-bold text-white/75">so&apos;m</span>
+        </span>
       </div>
       {footer && <div className="mt-2 relative z-20">{footer}</div>}
     </div>
