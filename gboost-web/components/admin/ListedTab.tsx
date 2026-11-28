@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { game, som, type Account, type Case } from "@/lib/uzdrop";
 import ImageUploader from "@/components/ImageUploader";
+import FramePicker from "./FramePicker";
 import { AccNo, AdminLine, Empty, UserLine, num, type AccExtra, type AdminOpt, type Rpc, type UserInfo } from "./shared";
 
 type Acc = Account & AccExtra;
@@ -55,7 +56,10 @@ export default function ListedTab({ accounts, cases, users, admins, adminById, m
               }}>O&apos;chirish</button>
             </div>
           </div>
-          {edit === a.id && <EditForm a={a} busy={busy} onSave={async args => { if (await rpc("admin_update_account", { p_id: a.id, ...args }, "Saqlandi")) setEdit(null); }} />}
+          {edit === a.id && <EditForm a={a} busy={busy} onSave={async ({ p_frame, ...args }) => {
+            if ((p_frame ?? "") !== (a.frame ?? "") && !(await rpc("admin_set_frame", { p_account: a.id, p_frame: p_frame || null }, "Ramka saqlandi"))) return;
+            if (await rpc("admin_update_account", { p_id: a.id, ...args }, "Saqlandi")) setEdit(null);
+          }} />}
         </div>
       ))}
     </div>
@@ -65,6 +69,7 @@ export default function ListedTab({ accounts, cases, users, admins, adminById, m
 function EditForm({ a, busy, onSave }: { a: Account; busy: boolean; onSave: (args: Record<string, unknown>) => void }) {
   const [f, setF] = useState({ title: a.title, description: a.description ?? "", rank: a.rank ?? "", level: a.level != null ? String(a.level) : "", price: String(a.price) });
   const [images, setImages] = useState<string[]>(a.images?.length ? a.images : a.image_url ? [a.image_url] : []);
+  const [frame, setFrame] = useState<string>(a.frame ?? "");
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setF({ ...f, [k]: e.target.value });
   return (
     <div className="border-t border-line mt-3 pt-3 space-y-3">
@@ -76,8 +81,9 @@ function EditForm({ a, busy, onSave }: { a: Account; busy: boolean; onSave: (arg
       </div>
       <div><label className="label">Tavsif</label><textarea className="input min-h-[70px]" value={f.description} onChange={set("description")} /></div>
       <div><label className="label">Rasmlar</label><ImageUploader value={images} onChange={setImages} /></div>
+      <FramePicker value={frame} onChange={setFrame} game={a.game} />
       <button disabled={busy || !f.title.trim() || !num(f.price)} className="btn-accent w-full" onClick={() => onSave({
-        p_title: f.title, p_description: f.description, p_rank: f.rank, p_level: num(f.level), p_price: num(f.price), p_images: images,
+        p_title: f.title, p_description: f.description, p_rank: f.rank, p_level: num(f.level), p_price: num(f.price), p_images: images, p_frame: frame,
       })}>Saqlash</button>
     </div>
   );

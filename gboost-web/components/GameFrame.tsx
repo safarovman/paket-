@@ -68,7 +68,20 @@ const failed = new Set<string>();
 const startStage = (key: string): 0 | 1 | 2 =>
   !failed.has(`/frames/frame-${key}.png`) ? 0 : !failed.has("/frames/frame-default.png") ? 1 : 2;
 
-export default function GameFrame({ game, children, className = "" }: { game?: string | null; children: React.ReactNode; className?: string }) {
+/** Admin tanlashi mumkin bo'lgan ramkalar ("" = o'yin bo'yicha avtomatik) */
+export const FRAME_OPTIONS: { id: string; name: string }[] = [
+  { id: "", name: "Avtomatik (o'yin bo'yicha)" },
+  { id: "pubg", name: "PUBG" }, { id: "standoff2", name: "Standoff 2" }, { id: "mlbb", name: "Mobile Legends" },
+  { id: "freefire", name: "Free Fire" }, { id: "cs2", name: "CS2" }, { id: "brawl", name: "Brawl Stars" },
+  { id: "default", name: "UzDrop" }, { id: "none", name: "Ramkasiz" },
+];
+
+export default function GameFrame({ game, frame, children, className = "" }: { game?: string | null; frame?: string | null; children: React.ReactNode; className?: string }) {
+  if (frame === "none") return <div className={`relative ${className}`}>{children}</div>;
+  return <Framed key={frame || game || "default"} game={frame || game} className={className}>{children}</Framed>;
+}
+
+function Framed({ game, children, className = "" }: { game?: string | null; children: React.ReactNode; className?: string }) {
   const key = game && THEMES[game] ? game : "default";
   const t = THEMES[key];
   // 0 = o'yinga xos PNG, 1 = umumiy PNG, 2 = CSS ramka

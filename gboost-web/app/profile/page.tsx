@@ -18,7 +18,7 @@ const TABS: { id: Tab; label: string }[] = [
 
 const TX_LABEL: Record<string, string> = {
   deposit: "To'ldirish", withdraw: "Yechish", buy: "Xarid", sale: "Sotuv", spin: "Spin",
-  win_sell: "Yutuqni sotish", quick_sell: "Tez sotish", refund: "Qaytarish", admin: "Admin",
+  win_sell: "Yutuqni sotish", quick_sell: "Tez sotish", refund: "Qaytarish", admin: "Admin", bid: "Auksion taklifi", bid_refund: "Taklif qaytarildi",
 };
 
 const STATUS: Record<string, { t: string; c: string }> = {

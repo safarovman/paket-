@@ -10,7 +10,7 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
 
 const LABEL: Record<string, string> = {
   buy: "🛒 Akkaunt sotib olindi", deposit: "💳 Balans to'ldirildi", withdraw: "🏦 Pul yechish",
-  sale: "💰 Sotuvchiga pul tushdi", quick_sell: "⚡ Tez sotish to'lovi", refund: "↩️ Pul qaytarildi",
+  sale: "💰 Sotuvchiga pul tushdi", quick_sell: "⚡ Tez sotish to'lovi", refund: "↩️ Pul qaytarildi", bid: "🔨 Auksion taklifi", bid_refund: "↩️ Auksion taklifi qaytarildi",
   spin: "🎰 Spin", win_sell: "🎰 Yutuq sotildi", admin: "🛠 Admin tuzatishi",
 };
 const som = (n: number) => `${Math.abs(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ")} so'm`;

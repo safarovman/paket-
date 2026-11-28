@@ -7,7 +7,8 @@
 --  oddiy xarid kabi kod beriladi (admin Telegramda topshiradi).
 -- ============================================================
 
--- accounts.status ga 'auction' qo'shish
+-- accounts.status ga 'auction' qo'shish (+ ramka ustuni, 18 bilan bir xil)
+alter table public.accounts add column if not exists frame text;
 alter table public.accounts drop constraint if exists accounts_status_check;
 alter table public.accounts add constraint accounts_status_check
   check (status in ('pending','active','sold','pool','won','claimed','rejected','auction'));
@@ -78,7 +79,7 @@ returns jsonb language sql stable security definer set search_path = public as $
       'is_mine_won', au.winner_id = auth.uid(),
       'account', jsonb_build_object('id', a.id, 'public_no', a.public_no, 'title', a.title, 'game', a.game,
           'rank', a.rank, 'level', a.level, 'description', a.description, 'image_url', a.image_url,
-          'images', a.images, 'price', a.price),
+          'images', a.images, 'price', a.price, 'frame', a.frame),
       'sort_key', case when p_status = 'live' then to_char(au.ends_at, 'YYYYMMDDHH24MISS')
                        else to_char(9999999999 - extract(epoch from au.ends_at)::bigint, 'FM0000000000') end
     ) x

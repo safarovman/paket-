@@ -102,7 +102,7 @@ export default function HeroSlider() {
           const dx = e.changedTouches[0].clientX - touch.current; touch.current = null;
           if (Math.abs(dx) > 40) go(dx < 0 ? 1 : -1);
         }}
-        className={`relative overflow-hidden rounded-3xl border border-line bg-gradient-to-br ${s.bg} min-h-[600px] sm:min-h-[340px] transition-colors duration-700`}>
+        className={`relative overflow-hidden rounded-3xl border border-line bg-gradient-to-br ${s.bg} min-h-[480px] sm:min-h-[340px] transition-colors duration-700`}>
         {/* fon bezaklari */}
         <div className="absolute inset-0 opacity-[.07] pointer-events-none"
           style={{ backgroundImage: "radial-gradient(circle at 1px 1px, #fff 1px, transparent 0)", backgroundSize: "22px 22px" }} />
@@ -113,10 +113,12 @@ export default function HeroSlider() {
         <div className="absolute right-[32%] -top-10 w-10 h-[140%] rotate-[24deg] bg-gradient-to-b from-accent/15 to-transparent blur-md pointer-events-none" />
 
         {/* Avatar — banner ichida, o'ng tomonda, katta */}
-        <div key={s.pose} className="absolute right-0 bottom-0 h-[36%] sm:h-[108%] w-[70%] sm:w-[48%] flex items-end justify-end pointer-events-none animate-fade-in">
+        <div key={s.pose} className="absolute z-0 -right-6 sm:right-0 bottom-0 h-[82%] sm:h-[108%] w-[88%] sm:w-[48%] flex items-end justify-end pointer-events-none animate-fade-in opacity-60 sm:opacity-100">
           <MascotImg pose={s.pose}
             className="h-full w-auto object-contain object-bottom drop-shadow-[0_20px_40px_rgba(0,0,0,.6)] select-none" />
         </div>
+        {/* Telefonda: matn o'qilishi uchun avatar ustidan qorong'i parda */}
+        <div className="sm:hidden absolute inset-0 z-[1] pointer-events-none bg-gradient-to-r from-black/75 via-black/45 to-transparent" />
         {s.badge && (
           <span className="hidden sm:inline-flex absolute right-[30%] bottom-10 items-center rounded-2xl px-4 py-2 text-sm font-black text-white bg-white/10 border border-white/20 backdrop-blur-md shadow-xl">
             {s.badge}

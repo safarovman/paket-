@@ -11,7 +11,7 @@ export default function AccountCard({ a, footer, onClick, compact }: {
   const g = game(a.game);
   const imgs = (a.images && a.images.length ? a.images : a.image_url ? [a.image_url] : []);
   return (
-    <GameFrame game={a.game} className="h-full">
+    <GameFrame game={a.game} frame={(a as { frame?: string | null }).frame} className="h-full">
       <div onClick={onClick}
         className={`group relative panel overflow-hidden h-full transition-transform ${onClick ? "cursor-pointer hover:-translate-y-1" : ""}`}>
         <div className="absolute inset-0 opacity-25 group-hover:opacity-40 transition-opacity"
