@@ -27,6 +27,7 @@ export default function Navbar() {
   const active = (href: string) => href === "/" ? path === "/" || path.startsWith("/market") : path.startsWith(href);
 
   return (
+    <>
     <header className="sticky top-0 z-50 bg-bg/90 backdrop-blur border-b border-line">
       <div className="wrap flex items-center h-16 gap-4">
         <Link href="/" className="flex items-center gap-2 shrink-0">
@@ -87,16 +88,21 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Mobil pastki menyu */}
-      <nav className="md:hidden flex border-t border-line">
-        {NAV.map(n => (
-          <Link key={n.href} href={n.href}
-            className={clsx("flex-1 py-2 text-center text-[10px] font-extrabold uppercase",
-              active(n.href) ? "text-accent" : "text-muted")}>
-            <span className="flex justify-center mb-1"><Icon name={n.icon} className="w-5 h-5" /></span>{n.label}{n.soon && <span className="block text-[8px] text-accent">tez kunda</span>}
-          </Link>
-        ))}
-      </nav>
     </header>
+
+    {/* Mobil: pastki kichik menyu (ekran tagida doim turadi) */}
+    <nav className="md:hidden fixed bottom-0 inset-x-0 z-50 flex border-t border-line bg-bg/95 backdrop-blur-md"
+      style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
+      {NAV.map(n => (
+        <Link key={n.href} href={n.href}
+          className={clsx("relative flex-1 pt-1.5 pb-1 flex flex-col items-center gap-0.5 text-[9px] font-bold",
+            active(n.href) ? "text-accent" : "text-muted")}>
+          <Icon name={n.icon} className="w-[18px] h-[18px]" />
+          <span className="leading-none">{n.label}</span>
+          {n.soon && <span className="absolute top-0.5 right-1/2 translate-x-4 w-1.5 h-1.5 rounded-full bg-accent" title="Tez kunda" />}
+        </Link>
+      ))}
+    </nav>
+    </>
   );
 }
