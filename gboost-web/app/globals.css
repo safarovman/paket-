@@ -4,6 +4,11 @@
 
 /* Sayt faqat qorong'i: brauzerning avtomatik qorong'i rejimi ranglarni o'zgartirmasin */
 :root { color-scheme: dark; }
+/* Samsung Internet va boshqalar faqat shu media-so'rov bo'lsa "sayt qorong'i rejimni o'zi qo'llaydi" deb hisoblaydi */
+@media (prefers-color-scheme: dark) {
+  :root { color-scheme: dark; }
+  html, body { background-color: #070505; color: #F7EDED; }
+}
 html, body { background-color: #070505; }
 
 html { scroll-behavior: smooth; }
