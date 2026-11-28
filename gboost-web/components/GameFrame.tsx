@@ -44,6 +44,19 @@ export function frameSrc(game?: string | null, frame?: string | null): { src: st
 
 const failed = new Set<string>();
 
+/** Ramkaning ichki shaffof oynasi (%): rasm aynan shu joyga joylashadi, ramka uni yopmaydi.
+ *  [chap, o'ng, tepa, past] — PNG lardan o'lchangan, chetlari ramka ostiga ozgina kiradi. */
+const INSET: Record<string, [number, number, number, number]> = {
+  pubg: [5.4, 5.4, 11.6, 9.4], standoff2: [5, 5, 10.2, 10.3], mlbb: [5.8, 5.8, 15.6, 15.6], freefire: [5.9, 5.9, 11.6, 11.5],
+  cs2: [4.3, 4.3, 7, 7.2], brawl: [8.2, 8.2, 14.4, 13.6], default: [4.1, 4.1, 7.3, 7.3],
+};
+const SIMPLE_INSET: [number, number, number, number] = [3.8, 3.8, 6.6, 6.7];
+export function frameInset(game?: string | null, frame?: string | null): [number, number, number, number] {
+  const f = frameSrc(game, frame);
+  if (!f) return [0, 0, 0, 0];
+  return frame?.startsWith("simple-") ? SIMPLE_INSET : INSET[f.key] ?? INSET.default;
+}
+
 /** Rasm qutisi (16:9) — ichiga rasm/karusel qo'yiladi, ustiga ramka */
 export default function GameFrame({ game, frame, children, className = "" }: {
   game?: string | null; frame?: string | null; children: React.ReactNode; className?: string;
@@ -51,10 +64,14 @@ export default function GameFrame({ game, frame, children, className = "" }: {
   const f = frameSrc(game, frame);
   const [bad, setBad] = useState(() => (f ? failed.has(f.src) : false));
   const c = f ? COLORS[f.key] : "#FFC83D";
+  const [l, r, t, b] = frameInset(game, frame);
 
   return (
     <div className={`relative aspect-video ${className}`}>
-      {children}
+      {/* Rasm — ramka ichidagi oynada */}
+      <div className="absolute overflow-hidden" style={{ left: `${l}%`, right: `${r}%`, top: `${t}%`, bottom: `${b}%` }}>
+        {children}
+      </div>
       {f && !bad && (
         <img key={f.src} src={f.src} alt="" aria-hidden loading="lazy" draggable={false}
           onError={() => { failed.add(f.src); setBad(true); }}

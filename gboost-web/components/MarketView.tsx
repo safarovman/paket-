@@ -6,7 +6,6 @@ import { supabase, errText } from "@/lib/supabase";
 import { useUser } from "@/components/UserProvider";
 import { GAMES, TELEGRAM_ADMIN, game, som, telegramLink, type Account } from "@/lib/uzdrop";
 import AccountCard from "@/components/AccountCard";
-import GameFrame from "@/components/GameFrame";
 import ImageCarousel from "@/components/ImageCarousel";
 import AccountBindings from "@/components/AccountBindings";
 import Icon, { GameIcon } from "@/components/Icon";
@@ -143,36 +142,51 @@ export default function MarketView() {
               </div>
             ) : (
               <div className="relative max-w-[1400px] mx-auto">
-                {/* Orqa fon: joriy skrinshotning xira (blur) nusxasi — rasm va yozuvlar orasini yumshoq bog'laydi */}
-                <div aria-hidden className="pointer-events-none absolute -inset-x-10 -top-6 h-[calc(100%+2rem)] overflow-hidden"
-                  style={{ maskImage: "radial-gradient(ellipse 60% 55% at 50% 55%, black 40%, transparent 100%)", WebkitMaskImage: "radial-gradient(ellipse 60% 55% at 50% 55%, black 40%, transparent 100%)" }}>
-                  {gallery[img]
-                    ? <img src={gallery[img]} alt="" className="w-full h-full object-cover scale-110 blur-3xl opacity-40 transition-all duration-700" />
-                    : <div className="w-full h-full bg-gradient-to-b from-violet/30 to-transparent blur-3xl" />}
-                </div>
+                {/* Skrinshot: pastki qismi xira (blur) bo'lib eriydi, nomi va narxi o'sha joyda */}
+                <div className="relative rounded-2xl overflow-hidden border border-white/10 bg-panel">
+                  {/* Orqa fon — joriy skrinshotning xira nusxasi */}
+                  {gallery[img] && (
+                    <img src={gallery[img]} alt="" aria-hidden className="absolute inset-0 w-full h-full object-cover scale-125 blur-3xl opacity-70 transition-all duration-700" />
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/20 to-black/70" />
 
-                {/* Rasm — katta, to'liq kenglikda */}
-                <div className="relative z-10">
-                  <GameFrame game={sel.game} frame="none" className="w-full rounded-2xl overflow-hidden bg-bg border border-white/10">
-                    <div className="absolute inset-0 grid place-items-center bg-gradient-to-br from-[#2a1015] to-[#0b0606]">
-                      {gallery.length
-                        ? <ImageCarousel images={gallery} index={img} onIndex={setImg} alt={sel.title} interval={3500} />
-                        : <GameIcon game={sel.game} className="w-24 h-24" />}
+                  {/* Rasm — butunligicha, pastki cheti blurga qo'shilib ketadi */}
+                  <div className="relative aspect-video"
+                    style={{ maskImage: "linear-gradient(to bottom, black 84%, transparent)", WebkitMaskImage: "linear-gradient(to bottom, black 84%, transparent)" }}>
+                    {gallery.length
+                      ? <ImageCarousel images={gallery} index={img} onIndex={setImg} alt={sel.title} interval={4000} dots={false} />
+                      : <div className="absolute inset-0 grid place-items-center"><GameIcon game={sel.game} className="w-24 h-24" /></div>}
+                  </div>
+                  {gallery.length > 1 && [-1, 1].map(d => (
+                    <button key={d} onClick={() => setImg((img + d + gallery.length) % gallery.length)}
+                      aria-label={d < 0 ? "Oldingi" : "Keyingi"}
+                      className={`absolute z-20 top-[28%] sm:top-[36%] -translate-y-1/2 ${d < 0 ? "left-3 sm:left-5" : "right-3 sm:right-5"} w-10 h-10 sm:w-14 sm:h-14 rounded-2xl bg-white/10 border border-white/25 backdrop-blur-md shadow-[0_8px_24px_rgba(0,0,0,.45)] grid place-items-center text-white transition-all hover:bg-accent hover:border-accent hover:text-[#1B1400] hover:scale-105 active:scale-95`}>
+                      <svg viewBox="0 0 24 24" className={`w-5 h-5 sm:w-7 sm:h-7 ${d < 0 ? "rotate-180" : ""}`} fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                        <path d="M9 5l7 7-7 7" />
+                      </svg>
+                    </button>
+                  ))}
+
+                  {/* Nomi, narxi — blur ustida, rasmning pastki qismiga kirib turadi */}
+                  <div className="relative z-10 -mt-6 sm:-mt-12 px-4 sm:px-7 pb-4 sm:pb-6 flex flex-col sm:flex-row sm:items-end gap-3 sm:gap-6">
+                    <div className="flex-1 min-w-0">
+                      <span className="chip bg-black/40 backdrop-blur text-white/80"><GameIcon game={sel.game} className="w-3.5 h-3.5 mr-1" />{game(sel.game).name}</span>
+                      <h2 className="text-2xl sm:text-4xl font-black mt-2 leading-tight drop-shadow-[0_2px_8px_rgba(0,0,0,.8)]">{sel.title}</h2>
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1.5 text-sm text-white/75">
+                        {sel.public_no != null && <span>ID <b className="text-white">#{sel.public_no}</b></span>}
+                        {sel.rank && <span>Rank <b className="text-white">{sel.rank}</b></span>}
+                        {sel.level != null && <span>Level <b className="text-white">{sel.level}</b></span>}
+                      </div>
                     </div>
-                    {gallery.length > 1 && [-1, 1].map(d => (
-                      <button key={d} onClick={() => setImg((img + d + gallery.length) % gallery.length)}
-                        aria-label={d < 0 ? "Oldingi" : "Keyingi"}
-                        className={`group absolute z-20 top-1/2 -translate-y-1/2 ${d < 0 ? "left-3 sm:left-5" : "right-3 sm:right-5"} w-11 h-11 sm:w-14 sm:h-14 rounded-2xl bg-white/10 border border-white/25 backdrop-blur-md shadow-[0_8px_24px_rgba(0,0,0,.45)] grid place-items-center text-white transition-all hover:bg-accent hover:border-accent hover:text-[#1B1400] hover:scale-105 active:scale-95`}>
-                        <svg viewBox="0 0 24 24" className={`w-6 h-6 sm:w-7 sm:h-7 ${d < 0 ? "rotate-180" : ""}`} fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                          <path d="M9 5l7 7-7 7" />
-                        </svg>
-                      </button>
-                    ))}
-                  </GameFrame>
+                    <div className="shrink-0 sm:text-right">
+                      <p className="text-3xl sm:text-4xl font-black text-accent drop-shadow-[0_2px_8px_rgba(0,0,0,.8)]">{som(sel.price)}</p>
+                    </div>
+                  </div>
+
                   {gallery.length > 1 && (
-                    <div className="flex gap-1.5 mt-3 overflow-x-auto justify-center">
+                    <div className="relative z-10 flex gap-1.5 overflow-x-auto px-4 sm:px-7 pb-4">
                       {gallery.map((u, i) => (
-                        <button key={u + i} onClick={() => setImg(i)} className={`shrink-0 w-20 sm:w-28 aspect-video rounded-md overflow-hidden border-2 ${i === img ? "border-accent" : "border-transparent opacity-60"}`}>
+                        <button key={u + i} onClick={() => setImg(i)} className={`shrink-0 w-20 sm:w-28 aspect-video rounded-md overflow-hidden border-2 bg-black/40 ${i === img ? "border-accent" : "border-transparent opacity-60"}`}>
                           <img src={u} alt="" className="w-full h-full object-cover" />
                         </button>
                       ))}
@@ -184,18 +198,11 @@ export default function MarketView() {
                 <div className="relative z-10 mt-6 rounded-2xl border border-white/10 bg-bg/50 backdrop-blur-xl p-4 sm:p-6">
                   <div className="grid md:grid-cols-2 gap-5 lg:gap-8">
                     <div>
-                      <span className="chip bg-bg text-muted"><GameIcon game={sel.game} className="w-3.5 h-3.5 mr-1" />{game(sel.game).name}</span>
-                      <h2 className="text-2xl sm:text-3xl font-black mt-2 leading-tight">{sel.title}</h2>
-                      <p className="text-3xl font-black text-accent mt-2">{som(sel.price)}</p>
-                      <div className="mt-3 space-y-1.5 text-sm">
-                        {sel.public_no != null && <div className="flex justify-between"><span className="text-muted">Akkaunt ID</span><b>#{sel.public_no}</b></div>}
-                        {sel.rank && <div className="flex justify-between"><span className="text-muted">Rank</span><b>{sel.rank}</b></div>}
-                        {sel.level != null && <div className="flex justify-between"><span className="text-muted">Daraja (level)</span><b>{sel.level}</b></div>}
-                        {user && <div className="flex justify-between"><span className="text-muted">Balansingiz</span><b>{som(profile?.balance)}</b></div>}
-                      </div>
-                      {sel.description && (
-                        <div className="mt-3 rounded-xl bg-bg/70 border border-line p-3 text-sm text-white/85 whitespace-pre-line max-h-48 overflow-y-auto">{sel.description}</div>
-                      )}
+                      <p className="text-xs font-extrabold uppercase text-muted mb-2">Tavsif</p>
+                      {sel.description
+                        ? <div className="rounded-xl bg-bg/70 border border-line p-3 text-sm text-white/85 whitespace-pre-line max-h-60 overflow-y-auto">{sel.description}</div>
+                        : <p className="text-sm text-muted">Qo&apos;shimcha tavsif yo&apos;q. Savollar bo&apos;lsa adminga yozing.</p>}
+                      {user && <div className="flex justify-between text-sm mt-3"><span className="text-muted">Balansingiz</span><b>{som(profile?.balance)}</b></div>}
                     </div>
                     <div className="space-y-3">
                       <AccountBindings bindings={sel.bindings} origin={sel.origin} />
