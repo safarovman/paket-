@@ -6,7 +6,7 @@ import { GameIcon } from "@/components/Icon";
 /**
  * Akkaunt kartasi = faqat ramkali skrinshot (ramka kartaning o'zi, ichida yana ramka yo'q).
  * Narx — pastki o'ng burchakda (kichik, to'q qizil), #ID va o'yin — chap pastda, nom — sichqoncha ustiga kelganda.
- * Belgilar ramka bezaklari ustiga tushmasligi uchun ichkariga (~7%) surilgan.
+ * Belgilar rasm oynasi ichida joylashadi, ramka bezaklari ustiga tushmaydi.
  */
 export default function AccountCard({ a, footer, onClick, compact }: {
   a: Pick<Account, "title" | "game" | "rank" | "image_url" | "price"> & {
@@ -19,8 +19,8 @@ export default function AccountCard({ a, footer, onClick, compact }: {
   const imgs = (a.images && a.images.length ? a.images : a.image_url ? [a.image_url] : []);
   // Ramkasiz kartada belgilar burchakka yaqinroq turadi
   const bare = a.frame === "none";
-  const L = bare ? "left-2.5" : "left-[7%]", R = bare ? "right-2.5" : "right-[7%]";
-  const T = bare ? "top-2.5" : "top-[10%]", B = bare ? "bottom-2.5" : "bottom-[10%]";
+  // Belgilar rasm oynasining ichida (ramka bo'lsa ham, bo'lmasa ham) — burchaklarga yaqin
+  const L = "left-2", R = "right-2", T = "top-2", B = "bottom-1.5";
   const pad = `${L} ${R}`;
 
   return (
@@ -40,9 +40,11 @@ export default function AccountCard({ a, footer, onClick, compact }: {
             {a.title}
           </p>
 
-          {/* Narx — pastki o'ng burchak: kichik, ramkasiz, to'q qizil */}
-          <span className={`absolute ${R} ${B} z-20 rounded-md px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-xs font-black text-white bg-[#8B1515] shadow-lg whitespace-nowrap`}>
-            {som(a.price)}
+          {/* Narx — rasmning pastki o'ng burchagiga tekis yopishgan, chap tomoni qiya (to'rtburchak, yumaloq emas) */}
+          <span className="absolute right-0 bottom-0 z-20 flex items-baseline gap-1 bg-[#8B1515] text-white pl-5 sm:pl-6 pr-2.5 sm:pr-3 py-1 sm:py-1.5 whitespace-nowrap shadow-[0_-2px_12px_rgba(0,0,0,.35)]"
+            style={{ clipPath: "polygon(14px 0, 100% 0, 100% 100%, 0 100%)" }}>
+            <b className="text-xs sm:text-sm font-black tracking-tight tabular-nums">{a.price.toLocaleString("ru-RU").replace(/\u00a0/g, " ")}</b>
+            <span className="text-[9px] sm:text-[10px] font-bold text-white/75">so&apos;m</span>
           </span>
 
           {/* Noyoblik — chap yuqori */}
