@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 
 /**
- * UzDrop yordamchisi — niqobli personaj, nutq pufakchasi bilan saytni tushuntiradi.
+ * UzzDrop yordamchisi — niqobli personaj, nutq pufakchasi bilan saytni tushuntiradi.
  * Rasm: /mascot/<pose>.png (shaffof fonli PNG). Rasm bo'lmasa — SVG siluet chiziladi.
  * "×" bosilsa, shu joyda boshqa ko'rsatilmaydi (brauzerda eslab qolinadi).
  */
@@ -57,7 +57,7 @@ export default function Mascot({ pose = "desk", text, side = "left", id, classNa
   const avatar = (
     <div className="shrink-0 w-20 h-24 sm:w-28 sm:h-32">
       {imgOk
-        ? <img src={`/mascot/${pose}.png`} alt="UzDrop yordamchisi" onError={() => setImgOk(false)} className="w-full h-full object-contain drop-shadow-[0_8px_20px_rgba(220,38,38,.35)]" />
+        ? <img src={`/mascot/${pose}.png`} alt="UzzDrop yordamchisi" onError={() => setImgOk(false)} className="w-full h-full object-contain drop-shadow-[0_8px_20px_rgba(220,38,38,.35)]" />
         : <Placeholder pose={pose} />}
     </div>
   );
@@ -65,7 +65,7 @@ export default function Mascot({ pose = "desk", text, side = "left", id, classNa
     <div className={`relative panel px-4 py-3 text-sm leading-snug max-w-md border-accent/30 ${side === "left" ? "sm:ml-1" : "sm:mr-1"}`}>
       <span className={`hidden sm:block absolute top-6 w-3 h-3 rotate-45 bg-panel border-line ${side === "left" ? "-left-1.5 border-l border-b" : "-right-1.5 border-r border-t"}`} />
       <button onClick={close} aria-label="Yopish" className="absolute right-1.5 top-1 text-muted hover:text-white text-base leading-none">×</button>
-      <p className="text-[10px] font-extrabold uppercase text-accent mb-0.5">UzDrop yordamchisi</p>
+      <p className="text-[10px] font-extrabold uppercase text-accent mb-0.5">UzzDrop yordamchisi</p>
       <div className="pr-3 text-white/90">{text}</div>
     </div>
   );

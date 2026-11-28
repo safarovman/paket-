@@ -15,9 +15,9 @@ function Sell() {
 
   const who = profile?.email || user?.email || "";
   const message = [
-    quick ? "Salom! Akkauntimni TEZ SOTMOQCHIMAN." : "Salom! Akkauntimni UzDrop bozorida sotmoqchiman.",
+    quick ? "Salom! Akkauntimni TEZ SOTMOQCHIMAN." : "Salom! Akkauntimni UzzDrop bozorida sotmoqchiman.",
     "",
-    `UzDrop akkauntim: ${who}`,
+    `UzzDrop akkauntim: ${who}`,
     `ID: ${user?.id ?? ""}`,
     "",
     "O'yin: ",
@@ -36,7 +36,7 @@ function Sell() {
       <div className="grid sm:grid-cols-2 gap-3 mb-6">
         {[
           { q: false, i: "cart", t: "Bozorga qo'yish", d: `Narxni o'zingiz aytasiz. Sotilganda ${100 - COMMISSION * 100}% balansingizga tushadi.` },
-          { q: true,  i: "zap", t: "Tez sotish",      d: "UzDrop akkauntni o'zi sotib oladi — admin tasdiqlashi bilan pul darhol balansda." },
+          { q: true,  i: "zap", t: "Tez sotish",      d: "UzzDrop akkauntni o'zi sotib oladi — admin tasdiqlashi bilan pul darhol balansda." },
         ].map(o => (
           <button key={o.t} type="button" onClick={() => setQuick(o.q)}
             className={`panel p-4 text-left transition-colors ${quick === o.q ? "!border-accent bg-accent/5" : "hover:border-violet"}`}>
@@ -51,7 +51,7 @@ function Sell() {
         <p className="font-black uppercase mb-4">Qanday ishlaydi</p>
         <ol className="space-y-3">
           {[
-            ["Tizimga kiring", "Pul aynan shu UzDrop akkauntingiz balansiga tushadi."],
+            ["Tizimga kiring", "Pul aynan shu UzzDrop akkauntingiz balansiga tushadi."],
             ["Telegramda adminga yozing", `@${TELEGRAM_ADMIN} — tayyor xabar avtomatik ochiladi, bo'sh joylarni to'ldiring.`],
             ["Skrinshotlar va ma'lumotlarni yuboring", "Rank, skinlar, inventar rasmlari. Login/parolni admin so'raganda berasiz."],
             ["Admin tekshiradi va saytga joylaydi", quick ? "Narx kelishilgach pul darhol balansingizga tushadi." : "E'lon rasmlari bilan bozorda paydo bo'ladi."],

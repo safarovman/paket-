@@ -30,7 +30,7 @@ export default function CodeCard({ code, kind, title, amount, accountId }: {
     `Kod: ${code}`,
     title ? `Akkaunt: ${title}` : "",
     amount ? `Summa: ${som(amount)}` : "",
-    `Mening UzDrop ID: ${profile?.public_id ?? "—"}`,
+    `Mening UzzDrop ID: ${profile?.public_id ?? "—"}`,
     kind === "deposit" ? "(To'lov chekini shu yerga yuboraman)" : "",
   ].filter(Boolean).join("\n");
 

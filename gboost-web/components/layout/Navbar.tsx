@@ -32,7 +32,7 @@ export default function Navbar() {
       <div className="wrap flex items-center h-16 gap-4">
         <Link href="/" className="flex items-center gap-2 shrink-0">
           <span className="w-9 h-9 rounded-xl bg-gradient-to-br from-accent to-[#DC2626] grid place-items-center font-black text-[#1B1400] text-lg rotate-[-6deg]">U</span>
-          <span className="font-black text-xl tracking-tight">Uz<span className="text-accent">Drop</span></span>
+          <span className="font-black text-xl tracking-tight">Uzz<span className="text-accent">Drop</span></span>
         </Link>
 
         <nav className="hidden md:flex items-center gap-1 ml-4">

@@ -127,7 +127,7 @@ export default function WalletPage() {
               <li>Admin to&apos;lov uchun karta raqamini beradi. To&apos;lab, chekni yuboring.</li>
               <li>Admin tasdiqlashi bilan pul balansingizda ko&apos;rinadi.</li>
             </ol>
-            <a href={telegramLink(`Balans to'ldirmoqchiman\nMening UzDrop ID: ${profile?.public_id ?? ""}\nSumma: ${som(amount)}`)}
+            <a href={telegramLink(`Balans to'ldirmoqchiman\nMening UzzDrop ID: ${profile?.public_id ?? ""}\nSumma: ${som(amount)}`)}
               target="_blank" rel="noopener noreferrer" className="btn-accent w-full">Telegramda adminga yozish</a>
             <p className="text-[11px] text-muted"><Icon name="alert" className="w-3.5 h-3.5 mr-1 text-accent" />Faqat <b className="text-white">@{TELEGRAM_ADMIN}</b> ga to&apos;lang. Boshqa &quot;admin&quot;larga ishonmang — admin sizga birinchi yozmaydi.</p>
           </div>

@@ -1,4 +1,4 @@
-// UzDrop — umumiy turlar va yordamchilar
+// UzzDrop — umumiy turlar va yordamchilar
 export type AccountStatus = "pending" | "active" | "sold" | "pool" | "won" | "claimed" | "rejected";
 
 export interface Account {
@@ -71,7 +71,7 @@ export const PAY_METHODS = [
 
 /** To'ldirish uchun karta (env orqali o'zgartiring) */
 export const DEPOSIT_CARD = process.env.NEXT_PUBLIC_DEPOSIT_CARD || "8600 0000 0000 0000";
-export const DEPOSIT_CARD_OWNER = process.env.NEXT_PUBLIC_DEPOSIT_CARD_OWNER || "UZDROP";
+export const DEPOSIT_CARD_OWNER = process.env.NEXT_PUBLIC_DEPOSIT_CARD_OWNER || "UZZDROP";
 
 /** Sotuvchilar yozadigan admin Telegram username (@siz) */
 export const TELEGRAM_ADMIN = (process.env.NEXT_PUBLIC_TELEGRAM_ADMIN || "perdeloto").replace(/^@/, "");

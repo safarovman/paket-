@@ -15,7 +15,7 @@ export default function AdminHeader() {
       <div className="wrap flex items-center h-14 gap-3">
         <Link href="/" className="flex items-center gap-2 shrink-0">
           <span className="w-8 h-8 rounded-lg bg-accent grid place-items-center font-black text-[#1B1400]">U</span>
-          <span className="font-black tracking-tight">Uz<span className="text-accent">Drop</span> <span className="text-muted font-bold text-sm">Admin</span></span>
+          <span className="font-black tracking-tight">Uzz<span className="text-accent">Drop</span> <span className="text-muted font-bold text-sm">Admin</span></span>
         </Link>
         {user && (
           <div className="ml-auto flex items-center gap-3 min-w-0">
