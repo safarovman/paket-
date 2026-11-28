@@ -2,26 +2,48 @@
 import { useRef, useState } from "react";
 import { uploadImage } from "@/lib/upload";
 import { errText } from "@/lib/supabase";
+import ImageCropper from "@/components/admin/ImageCropper";
 
 /** Admin uchun: bir nechta rasm yuklash, tartiblash (birinchisi — muqova), o'chirish */
-export default function ImageUploader({ value, onChange, max = 8 }: { value: string[]; onChange: (v: string[]) => void; max?: number }) {
+export default function ImageUploader({ value, onChange, max = 8, game = "other", frame = null }: {
+  value: string[]; onChange: (v: string[]) => void; max?: number; game?: string; frame?: string | null;
+}) {
+  // Kesish navbati: har bir tanlangan rasm avval kesish oynasidan o'tadi
+  const [queue, setQueue] = useState<File[]>([]);
+  const [qi, setQi] = useState(0);
+  const [done, setDone] = useState<File[]>([]);
   const input = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(0);
   const [err, setErr] = useState("");
   const [drag, setDrag] = useState(false);
 
-  const add = async (files: FileList | File[]) => {
+  // 1) Fayllar tanlanadi → kesish navbatiga
+  const add = (files: FileList | File[]) => {
     setErr("");
     const list = Array.from(files).filter(f => f.type.startsWith("image/")).slice(0, max - value.length);
     if (!list.length) return;
-    setBusy(list.length);
+    setDone([]); setQi(0); setQueue(list);
+  };
+
+  // 2) Kesilganlar yuklanadi
+  const upload = async (files: File[]) => {
+    if (!files.length) return;
+    setBusy(files.length);
     const urls: string[] = [];
-    for (const f of list) {
+    for (const f of files) {
       try { urls.push(await uploadImage(f)); } catch (e) { setErr(errText(e)); }
       setBusy(b => b - 1);
     }
     onChange([...value, ...urls]);
   };
+
+  const next = (out: File | null) => {
+    const acc = out ? [...done, out] : done;
+    if (qi + 1 < queue.length) { setDone(acc); setQi(qi + 1); return; }
+    setQueue([]); setDone([]); setQi(0);
+    upload(acc);
+  };
+
   const move = (i: number, d: number) => { const v = [...value]; const j = i + d; if (j < 0 || j >= v.length) return; [v[i], v[j]] = [v[j], v[i]]; onChange(v); };
 
   return (
@@ -48,8 +70,12 @@ export default function ImageUploader({ value, onChange, max = 8 }: { value: str
         )}
       </div>
       <input ref={input} type="file" accept="image/*" multiple hidden onChange={e => { if (e.target.files) add(e.target.files); e.target.value = ""; }} />
-      <p className="text-[11px] text-muted mt-1.5">Skrinshotlarni tashlang yoki tanlang. Birinchi rasm — muqova. Rasmlar avtomatik kichraytiriladi.</p>
+      <p className="text-[11px] text-muted mt-1.5">Skrinshotlarni tashlang yoki tanlang — har biri saytdagi o'lchamga (16:9) moslab kesiladi. Birinchi rasm — muqova.</p>
       {err && <p className="text-lose text-xs font-bold mt-1">{err}</p>}
+      {queue[qi] && (
+        <ImageCropper key={qi} file={queue[qi]} game={game} frame={frame} index={qi} total={queue.length}
+          onDone={out => next(out)} onCancel={() => next(null)} />
+      )}
     </div>
   );
 }

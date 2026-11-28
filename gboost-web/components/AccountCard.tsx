@@ -22,7 +22,7 @@ export default function AccountCard({ a, footer, onClick, compact }: {
             <span className="chip bg-bg/60 text-muted">{g.icon} {g.name}</span>
             <span className="chip" style={{ color: r.color, background: r.color + "22" }}>{r.name}</span>
           </div>
-          <div className={`${compact ? "h-24" : "h-32"} grid place-items-center rounded-lg overflow-hidden bg-bg/40`}>
+          <div className="aspect-video grid place-items-center rounded-lg overflow-hidden bg-bg/40">
             {imgs.length
               ? <ImageCarousel images={imgs} alt={a.title} className="rounded-lg" />
               : <span className={`${compact ? "text-4xl" : "text-6xl"} drop-shadow-xl`}>{g.icon}</span>}
