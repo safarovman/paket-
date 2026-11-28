@@ -11,6 +11,7 @@ export interface Account {
   image_url: string | null;
   images: string[];
   public_no?: number | null;
+  frame?: string | null;
   admin_id?: string | null;
   price: number;
   asked_price: number | null;

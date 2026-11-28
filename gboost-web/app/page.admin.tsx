@@ -8,6 +8,7 @@ import { Empty, UserLine, dt, type AdminOpt, type PoolRow, type ProfileRow, type
 import CodeTab, { type WaitingRow } from "@/components/admin/CodeTab";
 import AddAccountTab from "@/components/admin/AddAccountTab";
 import ListedTab from "@/components/admin/ListedTab";
+import AuctionsTab from "@/components/admin/AuctionsTab";
 import CasesTab from "@/components/admin/CasesTab";
 import UsersTab from "@/components/admin/UsersTab";
 import SettingsTab from "@/components/admin/SettingsTab";
@@ -18,7 +19,7 @@ import UserHistory from "@/components/admin/UserHistory";
 import BansTab from "@/components/admin/BansTab";
 import Link from "next/link";
 
-type Tab = "code" | "activity" | "stats" | "deposits" | "withdrawals" | "add" | "listed" | "cases" | "users" | "bans" | "settings";
+type Tab = "code" | "activity" | "stats" | "deposits" | "withdrawals" | "add" | "listed" | "auctions" | "cases" | "users" | "bans" | "settings";
 const TABS: { id: Tab; label: string }[] = [
   { id: "code",        label: "🔑 Kod" },
   { id: "activity",    label: "🔔 Faollik" },
@@ -26,6 +27,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "deposits",    label: "💳 To'ldirish" },
   { id: "add",         label: "➕ Akkaunt joylash" },
   { id: "listed",      label: "📦 Saytdagi" },
+  { id: "auctions",    label: "🔨 Auksion" },
   { id: "cases",       label: "Keyslar" },
   { id: "users",       label: "Foydalanuvchilar" },
   { id: "bans",        label: "🚫 Banlar" },
@@ -215,6 +217,7 @@ export default function AdminPage() {
 
       {tab === "add" && <AddAccountTab cases={cases} admins={adminOpts} me={profile.id} myTelegram={profile.telegram ?? null} busy={busy} rpc={rpc} after={after} />}
       {tab === "listed" && <ListedTab accounts={listed} cases={cases} users={byId} admins={adminOpts} adminById={adminById} me={profile.id} busy={busy} rpc={rpc} />}
+      {tab === "auctions" && <AuctionsTab />}
       {tab === "cases" && <CasesTab cases={cases} pool={pool} busy={busy} onSave={args => rpc("admin_save_case", args, "Keys saqlandi")} />}
       {tab === "users" && <UsersTab users={users} me={profile.id} busy={busy} rpc={rpc} after={after} onHistory={setHistory} />}
       {tab === "bans" && <BansTab after={after} />}

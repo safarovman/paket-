@@ -6,6 +6,8 @@ export const TX_LABEL: Record<string, string> = {
   sale: "💰 Sotuvchiga tushdi",
   quick_sell: "⚡ Tez sotish",
   refund: "↩️ Qaytarildi",
+  bid: "🔨 Auksion taklifi",
+  bid_refund: "↩️ Taklif qaytarildi",
   spin: "🎰 Spin",
   win_sell: "🎰 Yutuqni sotdi",
   admin: "🛠 Admin tuzatish",

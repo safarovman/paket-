@@ -4,6 +4,7 @@ import clsx from "clsx";
 import { supabase, errText } from "@/lib/supabase";
 import { GAMES, rarity, som, type Case } from "@/lib/uzdrop";
 import ImageUploader from "@/components/ImageUploader";
+import FramePicker from "./FramePicker";
 import { AccNo, Tg, num, type AdminOpt, type Rpc, type UserInfo } from "./shared";
 
 type Mode = "market" | "quick" | "site";
@@ -25,6 +26,7 @@ export default function AddAccountTab({ cases, admins, me, myTelegram, busy, aft
   const [created, setCreated] = useState<{ no: number | null; title: string; admin: AdminOpt | undefined } | null>(null);
   const [f, setF] = useState(empty);
   const [images, setImages] = useState<string[]>([]);
+  const [frame, setFrame] = useState("");
   const [seller, setSeller] = useState<Seller | null | "none">(null);
   const [looking, setLooking] = useState(false);
   const [lookErr, setLookErr] = useState("");
@@ -59,6 +61,10 @@ export default function AddAccountTab({ cases, admins, me, myTelegram, busy, aft
     if (error) { setSaving(false); await after(false, errText(error)); return; }
     const id = newId as string;
     let assignErr = "";
+    if (frame) {
+      const fr = await supabase.rpc("admin_set_frame", { p_account: id, p_frame: frame });
+      if (fr.error) assignErr += " (ramka saqlanmadi: " + errText(fr.error) + ")";
+    }
     if (adminId && adminId !== me) {
       const r = await supabase.rpc("admin_assign_account", { p_account: id, p_admin: adminId });
       if (r.error) assignErr = " (admin biriktirilmadi: " + errText(r.error) + ")";
@@ -66,7 +72,7 @@ export default function AddAccountTab({ cases, admins, me, myTelegram, busy, aft
     const { data: row } = await supabase.from("accounts").select("public_no").eq("id", id).maybeSingle();
     setCreated({ no: (row as { public_no: number | null } | null)?.public_no ?? null, title: f.title.trim(), admin: admins.find(a => a.id === adminId) });
     setSaving(false);
-    setF({ ...empty, game: f.game }); setImages([]); setSeller(null);
+    setF({ ...empty, game: f.game }); setImages([]); setSeller(null); setFrame("");
     await after(!assignErr, (mode === "quick" ? "Akkaunt joylandi, sotuvchiga pul tushdi" : "Akkaunt saytga joylandi") + assignErr);
   };
 
@@ -151,6 +157,7 @@ export default function AddAccountTab({ cases, admins, me, myTelegram, busy, aft
       )}
       <div><label className="label">Tavsif</label><textarea className="input min-h-[80px]" value={f.description} onChange={set("description")} /></div>
       <div><label className="label">Rasmlar (8 tagacha)</label><ImageUploader value={images} onChange={setImages} /></div>
+      <FramePicker value={frame} onChange={setFrame} game={f.game} />
 
       <div className="rounded-xl border border-violet/40 bg-violet/5 p-3 space-y-3">
         <p className="label !mb-0">🔒 Kirish ma&apos;lumotlari — saytda hech kimga ko&apos;rinmaydi</p>
