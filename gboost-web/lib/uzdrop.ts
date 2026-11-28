@@ -81,6 +81,11 @@ export const accNo = (n?: number | null) => (n ? `#${n}` : "");
 /** Akkaunt spin hozircha o'chiq — "Tez kunda". Yoqish: NEXT_PUBLIC_SPIN=1 */
 export const SPIN_ENABLED = process.env.NEXT_PUBLIC_SPIN === "1";
 
+/** Akkaunt rasmlarining yagona o'lchami (eni:bo'yi). Admin shu o'lchamda kesadi, kartalar shu o'lchamda ko'rsatadi. */
+export const IMAGE_ASPECT = 16 / 9;
+/** Kesilgan rasmning saqlanadigan eni (px): 1280x720 */
+export const IMAGE_OUT_W = 1280;
+
 export const COMMISSION = 0.10;
 
 export const som = (n: number | null | undefined) =>

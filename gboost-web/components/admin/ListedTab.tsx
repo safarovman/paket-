@@ -80,7 +80,7 @@ function EditForm({ a, busy, onSave }: { a: Account; busy: boolean; onSave: (arg
         <div><label className="label">Narx</label><input className="input" inputMode="numeric" value={f.price} onChange={set("price")} /></div>
       </div>
       <div><label className="label">Tavsif</label><textarea className="input min-h-[70px]" value={f.description} onChange={set("description")} /></div>
-      <div><label className="label">Rasmlar</label><ImageUploader value={images} onChange={setImages} /></div>
+      <div><label className="label">Rasmlar</label><ImageUploader value={images} onChange={setImages} game={a.game} frame={frame || null} /></div>
       <FramePicker value={frame} onChange={setFrame} game={a.game} />
       <button disabled={busy || !f.title.trim() || !num(f.price)} className="btn-accent w-full" onClick={() => onSave({
         p_title: f.title, p_description: f.description, p_rank: f.rank, p_level: num(f.level), p_price: num(f.price), p_images: images, p_frame: frame,

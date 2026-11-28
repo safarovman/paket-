@@ -156,7 +156,7 @@ export default function AddAccountTab({ cases, admins, me, myTelegram, busy, aft
         </div>
       )}
       <div><label className="label">Tavsif</label><textarea className="input min-h-[80px]" value={f.description} onChange={set("description")} /></div>
-      <div><label className="label">Rasmlar (8 tagacha)</label><ImageUploader value={images} onChange={setImages} /></div>
+      <div><label className="label">Rasmlar (8 tagacha)</label><ImageUploader value={images} onChange={setImages} game={f.game} frame={frame || null} /></div>
       <FramePicker value={frame} onChange={setFrame} game={f.game} />
 
       <div className="rounded-xl border border-violet/40 bg-violet/5 p-3 space-y-3">
