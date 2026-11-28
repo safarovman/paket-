@@ -51,6 +51,22 @@ function Market() {
   const close = () => { setSel(null); setBought(null); setMsg(""); setImg(0); };
   const gallery = sel ? (sel.images?.length ? sel.images : sel.image_url ? [sel.image_url] : []) : [];
 
+  // To'liq ekranli oyna: Esc — yopish, ← → — rasmlarni almashtirish, orqa sahifa aylanmaydi
+  useEffect(() => {
+    if (!sel) return;
+    const n = gallery.length;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") close();
+      else if (n > 1 && e.key === "ArrowRight") setImg(i => (i + 1) % n);
+      else if (n > 1 && e.key === "ArrowLeft") setImg(i => (i - 1 + n) % n);
+    };
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", onKey);
+    return () => { window.removeEventListener("keydown", onKey); document.body.style.overflow = prev; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sel?.id, gallery.length]);
+
   return (
     <div className="wrap py-6">
       <div className="flex flex-wrap items-end justify-between gap-3 mb-5">
@@ -80,20 +96,20 @@ function Market() {
       </div>
 
       {list === null ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">{Array.from({ length: 8 }).map((_, i) => <div key={i} className="panel aspect-video animate-pulse" />)}</div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-6">{Array.from({ length: 8 }).map((_, i) => <div key={i} className="panel aspect-video animate-pulse" />)}</div>
       ) : shown.length === 0 ? (
         <div className="panel p-12 text-center text-muted">Hech narsa topilmadi</div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-6">
           {shown.map(a => <AccountCard key={a.id} a={a} onClick={() => setSel(a)} />)}
         </div>
       )}
 
       {sel && (
-        <div className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm sm:grid sm:place-items-center sm:p-6 animate-fade-in overflow-y-auto" onClick={close}>
-          <div className="panel w-full min-h-full sm:min-h-0 rounded-none sm:rounded-2xl max-w-5xl p-4 sm:p-6 sm:my-auto" onClick={e => e.stopPropagation()}>
-            <div className="flex justify-end -mt-1 -mr-1 mb-1">
-              <button onClick={close} className="text-muted hover:text-white text-2xl leading-none" aria-label="Yopish">×</button>
+        <div className="fixed inset-0 z-[60] bg-black/95 animate-fade-in overflow-y-auto" onClick={close}>
+          <div className="w-full min-h-full bg-bg px-4 sm:px-8 lg:px-12 py-4 sm:py-6" onClick={e => e.stopPropagation()}>
+            <div className="sticky top-0 z-30 flex justify-end -mx-2 mb-2">
+              <button onClick={close} className="w-11 h-11 rounded-full bg-panel2 border border-line text-white text-2xl leading-none hover:bg-line" aria-label="Yopish">×</button>
             </div>
             {bought ? (
               <div className="text-center max-w-md mx-auto py-4">
@@ -111,7 +127,7 @@ function Market() {
                 </div>
               </div>
             ) : (
-              <div className="grid md:grid-cols-[1.5fr_1fr] gap-5 md:gap-6">
+              <div className="grid lg:grid-cols-[2fr_1fr] gap-6 lg:gap-10 max-w-[1600px] mx-auto">
                 {/* Rasm */}
                 <div>
                   <GameFrame game={sel.game} frame={sel.frame} className="w-full rounded-xl overflow-hidden bg-bg">

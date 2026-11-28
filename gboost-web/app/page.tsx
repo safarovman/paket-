@@ -80,11 +80,11 @@ export default function Home() {
           <Link href="/market" className="ml-auto text-sm font-bold text-accent">Qidirish va saralash →</Link>
         </div>
         {list === null ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">{Array.from({ length: 8 }).map((_, i) => <div key={i} className="panel aspect-video animate-pulse" />)}</div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-6">{Array.from({ length: 8 }).map((_, i) => <div key={i} className="panel aspect-video animate-pulse" />)}</div>
         ) : shown.length === 0 ? (
           <div className="panel p-10 text-center text-muted">Hozircha sotuvda akkaunt yo&apos;q. Tez orada qo&apos;shiladi!</div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-6">
             {shown.map(a => (
               <Link key={a.id} href={`/market?id=${a.id}`}>
                 <AccountCard a={a} onClick={() => {}} />
